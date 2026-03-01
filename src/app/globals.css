@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* ตั้งค่าสีพิเศษสำหรับร้าน Bamblue (ใช้ @theme แทน config แบบเก่า) */
+@theme {
+  --color-bamblue-pink: #F5E6E8;   /* สีชมพูตุ่นๆ พาสเทล */
+  --color-bamblue-purple: #E3D7ED; /* สีม่วงลาเวนเดอร์พาสเทล */
+  --color-bamblue-dark: #4A3B52;   /* สีม่วงเข้มสำหรับตัวหนังสือ */
+}
+
+/* ตั้งค่าพื้นหลังของเว็บให้เป็นสีชมพูอ่อนๆ สไตล์พาสเทล */
+@layer base {
+  body {
+    background-color: #fdf2f8;
+    color: #333333;
+  }
+}
