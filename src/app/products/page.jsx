@@ -1,0 +1,91 @@
+"use client";
+import { useState } from 'react';
+import { useCart } from '../context/CartContext'; // 🌟 เช็ค path โฟลเดอร์ context ของคุณด้วยนะครับว่าอยู่ตรงนี้ไหม
+import { productsData } from '../../data/products'; // 🌟 ดึงข้อมูลสินค้ามาใช้
+
+export default function ProductsPage() {
+    const { addToCart } = useCart();
+    const [activeCategory, setActiveCategory] = useState('all');
+
+    // ฟังก์ชันกรองสินค้าตามหมวดหมู่
+    const filteredProducts = activeCategory === 'all'
+        ? productsData
+        : productsData.filter(p => p.category === activeCategory);
+
+    return (
+        <main className="min-h-screen bg-white py-12">
+            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-12">
+
+                {/* 🗂️ แถบเมนูกรองหมวดหมู่ด้านซ้าย (Sidebar) */}
+                <aside className="w-full md:w-56 shrink-0">
+                    <h2 className="text-lg font-bold text-zinc-900 mb-6 tracking-wide border-b border-gray-100 pb-4">หมวดหมู่สินค้า</h2>
+                    <ul className="space-y-4 text-sm font-medium text-gray-600">
+                        <li>
+                            <button onClick={() => setActiveCategory('all')} className={`transition-colors cursor-pointer ${activeCategory === 'all' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
+                                ทั้งหมด (All)
+                            </button>
+                        </li>
+                        <li>
+                            <button onClick={() => setActiveCategory('shirt')} className={`transition-colors cursor-pointer ${activeCategory === 'shirt' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
+                                เสื้อ (Shirts)
+                            </button>
+                        </li>
+                        <li>
+                            <button onClick={() => setActiveCategory('dress')} className={`transition-colors cursor-pointer ${activeCategory === 'dress' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
+                                เดรส (Dresses)
+                            </button>
+                        </li>
+                        <li>
+                            <button onClick={() => setActiveCategory('set')} className={`transition-colors cursor-pointer ${activeCategory === 'set' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
+                                ชุดเซ็ต (Sets)
+                            </button>
+                        </li>
+                    </ul>
+                </aside>
+
+                {/* 🖼️ พื้นที่โชว์สินค้า (Product Grid) */}
+                <div className="flex-1">
+                    <div className="flex justify-between items-end mb-8">
+                        <h1 className="text-3xl font-bold tracking-widest text-zinc-900">
+                            ALL PRODUCTS
+                        </h1>
+                        <p className="text-sm text-gray-500">พบ {filteredProducts.length} รายการ</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+                        {filteredProducts.map(product => (
+                            <div key={product.id} className="group cursor-pointer">
+                                <div className="relative aspect-3/4 bg-gray-100 mb-4 overflow-hidden rounded-md">
+                                    <img
+                                        src={product.image}
+                                        alt={product.nameEN}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                    />
+
+                                    {/* 🌟 ปุ่ม ADD TO CART (จะโผล่มาตอนเอาเมาส์ชี้รูป) */}
+                                    <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // กันไม่ให้กดปุ่มแล้วมองว่ากดรูป
+                                                addToCart({ ...product, quantity: 1 });
+                                            }}
+                                            className="cursor-pointer w-full bg-white/95 backdrop-blur-sm text-zinc-900 hover:bg-zinc-900 hover:text-white py-3 rounded text-sm font-bold tracking-widest transition-colors shadow-lg"
+                                        >
+                                            ADD TO CART
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{product.nameEN}</h3>
+                                    <p className="text-xs text-gray-500 mt-1 mb-2 line-clamp-1">{product.nameTH}</p>
+                                    <p className="text-sm font-semibold text-pink-500">{product.price}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </main>
+    );
+}

@@ -7,7 +7,8 @@ export const productsData = [
     price: "฿1,290",
     oldPrice: "฿1,590",
     image: "/Picture/product/product1.jpg",
-    images: ["/Picture/product/product1.jpg", "/Picture/product/product1.jpg"]
+    images: ["/Picture/product/product1.jpg", "/Picture/product/product1.jpg"],
+    category: "shirt"
   },
   {
     id: "2",
@@ -16,7 +17,8 @@ export const productsData = [
     price: "฿1,290",
     oldPrice: "฿1,590",
     image: "/Picture/product/product2.jpg",
-    images: ["/Picture/product/product2.jpg", "/Picture/product/product2.jpg"]
+    images: ["/Picture/product/product2.jpg", "/Picture/product/product2.jpg"],
+    category: "dress"
   },
   {
     id: "3",
@@ -25,7 +27,8 @@ export const productsData = [
     price: "฿1,290",
     oldPrice: "฿1,590",
     image: "/Picture/product/product3.jpg",
-    images: ["/Picture/product/product3.jpg", "/Picture/product/product3.jpg"]
+    images: ["/Picture/product/product3.jpg", "/Picture/product/product3.jpg"],
+    category: "shirt"
   },
   {
     id: "4",
@@ -34,7 +37,8 @@ export const productsData = [
     price: "฿1,290",
     oldPrice: "฿1,590",
     image: "/Picture/product/product4.jpg",
-    images: ["/Picture/product/product4.jpg", "/Picture/product/product4.jpg"]
+    images: ["/Picture/product/product4.jpg", "/Picture/product/product4.jpg"],
+    category: "shirt"
   },
   {
     id: "5",
@@ -43,7 +47,8 @@ export const productsData = [
     price: "฿1,290",
     oldPrice: "฿1,590",
     image: "/Picture/product/product5.jpg",
-    images: ["/Picture/product/product5.jpg", "/Picture/product/product5.jpg"]
+    images: ["/Picture/product/product5.jpg", "/Picture/product/product5.jpg"],
+    category: "dress"
   },
   {
     id: "6",
@@ -52,7 +57,8 @@ export const productsData = [
     price: "฿1,290",
     oldPrice: "฿1,590",
     image: "/Picture/product/product6.jpg",
-    images: ["/Picture/product/product6.jpg", "/Picture/product/product6.jpg"]
+    images: ["/Picture/product/product6.jpg", "/Picture/product/product6.jpg"],
+    category: "dress"
   },
   {
     id: "7",
@@ -61,7 +67,8 @@ export const productsData = [
     price: "฿1,290",
     oldPrice: "฿1,590",
     image: "/Picture/product/product7.jpg",
-    images: ["/Picture/product/product7.jpg", "/Picture/product/product7.jpg"]
+    images: ["/Picture/product/product7.jpg", "/Picture/product/product7.jpg"],
+    category: "dress"
   },
   {
     id: "8",
@@ -70,6 +77,7 @@ export const productsData = [
     price: "฿1,290",
     oldPrice: "฿1,590",
     image: "/Picture/product/product8.jpg",
-    images: ["/Picture/product/product8.jpg", "/Picture/product/product8.jpg"]
+    images: ["/Picture/product/product8.jpg", "/Picture/product/product8.jpg"],
+    category: "set"
   }
 ];

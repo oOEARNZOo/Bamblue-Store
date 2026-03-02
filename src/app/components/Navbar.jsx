@@ -49,16 +49,16 @@ export default function Navbar() {
         
         {/* 🌸 ฝั่งซ้าย: โลโก้ร้าน */}
         <Link href="/" className="cursor-pointer text-2xl font-bold tracking-tight">
-          Bamblue <span className="text-pink-400">store</span>
+          Bamblue <span className="text-[#dc6fd6]">store</span>
         </Link>
 
         {/* 📝 ตรงกลาง: เมนู */}
         <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
-          <Link href="/" className="cursor-pointer hover:text-pink-400 transition-colors">หน้าหลัก</Link>
-          <Link href="/products" className="cursor-pointer hover:text-pink-400 transition-colors">สินค้าทั้งหมด</Link>
-          <Link href="/reviews" className="cursor-pointer hover:text-pink-400 transition-colors">รีวิวจากลูกค้า</Link>
-          <Link href="/promotions" className="cursor-pointer hover:text-pink-400 transition-colors">ข่าวสารโปรโมชั่น</Link>
-          <Link href="/contact" className="cursor-pointer hover:text-pink-400 transition-colors">ติดต่อเรา</Link>
+          <Link href="/" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">หน้าหลัก</Link>
+          <Link href="/products" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">สินค้าทั้งหมด</Link>
+          <Link href="/reviews" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">รีวิวจากลูกค้า</Link>
+          <Link href="/promotions" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">ข่าวสารโปรโมชั่น</Link>
+          <Link href="/contact" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">ติดต่อเรา</Link>
         </div>
 
         {/* 🔍 ฝั่งขวา: ไอคอนต่างๆ */}
@@ -75,7 +75,7 @@ export default function Navbar() {
             <Search size={22} strokeWidth={1.5} />
           </button>
           
-          <button className="cursor-pointer hover:text-pink-400 transition-colors border-none bg-transparent py-2">
+          <button className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2">
             <User size={22} strokeWidth={1.5} />
           </button>
           
@@ -86,11 +86,11 @@ export default function Navbar() {
                 setIsCartOpen(!isCartOpen);
                 setIsSearchOpen(false); // ปิดค้นหาถ้าเปิดอยู่
               }}
-              className="cursor-pointer relative hover:text-pink-400 transition-colors flex items-center py-2 bg-transparent border-none"
+              className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors flex items-center py-2 bg-transparent border-none"
             >
               <ShoppingCart size={22} strokeWidth={1.5} />
               {cartItemCount > 0 && (
-                <span className="absolute top-0 -right-2 bg-pink-400 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                <span className="absolute top-0 -right-2 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                   {cartItemCount}
                 </span>
               )}
@@ -103,7 +103,7 @@ export default function Navbar() {
                   <h3 className="text-sm font-bold text-gray-800">
                     ตะกร้าสินค้า ({cartItemCount} ชิ้น)
                   </h3>
-                  <button onClick={() => setIsCartOpen(false)} className="text-gray-400 hover:text-pink-400 text-xs cursor-pointer">
+                  <button onClick={() => setIsCartOpen(false)} className="text-gray-400 hover:text-[#dc6fd6] text-xs cursor-pointer">
                     ปิด ✕
                   </button>
                 </div>
@@ -118,12 +118,12 @@ export default function Navbar() {
                           <img src={item.image} alt={item.nameEN} className="w-16 h-20 object-cover rounded shrink-0 bg-gray-50" />
                           <div className="grow flex flex-col justify-center">
                             <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.nameEN}</p>
-                            <p className="text-xs text-pink-500 font-medium mb-2">{item.price}</p>
+                            <p className="text-xs text-[#dc6fd6] font-medium mb-2">{item.price}</p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center border border-gray-200 rounded w-20 h-7">
-                                <button onClick={() => updateQuantity(item.id, -1)} disabled={item.quantity <= 1} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-pink-400 disabled:opacity-30 cursor-pointer"><Minus size={12} /></button>
+                                <button onClick={() => updateQuantity(item.id, -1)} disabled={item.quantity <= 1} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] disabled:opacity-30 cursor-pointer"><Minus size={12} /></button>
                                 <span className="w-6 text-center text-xs font-semibold">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-pink-400 cursor-pointer"><Plus size={12} /></button>
+                                <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] cursor-pointer"><Plus size={12} /></button>
                               </div>
                               <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500 cursor-pointer p-1 transition-colors"><Trash2 size={16} /></button>
                             </div>
@@ -136,7 +136,7 @@ export default function Navbar() {
                         <span className="text-sm font-bold text-gray-700">ราคาสินค้ารวม</span>
                         <span className="text-lg font-bold text-zinc-900">฿{calculateTotal().toLocaleString()}</span>
                       </div>
-                      <Link href="/cart" onClick={() => setIsCartOpen(false)} className="cursor-pointer block w-full text-center py-3 px-4 bg-pink-400 text-white rounded text-sm font-bold hover:bg-pink-500 transition-colors shadow-sm">
+                      <Link href="/cart" onClick={() => setIsCartOpen(false)} className="cursor-pointer block w-full text-center py-3 px-4 bg-[#dc6fd6] text-white rounded text-sm font-bold hover:bg-[#c05ca8] transition-colors shadow-sm">
                         ดำเนินการสั่งซื้อ
                       </Link>
                     </div>
@@ -166,7 +166,7 @@ export default function Navbar() {
               </div>
               <button 
                 onClick={() => setIsSearchOpen(false)}
-                className="text-sm font-bold text-gray-600 hover:text-pink-400 cursor-pointer whitespace-nowrap"
+                className="text-sm font-bold text-gray-600 hover:text-[#dc6fd6] cursor-pointer whitespace-nowrap"
               >
                 ยกเลิก
               </button>

@@ -90,7 +90,7 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
-            <h3 className="text-2xl tracking-widest text-zinc-900 font-medium">NEW ARRIVALS</h3>
+            <h3 className="text-2xl tracking-widest text-[#dc6fd6] border-gray-200 border-b font-medium">NEW ARRIVALS</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {newArrivals.map((item) => (
