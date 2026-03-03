@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import Link from 'next/link';
 import { useCart } from '../context/CartContext'; // 🌟 เช็ค path โฟลเดอร์ context ของคุณด้วยนะครับว่าอยู่ตรงนี้ไหม
 import { productsData } from '../../data/products'; // 🌟 ดึงข้อมูลสินค้ามาใช้
 
@@ -54,7 +55,7 @@ export default function ProductsPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
                         {filteredProducts.map(product => (
-                            <div key={product.id} className="group cursor-pointer">
+                            <Link key={product.id} href={`/product/${product.id}`} className="group cursor-pointer">
                                 <div className="relative aspect-3/4 bg-gray-100 mb-4 overflow-hidden rounded-md">
                                     <img
                                         src={product.image}
@@ -67,6 +68,7 @@ export default function ProductsPage() {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation(); // กันไม่ให้กดปุ่มแล้วมองว่ากดรูป
+                                                e.preventDefault(); // ป้องกันการนำทางเมื่อกดปุ่ม
                                                 addToCart({ ...product, quantity: 1 });
                                             }}
                                             className="cursor-pointer w-full bg-white/95 backdrop-blur-sm text-zinc-900 hover:bg-zinc-900 hover:text-white py-3 rounded text-sm font-bold tracking-widest transition-colors shadow-lg"
@@ -81,7 +83,7 @@ export default function ProductsPage() {
                                     <p className="text-xs text-gray-500 mt-1 mb-2 line-clamp-1">{product.nameTH}</p>
                                     <p className="text-sm font-semibold text-pink-500">{product.price}</p>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>

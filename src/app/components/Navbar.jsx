@@ -1,15 +1,18 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, User, ShoppingCart, Minus, Plus, Trash2 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Search, User, ShoppingCart, Minus, Plus, Trash2, Menu, X } from 'lucide-react';
 import { useCart } from '../context/CartContext'; 
 
 export default function Navbar() {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const pathname = usePathname();
   
   // 🌟 State สำหรับเปิด/ปิด ตะกร้า และ ค้นหา
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // 🌟 Refs สำหรับตรวจจับการคลิกนอกกรอบ
   const cartRef = useRef(null);
@@ -54,15 +57,27 @@ export default function Navbar() {
 
         {/* 📝 ตรงกลาง: เมนู */}
         <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
-          <Link href="/" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">หน้าหลัก</Link>
-          <Link href="/products" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">สินค้าทั้งหมด</Link>
-          <Link href="/reviews" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">รีวิวจากลูกค้า</Link>
-          <Link href="/promotions" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">ข่าวสารโปรโมชั่น</Link>
-          <Link href="/contact" className="cursor-pointer hover:text-[#dc6fd6] transition-colors">ติดต่อเรา</Link>
+          <Link href="/" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>หน้าหลัก</Link>
+          <Link href="/products" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/products' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>สินค้าทั้งหมด</Link>
+          <Link href="/reviews" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/reviews' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>รีวิวจากลูกค้า</Link>
+          <Link href="/promotions" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/promotions' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>ข่าวสารโปรโมชั่น</Link>
+          <Link href="/contact" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/contact' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>ติดต่อเรา</Link>
         </div>
 
         {/* 🔍 ฝั่งขวา: ไอคอนต่างๆ */}
         <div className="flex items-center space-x-5 text-gray-700">
+          
+          {/* 🍔 Hamburger Menu สำหรับมือถือ */}
+          <button 
+            onClick={() => {
+              setIsMobileMenuOpen(!isMobileMenuOpen);
+              setIsCartOpen(false);
+              setIsSearchOpen(false);
+            }}
+            className="md:hidden cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2"
+          >
+            {isMobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+          </button>
           
           {/* 🌟 ปุ่มค้นหา */}
           <button 
@@ -147,6 +162,29 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* 📱 Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 py-4 px-6 animate-in fade-in duration-200">
+          <div className="space-y-2">
+            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
+              หน้าหลัก
+            </Link>
+            <Link href="/products" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/products' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
+              สินค้าทั้งหมด
+            </Link>
+            <Link href="/reviews" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/reviews' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
+              รีวิวจากลูกค้า
+            </Link>
+            <Link href="/promotions" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/promotions' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
+              ข่าวสารโปรโมชั่น
+            </Link>
+            <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/contact' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
+              ติดต่อเรา
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* 🌟 Search Dropdown Panel (เด้งลงมาแบบ Full-width) */}
       {isSearchOpen && (
