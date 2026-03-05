@@ -41,11 +41,16 @@ export default function ProductDetailPage() {
   const sizes = ['S', 'M', 'L', 'XL'];
   const skuCode = `BMB-${product.id}00${selectedSize}`;
 
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-        addToCart({ ...product, image: mainImage });
-    }
-  };
+const handleAddToCart = () => {
+  addToCart({ 
+    ...product, 
+    image: mainImage, 
+    size: selectedSize, // ส่งไซส์ที่เลือกไปด้วย ตะกร้าจะได้รู้ว่าลูกค้าสั่งไซส์อะไร
+    quantity: quantity  // ส่งจำนวนรวบยอดไปเลย
+  });
+  
+  // (Optional) อาจจะเพิ่ม Alert หรือ Toast เล็กๆ ตรงนี้ว่า "เพิ่มลงตะกร้าแล้ว"
+};
 
   // 🎯 ฟังก์ชันจับตำแหน่งเมาส์เวลาเลื่อนบนรูป (ใช้สำหรับซูม)
   const handleMouseMove = (e) => {

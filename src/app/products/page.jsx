@@ -3,15 +3,37 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../context/CartContext'; // 🌟 เช็ค path โฟลเดอร์ context ของคุณด้วยนะครับว่าอยู่ตรงนี้ไหม
 import { productsData } from '../../data/products'; // 🌟 ดึงข้อมูลสินค้ามาใช้
+import { useSearchParams } from 'next/navigation';
 
 export default function ProductsPage() {
     const { addToCart } = useCart();
     const [activeCategory, setActiveCategory] = useState('all');
 
-    // ฟังก์ชันกรองสินค้าตามหมวดหมู่
-    const filteredProducts = activeCategory === 'all'
-        ? productsData
-        : productsData.filter(p => p.category === activeCategory);
+    // 👇 --- ลบของเก่า และก๊อปปี้ส่วนนี้ไปวางแทน --- 👇
+
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams ? searchParams.get('search') : null;
+
+    // ฟังก์ชันกรองสินค้าตามหมวดหมู่ "และ" คำค้นหา
+    const filteredProducts = productsData.filter(product => {
+        // 1. เช็คหมวดหมู่ (ถ้าไม่ได้เลือก 'all')
+        const matchCategory = activeCategory === 'all' || product.category === activeCategory;
+
+        // 2. เช็คคำค้นหา (ถ้ามีคนพิมพ์ค้นหามา)
+        let matchSearch = true;
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            matchSearch =
+                product.nameEN.toLowerCase().includes(q) ||
+                product.nameTH.toLowerCase().includes(q) ||
+                (product.category && product.category.toLowerCase().includes(q));
+        }
+
+        // สินค้าต้องตรงทั้งหมวดหมู่ และ คำค้นหา
+        return matchCategory && matchSearch;
+    });
+
+    // 👆 --- สิ้นสุดส่วนที่ต้องวางทับ --- 👆
 
     return (
         <main className="min-h-screen bg-white py-12">

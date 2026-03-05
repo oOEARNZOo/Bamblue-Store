@@ -14,10 +14,12 @@ export default function Footer() {
         <div>
           <h4 className="text-sm font-semibold tracking-widest mb-4 text-gray-200">SHOP</h4>
           <ul className="text-gray-400 text-sm space-y-3">
-            <li><a href="#" className="hover:text-pink-400 transition-colors">NEW ARRIVALS</a></li>
-            <li><a href="#" className="hover:text-pink-400 transition-colors">TOPS (เสื้อท่อนบน)</a></li>
-            <li><a href="#" className="hover:text-pink-400 transition-colors">BOTTOMS (กางเกง/กระโปรง)</a></li>
-            <li><a href="#" className="hover:text-pink-400 transition-colors">SALE (โปรโมชั่น)</a></li>
+            <li><a href="#" className="hover:text-pink-400 transition-colors">ทั้งหมด (All)</a></li>
+            <li><a href="#" className="hover:text-pink-400 transition-colors">เสื้อ (Shirts)</a></li>
+            <li><a href="#" className="hover:text-pink-400 transition-colors">BOTTOMS เดรส (Dresses)</a></li>
+            <li><a href="#" className="hover:text-pink-400 transition-colors">ชุดเซ็ต (Sets)</a></li>
+            <li><a href="#" className="hover:text-pink-400 transition-colors">โปรโมชั่น (Promotions)</a></li>
+
           </ul>
         </div>
         <div>
