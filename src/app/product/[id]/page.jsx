@@ -92,7 +92,7 @@ const handleAddToCart = () => {
             
             {/* 🔍 กล่องรูปภาพหลักที่ใส่ระบบซูม */}
             <div 
-              className="grow bg-gray-100 aspect-3/4 md:aspect-auto overflow-hidden cursor-zoom-in relative"
+              className="grow bg-gray-100 aspect-3/4 md:aspect-auto  overflow-hidden"
               onMouseEnter={() => setIsZoomed(true)}
               onMouseLeave={() => setIsZoomed(false)}
               onMouseMove={handleMouseMove}
@@ -104,7 +104,7 @@ const handleAddToCart = () => {
                   alt={product.nameEN} 
                   style={{
                     transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
-                    transform: isZoomed ? 'scale(2.5)' : 'scale(1)' // ปรับเลข 2.5 ตรงนี้เพื่อลด/เพิ่มความซูม
+                    transform: isZoomed ? 'scale(1.5)' : 'scale(1)' // ปรับเลข 2.5 ตรงนี้เพื่อลด/เพิ่มความซูม
                   }}
                 />
               )}

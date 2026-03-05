@@ -25,7 +25,7 @@ export default function CartPage() {
         {cartItems.length === 0 ? (
           <div className="text-center py-20 bg-gray-50 rounded-md">
             <p className="text-gray-500 mb-6 tracking-wider">ตะกร้าของคุณยังว่างเปล่า</p>
-            <Link href="/" className="inline-block bg-zinc-900 hover:bg-gray-800 text-white px-8 py-3 rounded text-sm tracking-widest font-semibold transition-colors">
+            <Link href="/products" className="inline-block bg-zinc-900 hover:bg-gray-800 text-white px-8 py-3 rounded text-sm tracking-widest font-semibold transition-colors">
               CONTINUE SHOPPING
             </Link>
           </div>
@@ -44,12 +44,12 @@ export default function CartPage() {
                       <p className="text-xs text-gray-500 mb-2">{item.nameTH}</p>
                       <p className="font-medium text-gray-800 mb-3">{item.price}</p>
                       
-                      {/* 🌟 เปลี่ยนจาก Text ธรรมดา เป็นปุ่ม + / - */}
+                      {/* 🌟 ปุ่ม + / - */}
                       <div className="flex items-center border border-gray-300 w-28 rounded">
                         <button 
                           onClick={() => updateQuantity(item.id, -1)}
                           disabled={item.quantity <= 1} // ปิดปุ่มถ้าจำนวนเหลือแค่ 1
-                          className={`w-8 h-8 flex items-center justify-center transition-colors ${item.quantity <= 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-pink-400 cursor-pointer'}`}
+                          className={`w-8 h-8 flex items-center justify-center transition-colors ${item.quantity <= 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-[#dc6fd6] cursor-pointer'}`}
                         >
                           <Minus size={14} />
                         </button>
@@ -63,7 +63,7 @@ export default function CartPage() {
                         
                         <button 
                           onClick={() => updateQuantity(item.id, 1)}
-                          className="cursor-pointer w-8 h-8 flex items-center justify-center text-gray-600 hover:text-pink-400 transition-colors"
+                          className="cursor-pointer w-8 h-8 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6] transition-colors"
                         >
                           <Plus size={14} />
                         </button>
@@ -89,9 +89,14 @@ export default function CartPage() {
                 </span>
               </div>
               <p className="text-xs text-gray-500 mb-6 tracking-wide">ภาษีและค่าจัดส่งจะถูกคำนวณในขั้นตอนชำระเงิน</p>
-              <button className="cursor-pointer w-full md:w-auto bg-pink-400 hover:bg-pink-500 text-white px-12 py-4 rounded text-sm tracking-widest font-bold shadow-md transition-colors">
+              
+              {/* ✅ เปลี่ยนเป็น Link เพื่อพาไปหน้า Checkout จริงๆ */}
+              <Link 
+                href="/checkout"
+                className="inline-block cursor-pointer w-full md:w-auto bg-[#dc6fd6] hover:bg-[#c05ca8] text-white px-12 py-4 rounded text-sm tracking-widest font-bold shadow-md transition-colors text-center"
+              >
                 CHECKOUT
-              </button>
+              </Link>
             </div>
           </div>
         )}

@@ -31,46 +31,40 @@ export default function Navbar() {
 
   // 🎯 ฟังก์ชันจัดการตอนกดค้นหา (พิมพ์เสร็จแล้วกด Enter หรือคลิกเลือก)
   const handleSearch = (term) => {
-    if (!term.trim()) return; // ถ้าไม่ได้พิมพ์อะไร ไม่ต้องทำอะไร
+    if (!term.trim()) return;
 
-    // 1. บันทึกประวัติการค้นหา (เอาคำใหม่ต่อหน้า ลบคำซ้ำออก เก็บแค่ 5 คำ)
     const updatedSearches = [term, ...recentSearches.filter(item => item !== term)].slice(0, 5);
     setRecentSearches(updatedSearches);
     localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
 
-    // 2. ปิดหน้าต่าง ล้างช่องค้นหา และพาไปหน้า Products
     setIsSearchOpen(false);
     setSearchInput('');
     setSuggestions([]);
     router.push(`/products?search=${encodeURIComponent(term)}`);
   };
 
-  // 🎯 ฟังก์ชันล้างประวัติการค้นหา
   const clearRecentSearches = () => {
     setRecentSearches([]);
     localStorage.removeItem('recentSearches');
   };
 
-  // 🎯 ฟังก์ชันตอนพิมพ์ค้นหา (Live Search โชว์สินค้าแนะนำ)
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
 
-    // ถ้าพิมพ์มากกว่า 0 ตัวอักษร ให้เริ่มหา
     if (value.trim().length > 0) {
       const q = value.toLowerCase();
       const filtered = productsData.filter(p =>
         p.nameEN.toLowerCase().includes(q) ||
         p.nameTH.toLowerCase().includes(q)
-      ).slice(0, 5); // เอาแค่ 5 ชิ้นแรก
+      ).slice(0, 5);
 
       setSuggestions(filtered);
     } else {
-      setSuggestions([]); // ถ้าลบคำค้นหาทิ้ง ให้ซ่อนกล่องแนะนำ
+      setSuggestions([]);
     }
   };
 
-  // 🌟 Refs สำหรับตรวจจับการคลิกนอกกรอบ
   const cartRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -84,7 +78,6 @@ export default function Navbar() {
     }, 0);
   };
 
-  // 🌟 ฟังก์ชันปิดตะกร้าและค้นหาเมื่อคลิกที่อื่น
   useEffect(() => {
     function handleClickOutside(event) {
       if (cartRef.current && !cartRef.current.contains(event.target)) {
@@ -141,9 +134,10 @@ export default function Navbar() {
             <Search size={22} strokeWidth={1.5} />
           </button>
 
-          <button className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2">
+          {/* 👤 ไอคอนเข้าสู่ระบบ / บัญชีผู้ใช้ (แก้ไขตรงนี้ครับ ✅) */}
+          <Link href="/login" className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center">
             <User size={22} strokeWidth={1.5} />
-          </button>
+          </Link>
 
           {/* 🛒 โซนตะกร้าสินค้า */}
           <div className="relative" ref={cartRef}>
@@ -255,13 +249,11 @@ export default function Navbar() {
                     <button
                       key={item.id}
                       onClick={() => {
-                        // 👇 1. เพิ่มโค้ดส่วนนี้เพื่อบันทึกชื่อสินค้าเป๊ะๆ ลงประวัติ 👇
-                        const term = item.nameEN; // ใช้ชื่อสินค้าไปเลย เช่น "Butterfly Lemonade Ruched Top"
+                        const term = item.nameEN;
                         const updatedSearches = [term, ...recentSearches.filter(t => t !== term)].slice(0, 5);
                         setRecentSearches(updatedSearches);
                         localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
 
-                        // 👇 2. พาไปหน้าสินค้าและปิดหน้าต่างค้นหา (ของเดิม) 👇
                         router.push(`/product/${item.id}`);
                         setIsSearchOpen(false);
                         setSearchInput('');
