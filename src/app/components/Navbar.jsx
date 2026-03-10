@@ -73,8 +73,8 @@ export default function Navbar() {
   const calculateTotal = () => {
     if (!cartItems) return 0;
     return cartItems.reduce((total, item) => {
-      const priceNumber = parseInt(item.price.replace(/[^0-9]/g, ''), 10);
-      return total + (priceNumber * item.quantity);
+      // ✅ เปลี่ยนมาใช้ Number() ตรงๆ ได้เลย เพราะดึงมาจาก Supabase เป็นตัวเลขอยู่แล้ว
+      return total + (Number(item.price) * item.quantity);
     }, 0);
   };
 
@@ -178,7 +178,7 @@ export default function Navbar() {
                           <img src={item.image} alt={item.nameEN} className="w-16 h-20 object-cover rounded shrink-0 bg-gray-50" />
                           <div className="grow flex flex-col justify-center">
                             <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.nameEN}</p>
-                            <p className="text-xs text-[#dc6fd6] font-medium mb-2">{item.price}</p>
+                            <p className="text-xs text-[#dc6fd6] font-medium mb-2">฿{Number(item.price).toLocaleString()}</p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center border border-gray-200 rounded w-20 h-7">
                                 <button onClick={() => updateQuantity(item.id, -1)} disabled={item.quantity <= 1} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] disabled:opacity-30 cursor-pointer"><Minus size={12} /></button>

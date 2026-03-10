@@ -11,8 +11,8 @@ export default function CheckoutPage() {
   // 🧮 ฟังก์ชันคำนวณราคารวม
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      const priceNumber = parseInt(item.price.replace(/[^0-9]/g, ''), 10);
-      return total + (priceNumber * item.quantity);
+      // ✅ เปลี่ยนมาใช้ Number(item.price) แบบตรงๆ
+      return total + Number(item.price) * item.quantity;
     }, 0);
   };
 
@@ -35,26 +35,26 @@ export default function CheckoutPage() {
   return (
     <main className="min-h-screen bg-gray-50/50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* ลิงก์กลับไปตะกร้า */}
         <Link href="/cart" className="inline-flex items-center text-sm text-gray-500 hover:text-zinc-900 mb-8 transition-colors">
           <ArrowLeft size={16} className="mr-2" /> กลับไปหน้าตะกร้าสินค้า
         </Link>
 
         <div className="flex flex-col lg:flex-row gap-10">
-          
+
           {/* 📝 ฝั่งซ้าย: ฟอร์มกรอกข้อมูล */}
           <div className="w-full lg:w-3/5 space-y-8">
-            
+
             {/* กล่อง 1: ข้อมูลการติดต่อ */}
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-zinc-900 mb-6 tracking-wide">ข้อมูลการติดต่อ</h2>
               <div>
                 <label className="block text-sm text-gray-700 mb-2">อีเมล (สำหรับส่งใบเสร็จ)</label>
-                <input 
-                  type="email" 
-                  placeholder="your@email.com" 
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none transition-all text-sm" 
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none transition-all text-sm"
                 />
               </div>
             </div>
@@ -73,7 +73,7 @@ export default function CheckoutPage() {
                     <input type="text" className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#dc6fd6] outline-none text-sm" />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">ที่อยู่ (บ้านเลขที่, ซอย, ถนน)</label>
                   <input type="text" className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#dc6fd6] outline-none text-sm" />
@@ -100,7 +100,7 @@ export default function CheckoutPage() {
             {/* กล่อง 3: วิธีการชำระเงิน */}
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-zinc-900 mb-6 tracking-wide">วิธีการชำระเงิน</h2>
-              
+
               <div className="space-y-3">
                 {/* Option 1: บัตรเครดิต */}
                 <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'credit' ? 'border-[#dc6fd6] bg-pink-50/30' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -131,7 +131,7 @@ export default function CheckoutPage() {
           <div className="w-full lg:w-2/5">
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 sticky top-8">
               <h2 className="text-xl font-bold text-zinc-900 mb-6 tracking-wide">สรุปคำสั่งซื้อ</h2>
-              
+
               {/* รายการสินค้าที่ดึงมาจาก CartContext */}
               <div className="space-y-4 mb-6 max-h-80 overflow-y-auto pr-2">
                 {cartItems.map((item) => (
@@ -148,7 +148,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex items-center">
                       <span className="text-sm font-medium text-gray-900">
-                        ฿{(parseInt(item.price.replace(/[^0-9]/g, ''), 10) * item.quantity).toLocaleString()}
+                        ฿{(Number(item.price) * item.quantity).toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -173,8 +173,8 @@ export default function CheckoutPage() {
               </div>
 
               {/* ปุ่มสั่งซื้อ (ตอนนี้เป็นแค่ Link เตรียมไว้ต่อยอด) */}
-              <Link 
-                href="/success" 
+              <Link
+                href="/success"
                 className="block w-full bg-[#dc6fd6] hover:bg-[#c05ca8] text-white py-4 rounded-xl text-center text-sm tracking-widest font-bold shadow-md transition-colors cursor-pointer"
               >
                 ยืนยันการสั่งซื้อ (PLACE ORDER)

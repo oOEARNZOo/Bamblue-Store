@@ -1,5 +1,5 @@
 "use client";
-import { useCart } from '../context/CartContext'; 
+import { useCart } from '../context/CartContext';
 import Link from 'next/link';
 // 🌟 นำเข้าไอคอน Plus และ Minus มาใช้ทำปุ่ม
 import { Minus, Plus } from 'lucide-react';
@@ -10,8 +10,8 @@ export default function CartPage() {
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      const priceNumber = parseInt(item.price.replace(/[^0-9]/g, ''), 10);
-      return total + (priceNumber * item.quantity); 
+      // ✅ เปลี่ยนมาใช้ Number(item.price) แบบตรงๆ ได้เลย
+      return total + Number(item.price) * item.quantity;
     }, 0);
   };
 
@@ -38,30 +38,30 @@ export default function CartPage() {
                     <div className="w-24 h-32 bg-gray-100 overflow-hidden rounded shrink-0">
                       <img src={item.image} alt={item.nameEN} className="w-full h-full object-cover" />
                     </div>
-                    
+
                     <div>
                       <h3 className="font-semibold text-zinc-900 tracking-wide">{item.nameEN}</h3>
                       <p className="text-xs text-gray-500 mb-2">{item.nameTH}</p>
-                      <p className="font-medium text-gray-800 mb-3">{item.price}</p>
-                      
+                      <p className="font-medium text-gray-800 mb-3">฿{Number(item.price).toLocaleString()}</p>
+
                       {/* 🌟 ปุ่ม + / - */}
                       <div className="flex items-center border border-gray-300 w-28 rounded">
-                        <button 
+                        <button
                           onClick={() => updateQuantity(item.id, -1)}
                           disabled={item.quantity <= 1} // ปิดปุ่มถ้าจำนวนเหลือแค่ 1
                           className={`w-8 h-8 flex items-center justify-center transition-colors ${item.quantity <= 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-[#dc6fd6] cursor-pointer'}`}
                         >
                           <Minus size={14} />
                         </button>
-                        
-                        <input 
-                          type="text" 
-                          readOnly 
-                          value={item.quantity} 
+
+                        <input
+                          type="text"
+                          readOnly
+                          value={item.quantity}
                           className="w-12 h-8 text-center text-sm font-semibold focus:outline-none cursor-default bg-transparent"
                         />
-                        
-                        <button 
+
+                        <button
                           onClick={() => updateQuantity(item.id, 1)}
                           className="cursor-pointer w-8 h-8 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6] transition-colors"
                         >
@@ -70,8 +70,8 @@ export default function CartPage() {
                       </div>
                     </div>
                   </div>
-                  
-                  <button 
+
+                  <button
                     onClick={() => removeFromCart(item.id)}
                     className="cursor-pointer text-xs text-gray-400 hover:text-red-500 tracking-wider transition-colors border-b border-transparent hover:border-red-500"
                   >
@@ -89,9 +89,9 @@ export default function CartPage() {
                 </span>
               </div>
               <p className="text-xs text-gray-500 mb-6 tracking-wide">ภาษีและค่าจัดส่งจะถูกคำนวณในขั้นตอนชำระเงิน</p>
-              
+
               {/* ✅ เปลี่ยนเป็น Link เพื่อพาไปหน้า Checkout จริงๆ */}
-              <Link 
+              <Link
                 href="/checkout"
                 className="inline-block cursor-pointer w-full md:w-auto bg-[#dc6fd6] hover:bg-[#c05ca8] text-white px-12 py-4 rounded text-sm tracking-widest font-bold shadow-md transition-colors text-center"
               >

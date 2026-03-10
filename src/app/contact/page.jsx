@@ -85,7 +85,7 @@ export default function ContactPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">ฝากข้อความถึงเรา</h2>
           
           {isSubmitted ? (
-            <div className="bg-green-50 border border-green-200 text-green-700 p-6 rounded-xl flex flex-col items-center justify-center text-center h-full min-h-[300px] animate-fade-in">
+            <div className="bg-green-50 border border-green-200 text-green-700 p-6 rounded-xl flex flex-col items-center justify-center text-center h-full min-h-75 animate-fade-in">
               <div className="bg-green-100 p-3 rounded-full mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
