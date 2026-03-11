@@ -90,7 +90,7 @@ export default function CartPage() {
               </div>
               <p className="text-xs text-gray-500 mb-6 tracking-wide">ภาษีและค่าจัดส่งจะถูกคำนวณในขั้นตอนชำระเงิน</p>
 
-              {/* ✅ เปลี่ยนเป็น Link เพื่อพาไปหน้า Checkout จริงๆจัง */}
+              {/* ✅ เปลี่ยนเป็น Link เพื่อพาไปหน้า Checkout จริงๆ */}
               <Link
                 href="/checkout"
                 className="inline-block cursor-pointer w-full md:w-auto bg-[#dc6fd6] hover:bg-[#c05ca8] text-white px-12 py-4 rounded text-sm tracking-widest font-bold shadow-md transition-colors text-center"
