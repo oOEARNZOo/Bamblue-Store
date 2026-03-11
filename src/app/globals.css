@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ตั้งค่าสีพิเศษสำหรับร้าน Bamblue (ใช้ @theme แทน config แบบเก่า) */
 @theme {
