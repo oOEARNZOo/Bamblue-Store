@@ -6,6 +6,11 @@ import { useWishlist } from '../context/WishlistContext';
 import { supabase } from '../../lib/supabase';
 import { useSearchParams } from 'next/navigation';
 import { Heart } from 'lucide-react';
+import { 
+  ProductGridSkeleton, 
+  CategoryFilterSkeleton, 
+  LoadingSpinner 
+} from '../components/LoadingSkeletons';
 
 // 📦 1. แยกเนื้อหาที่ใช้ useSearchParams มาไว้ใน Component ย่อย
 function ProductsContent() {
@@ -59,10 +64,21 @@ function ProductsContent() {
 
     if (isLoading) {
         return (
-            <div className="w-full flex justify-center items-center py-32">
-                <p className="text-pink-500 font-medium tracking-widest animate-pulse">
-                    LOADING PRODUCTS... ⏳
-                </p>
+            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-12">
+                {/* Category Filter Skeleton */}
+                <aside className="w-full md:w-56 shrink-0">
+                    <h2 className="text-lg font-bold text-zinc-900 mb-6 tracking-wide border-b border-gray-100 pb-4">หมวดหมู่สินค้า</h2>
+                    <CategoryFilterSkeleton />
+                </aside>
+                
+                {/* Product Grid Skeleton */}
+                <div className="flex-1">
+                    <div className="flex justify-between items-end mb-8">
+                        <h1 className="text-3xl font-bold tracking-widest text-zinc-900">ALL PRODUCTS</h1>
+                        <p className="text-sm text-gray-500">กำลังโหลด...</p>
+                    </div>
+                    <ProductGridSkeleton count={8} />
+                </div>
             </div>
         );
     }

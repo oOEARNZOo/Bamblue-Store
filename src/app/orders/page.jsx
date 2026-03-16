@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 import { Package, Clock, Truck, CheckCircle, XCircle, ChevronRight, ShoppingBag } from 'lucide-react';
+import { OrderListSkeleton, LoadingSpinner } from '../components/LoadingSkeletons';
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
@@ -104,10 +105,13 @@ export default function OrderHistoryPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#dc6fd6] mx-auto mb-4"></div>
-          <p className="text-gray-600">กำลังโหลดประวัติการสั่งซื้อ...</p>
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">ประวัติการสั่งซื้อ</h1>
+            <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
+          </div>
+          <OrderListSkeleton count={3} />
         </div>
       </div>
     );

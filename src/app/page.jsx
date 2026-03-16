@@ -6,6 +6,10 @@ import { useCart } from './context/CartContext';
 
 // 🌟 1. นำเข้า Supabase (ถ้า Path ผิด ลองแก้เป็น '../lib/supabase' หรือ '../../lib/supabase' ตามไฟล์ของคุณนะครับ)
 import { supabase } from '@/lib/supabase';
+import { 
+  HeroBannerSkeleton, 
+  ProductGridSkeleton 
+} from './components/LoadingSkeletons';
 
 export default function Home() {
   const { addToCart } = useCart();
@@ -120,9 +124,7 @@ export default function Home() {
           </div>
 
           {isLoading ? (
-            <div className="text-center py-10 text-gray-500 font-medium tracking-widest animate-pulse">
-              LOADING NEW ARRIVALS... ⏳
-            </div>
+            <ProductGridSkeleton count={4} />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {newArrivals.map((item) => (

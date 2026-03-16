@@ -16,6 +16,7 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
+import { AdminDashboardSkeleton } from '../components/LoadingSkeletons';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -124,10 +125,20 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#dc6fd6] mx-auto mb-4"></div>
-          <p className="text-gray-500">กำลังโหลดแดชบอร์ด...</p>
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="h-8 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+              </div>
+              <div className="h-10 bg-gray-200 rounded w-24 animate-pulse"></div>
+            </div>
+          </div>
+        </header>
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <AdminDashboardSkeleton />
         </div>
       </div>
     );

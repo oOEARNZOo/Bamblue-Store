@@ -2,13 +2,14 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-// 🌟 นำเข้าไอคอน Heart มาเพิ่ม
+// นำเข้าไอคอน Heart มาเพิ่ม
 import { Search, User, ShoppingCart, Minus, Plus, Trash2, Menu, X, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useRouter } from 'next/navigation';
 import { productsData } from '../../data/products';
 import { supabase } from '../../lib/supabase';
+import { CartSkeleton } from './LoadingSkeletons';
 
 export default function Navbar() {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
