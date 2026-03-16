@@ -2,34 +2,84 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, User, ShoppingCart, Minus, Plus, Trash2, Menu, X } from 'lucide-react';
+// 🌟 นำเข้าไอคอน Heart มาเพิ่ม
+import { Search, User, ShoppingCart, Minus, Plus, Trash2, Menu, X, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useRouter } from 'next/navigation';
 import { productsData } from '../../data/products';
+import { supabase } from '../../lib/supabase';
 
 export default function Navbar() {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const { wishlistItems } = useWishlist();
   const pathname = usePathname();
   const router = useRouter();
   const [searchInput, setSearchInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
 
-  // 🌟 State สำหรับเปิด/ปิด ตะกร้า และ ค้นหา
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // ข้อมูลจำลองสำหรับหน้าต่างค้นหา
   const popularSearches = ['กระเป๋า', 'กางเกง', 'เสื้อกันหนาว', 'รองเท้า'];
   const [recentSearches, setRecentSearches] = useState([]);
 
-  // ดึงประวัติการค้นหาจาก localStorage ตอนโหลดหน้าเว็บครั้งแรก
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user || null;
+      setUser(currentUser);
+      
+      // ตรวจสอบว่าเป็น admin หรือไม่
+      if (currentUser) {
+        const isAdminUser = currentUser.email === 'admin@bamblue.com' || 
+                           currentUser.email === 'earn.hcg32@gmail.com' ||
+                           currentUser.user_metadata?.role === 'admin' ||
+                           currentUser.email?.includes('admin');
+        setIsAdmin(isAdminUser);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    
+    fetchUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user || null;
+      setUser(currentUser);
+      
+      // ตรวจสอบว่าเป็น admin หรือไม่
+      if (currentUser) {
+        const isAdminUser = currentUser.email === 'admin@bamblue.com' || 
+                           currentUser.email === 'earn.hcg32@gmail.com' ||
+                           currentUser.user_metadata?.role === 'admin' ||
+                           currentUser.email?.includes('admin');
+        setIsAdmin(isAdminUser);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsProfileOpen(false);
+    router.push('/logout');
+  };
+
   useEffect(() => {
     const savedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
     setRecentSearches(savedSearches);
   }, []);
 
-  // 🎯 ฟังก์ชันจัดการตอนกดค้นหา (พิมพ์เสร็จแล้วกด Enter หรือคลิกเลือก)
   const handleSearch = (term) => {
     if (!term.trim()) return;
 
@@ -67,13 +117,13 @@ export default function Navbar() {
 
   const cartRef = useRef(null);
   const searchRef = useRef(null);
+  const profileRef = useRef(null);
 
   const cartItemCount = cartItems ? cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
 
   const calculateTotal = () => {
     if (!cartItems) return 0;
     return cartItems.reduce((total, item) => {
-      // ✅ เปลี่ยนมาใช้ Number() ตรงๆ ได้เลย เพราะดึงมาจาก Supabase เป็นตัวเลขอยู่แล้ว
       return total + (Number(item.price) * item.quantity);
     }, 0);
   };
@@ -86,6 +136,9 @@ export default function Navbar() {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setIsSearchOpen(false);
       }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -95,12 +148,10 @@ export default function Navbar() {
     <nav className="bg-white border-b border-gray-100 py-4 px-6 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
 
-        {/* 🌸 ฝั่งซ้าย: โลโก้ร้าน */}
         <Link href="/" className="cursor-pointer text-2xl font-bold tracking-tight">
           Bamblue <span className="text-[#dc6fd6]">store</span>
         </Link>
 
-        {/* 📝 ตรงกลาง: เมนู */}
         <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
           <Link href="/" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>หน้าหลัก</Link>
           <Link href="/products" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/products' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>สินค้าทั้งหมด</Link>
@@ -109,42 +160,119 @@ export default function Navbar() {
           <Link href="/contact" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/contact' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>ติดต่อเรา</Link>
         </div>
 
-        {/* 🔍 ฝั่งขวา: ไอคอนต่างๆ */}
         <div className="flex items-center space-x-5 text-gray-700">
-          {/* 🍔 Hamburger Menu สำหรับมือถือ */}
           <button
             onClick={() => {
               setIsMobileMenuOpen(!isMobileMenuOpen);
               setIsCartOpen(false);
               setIsSearchOpen(false);
+              setIsProfileOpen(false);
             }}
             className="md:hidden cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2"
           >
             {isMobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
           </button>
 
-          {/* 🌟 ปุ่มค้นหา */}
           <button
             onClick={() => {
               setIsSearchOpen(!isSearchOpen);
-              setIsCartOpen(false); // ปิดตะกร้าถ้าเปิดอยู่
+              setIsCartOpen(false); 
+              setIsProfileOpen(false);
             }}
             className={`cursor-pointer transition-colors border-none bg-transparent py-2 ${isSearchOpen ? 'text-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}
           >
             <Search size={22} strokeWidth={1.5} />
           </button>
 
-          {/* 👤 ไอคอนเข้าสู่ระบบ / บัญชีผู้ใช้ (แก้ไขตรงนี้ครับ ✅) */}
-          <Link href="/login" className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center">
-            <User size={22} strokeWidth={1.5} />
+          {/* ปุ่ม Wishlist บน Navbar */}
+          <Link 
+            href={user ? "/wishlist" : "/login"} 
+            className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center"
+            title="รายการโปรด"
+          >
+            <Heart size={22} strokeWidth={1.5} />
+            {wishlistItems.length > 0 && (
+              <span className="absolute top-0 -right-2 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                {wishlistItems.length}
+              </span>
+            )}
           </Link>
 
-          {/* 🛒 โซนตะกร้าสินค้า */}
+          {user ? (
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => {
+                  setIsProfileOpen(!isProfileOpen);
+                  setIsCartOpen(false);
+                  setIsSearchOpen(false);
+                }}
+                className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center"
+              >
+                <User size={22} strokeWidth={1.5} className="text-[#dc6fd6]" /> 
+              </button>
+              
+              {isProfileOpen && (
+                <div className="absolute top-full right-0 mt-3 w-56 bg-white shadow-xl border border-gray-100 rounded-lg p-2 z-50">
+                  <div className="px-4 py-3 border-b border-gray-100 mb-2">
+                    <p className="text-xs text-gray-500 mb-1">เข้าสู่ระบบด้วย</p>
+                    <p className="text-sm font-semibold text-gray-800 truncate">{user.email}</p>
+                    {isAdmin && (
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* แสดงลิงก์ Admin Dashboard ถ้าเป็น admin */}
+                  {isAdmin && (
+                    <>
+                      <Link
+                        href="/admin"
+                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-md transition-colors cursor-pointer"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        🎯 Admin Dashboard
+                      </Link>
+                      <div className="border-t border-gray-100 my-2"></div>
+                    </>
+                  )}
+                  
+                  <Link
+                    href="/profile"
+                    className="block w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-colors cursor-pointer"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    โปรไฟล์ของฉัน
+                  </Link>
+                  <Link
+                    href="/orders"
+                    className="block w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-colors cursor-pointer"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    ประวัติการสั่งซื้อ
+                  </Link>
+                  <div className="border-t border-gray-100 my-2"></div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                  >
+                    ออกจากระบบ
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/login" className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center">
+              <User size={22} strokeWidth={1.5} />
+            </Link>
+          )}
+
           <div className="relative" ref={cartRef}>
             <button
               onClick={() => {
                 setIsCartOpen(!isCartOpen);
-                setIsSearchOpen(false); // ปิดค้นหาถ้าเปิดอยู่
+                setIsSearchOpen(false); 
+                setIsProfileOpen(false);
               }}
               className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors flex items-center py-2 bg-transparent border-none"
             >
@@ -156,7 +284,6 @@ export default function Navbar() {
               )}
             </button>
 
-            {/* Mini-Cart Dropdown */}
             {isCartOpen && (
               <div className="absolute top-full right-0 mt-3 w-80 bg-white shadow-xl border border-gray-100 rounded-lg p-4 z-50 cursor-default">
                 <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
@@ -208,7 +335,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* 📱 Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 py-4 px-6 animate-in fade-in duration-200">
           <div className="space-y-2">
@@ -221,12 +347,10 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* 🌟 Search Dropdown Panel (เด้งลงมาแบบ Full-width) */}
       {isSearchOpen && (
         <div ref={searchRef} className="absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-100 py-8 px-6 z-40 cursor-default">
+          {/* ส่วนค้นหาเหมือนเดิม ไม่ได้ปรับแก้ครับ */}
           <div className="max-w-4xl mx-auto">
-
-            {/* 🔍 ส่วนของ Input และกล่อง Suggestions */}
             <div className="relative w-full mb-8">
               <input
                 type="text"
@@ -241,8 +365,6 @@ export default function Navbar() {
                   }
                 }}
               />
-
-              {/* 📦 กล่องรายการแนะนำสินค้า */}
               {suggestions.length > 0 && (
                 <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden z-50">
                   {suggestions.map((item) => (
@@ -273,9 +395,7 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* หมวดหมู่ค้นหา */}
             <div className="space-y-8">
-              {/* คำค้นหายอดนิยม */}
               <div>
                 <h4 className="text-sm font-bold text-gray-500 mb-4">คำค้นหายอดนิยม</h4>
                 <div className="flex flex-wrap gap-2 md:gap-3">
@@ -291,7 +411,6 @@ export default function Navbar() {
                 </div>
               </div>
 
-              {/* สินค้าที่เพิ่งค้นหา */}
               {recentSearches.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-4">
@@ -317,7 +436,6 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-
           </div>
         </div>
       )}

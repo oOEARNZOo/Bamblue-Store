@@ -1,14 +1,41 @@
 "use client";
 
-import { createContext, useState, useContext } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 import toast from 'react-hot-toast'; 
 
 const CartContext = createContext();
 
+const CART_STORAGE_KEY = 'bamblue_cart';
+
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // 🌟 ฟังก์ชันเพิ่มสินค้าลงตะกร้า (จากหน้าสินค้า)
+  // โหลดข้อมูล cart จาก localStorage เมื่อเริ่มต้น
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
+        setCartItems(JSON.parse(savedCart));
+      }
+    } catch (error) {
+      console.error('Error loading cart from localStorage:', error);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // บันทึกข้อมูล cart ลง localStorage ทุกครั้งที่มีการเปลี่ยนแปลง
+  useEffect(() => {
+    if (isInitialized) {
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+      } catch (error) {
+        console.error('Error saving cart to localStorage:', error);
+      }
+    }
+  }, [cartItems, isInitialized]);
+
+  // ฟังก์ชันเพิ่มสินค้าลงตะกร้า (จากหน้าสินค้า)
   const addToCart = (product) => {
     setCartItems((prevItems) => {
       const existingItemIndex = prevItems.findIndex((item) => item.id === product.id);
