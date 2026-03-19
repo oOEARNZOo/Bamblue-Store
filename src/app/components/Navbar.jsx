@@ -35,31 +35,31 @@ export default function Navbar() {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user || null;
       setUser(currentUser);
-      
+
       // ตรวจสอบว่าเป็น admin หรือไม่
       if (currentUser) {
-        const isAdminUser = currentUser.email === 'admin@bamblue.com' || 
-                           currentUser.email === 'earn.hcg32@gmail.com' ||
-                           currentUser.user_metadata?.role === 'admin' ||
-                           currentUser.email?.includes('admin');
+        const isAdminUser = currentUser.email === 'admin@bamblue.com' ||
+          currentUser.email === 'earn.hcg32@gmail.com' ||
+          currentUser.user_metadata?.role === 'admin' ||
+          currentUser.email?.includes('admin');
         setIsAdmin(isAdminUser);
       } else {
         setIsAdmin(false);
       }
     };
-    
+
     fetchUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user || null;
       setUser(currentUser);
-      
+
       // ตรวจสอบว่าเป็น admin หรือไม่
       if (currentUser) {
-        const isAdminUser = currentUser.email === 'admin@bamblue.com' || 
-                           currentUser.email === 'earn.hcg32@gmail.com' ||
-                           currentUser.user_metadata?.role === 'admin' ||
-                           currentUser.email?.includes('admin');
+        const isAdminUser = currentUser.email === 'admin@bamblue.com' ||
+          currentUser.email === 'earn.hcg32@gmail.com' ||
+          currentUser.user_metadata?.role === 'admin' ||
+          currentUser.email?.includes('admin');
         setIsAdmin(isAdminUser);
       } else {
         setIsAdmin(false);
@@ -177,7 +177,7 @@ export default function Navbar() {
           <button
             onClick={() => {
               setIsSearchOpen(!isSearchOpen);
-              setIsCartOpen(false); 
+              setIsCartOpen(false);
               setIsProfileOpen(false);
             }}
             className={`cursor-pointer transition-colors border-none bg-transparent py-2 ${isSearchOpen ? 'text-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}
@@ -186,8 +186,8 @@ export default function Navbar() {
           </button>
 
           {/* ปุ่ม Wishlist บน Navbar */}
-          <Link 
-            href={user ? "/wishlist" : "/login"} 
+          <Link
+            href={user ? "/wishlist" : "/login"}
             className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center"
             title="รายการโปรด"
           >
@@ -209,9 +209,9 @@ export default function Navbar() {
                 }}
                 className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center"
               >
-                <User size={22} strokeWidth={1.5} className="text-[#dc6fd6]" /> 
+                <User size={22} strokeWidth={1.5} className="text-[#dc6fd6]" />
               </button>
-              
+
               {isProfileOpen && (
                 <div className="absolute top-full right-0 mt-3 w-56 bg-white shadow-xl border border-gray-100 rounded-lg p-2 z-50">
                   <div className="px-4 py-3 border-b border-gray-100 mb-2">
@@ -223,7 +223,7 @@ export default function Navbar() {
                       </span>
                     )}
                   </div>
-                  
+
                   {/* แสดงลิงก์ Admin Dashboard ถ้าเป็น admin */}
                   {isAdmin && (
                     <>
@@ -237,7 +237,7 @@ export default function Navbar() {
                       <div className="border-t border-gray-100 my-2"></div>
                     </>
                   )}
-                  
+
                   <Link
                     href="/profile"
                     className="block w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-colors cursor-pointer"
@@ -272,7 +272,7 @@ export default function Navbar() {
             <button
               onClick={() => {
                 setIsCartOpen(!isCartOpen);
-                setIsSearchOpen(false); 
+                setIsSearchOpen(false);
                 setIsProfileOpen(false);
               }}
               className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors flex items-center py-2 bg-transparent border-none"

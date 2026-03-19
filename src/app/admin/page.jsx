@@ -2,13 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
-import { 
-  BarChart3, 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  Star, 
-  TrendingUp, 
+import {
+  BarChart3,
+  Package,
+  ShoppingCart,
+  Users,
+  Star,
+  TrendingUp,
   DollarSign,
   ArrowUp,
   ArrowDown,
@@ -47,10 +47,10 @@ export default function AdminDashboard() {
       }
 
       // ตรวจสอบว่าเป็น admin หรือไม่ (จาก user metadata หรือ email)
-      const isAdminUser = user.email === 'admin@bamblue.com' || 
-                         user.email === 'earn.hcg32@gmail.com' ||
-                         user.user_metadata?.role === 'admin' ||
-                         user.email?.includes('admin');
+      const isAdminUser = user.email === 'admin@bamblue.com' ||
+        user.email === 'earn.hcg32@gmail.com' ||
+        user.user_metadata?.role === 'admin' ||
+        user.email?.includes('admin');
 
       if (!isAdminUser) {
         router.push('/');
@@ -77,10 +77,10 @@ export default function AdminDashboard() {
       ] = await Promise.all([
         // นับจำนวนสินค้า
         supabase.from('products1').select('id', { count: 'exact' }),
-        
+
         // ดึงข้อมูลออเดอร์ (ใช้ result เดียว)
         supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5),
-        
+
         // ดึงรีวิวล่าสุด
         supabase.from('reviews').select('*').order('created_at', { ascending: false }).limit(5)
       ]);
@@ -245,13 +245,12 @@ export default function AdminDashboard() {
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-gray-900">฿{order.total_amount?.toLocaleString() || 0}</p>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                          order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                          order.status === 'shipped' ? 'bg-purple-100 text-purple-700' :
-                          order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
+                        <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                              order.status === 'shipped' ? 'bg-purple-100 text-purple-700' :
+                                order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                  'bg-red-100 text-red-700'
+                          }`}>
                           {order.status}
                         </span>
                       </div>
@@ -294,9 +293,8 @@ export default function AdminDashboard() {
                       </div>
                       <p className="text-sm text-gray-600 line-clamp-2">{review.comment}</p>
                       <div className="flex items-center justify-between mt-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          review.is_approved ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
+                        <span className={`text-xs px-2 py-1 rounded-full ${review.is_approved ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          }`}>
                           {review.is_approved ? 'อนุมัติ' : 'รออนุมัติ'}
                         </span>
                         <button className="text-xs text-[#dc6fd6] hover:text-[#c05ca8]">

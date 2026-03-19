@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
-import { Package, Clock, Truck, CheckCircle, XCircle, ChevronRight, ShoppingBag } from 'lucide-react';
+import { Package, Clock, Truck, CheckCircle, XCircle, ChevronRight, ShoppingBag, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { OrderListSkeleton, LoadingSpinner } from '../components/LoadingSkeletons';
 
 export default function OrderHistoryPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -213,6 +215,16 @@ export default function OrderHistoryPage() {
                             <p className="text-xs text-gray-400 mt-1">
                               ไซส์ {item.size} × {item.quantity}
                             </p>
+                            {/* ปุ่มรีวิวสินค้า - แสดงเฉพาะเมื่อจัดส่งสำเร็จ */}
+                            {order.status === 'delivered' && (
+                              <button
+                                onClick={() => router.push(`/product/${item.product_id}#reviews`)}
+                                className="flex items-center gap-1 text-xs text-[#dc6fd6] hover:text-[#c05ca8] mt-2 font-medium transition-colors"
+                              >
+                                <Star size={12} />
+                                รีวิวสินค้า
+                              </button>
+                            )}
                           </div>
                           <p className="font-semibold text-gray-900">
                             ฿{(Number(item.price) * item.quantity).toLocaleString()}

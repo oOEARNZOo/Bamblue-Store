@@ -3,7 +3,7 @@ export const productsData = [
   {
     id: "1",
     nameTH: "เสื้อรูดข้างประดับผีเสื้อเลมอน",
-    nameEN: "Butterfly Lemonade Ruched Top",
+    nameEN: " ",
     price: "฿1,290",
     oldPrice: "฿1,590",
     image: "/Picture/product/product1.jpg",

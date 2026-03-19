@@ -127,6 +127,9 @@ export default function CheckoutPage() {
 
       if (itemsError) throw itemsError;
 
+      // ล้างตะกร้าทันที
+      if (clearCart) clearCart();
+      
       // สั่งซื้อสำเร็จ
       setPopup({
         isOpen: true,
@@ -134,8 +137,8 @@ export default function CheckoutPage() {
         message: `🎉 สั่งซื้อสำเร็จ!\nเลขที่ออเดอร์: ${orderNumber}\nขอบคุณที่อุดหนุน Bamblue Store ครับ`
       });
       
-      // ล้างตะกร้า
-      if (clearCart) clearCart();
+      // Redirect ไปหน้า orders
+      router.push('/orders');
 
     } catch (err) {
       console.error("Error saving order:", err);
@@ -151,9 +154,9 @@ export default function CheckoutPage() {
 
   // ฟังก์ชันปิด Pop-up
   const closePopup = () => {
-    // ถ้าเป็น Pop-up สำเร็จ พอกดปิดให้เด้งไปหน้า Success เลย
+    // ถ้าเป็น Pop-up สำเร็จ พอกดปิดให้เด้งไปหน้า Orders เลย
     if (popup.type === 'success') {
-      router.push('/success');
+      router.push('/orders');
     }
     setPopup({ ...popup, isOpen: false });
   };

@@ -264,6 +264,11 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* 🌟 ส่วนรีวิวสินค้า */}
+        <section id="reviews" className="max-w-7xl mx-auto px-4 md:px-8 lg:px-24 py-12 border-t">
+          <ProductReviews productId={productId} />
+        </section>
       </main>
 
       {/* 🌟 Pop-up Modal แจ้งเตือนให้เข้าสู่ระบบ (สวยงาม) */}

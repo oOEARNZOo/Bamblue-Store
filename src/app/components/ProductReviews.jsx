@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Star, ThumbsUp, User, Calendar, MessageSquare, Plus } from 'lucide-react';
+import { Star, ThumbsUp, User, Calendar, MessageSquare, Plus, CheckCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function ProductReviews({ productId }) {
   const [reviews, setReviews] = useState([]);
@@ -9,6 +10,9 @@ export default function ProductReviews({ productId }) {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [user, setUser] = useState(null);
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [checkingPurchase, setCheckingPurchase] = useState(true);
+  const [product, setProduct] = useState(null);
 
   // Form state
   const [reviewForm, setReviewForm] = useState({
@@ -21,7 +25,24 @@ export default function ProductReviews({ productId }) {
   useEffect(() => {
     fetchReviews();
     checkUserReview();
+    checkUserPurchase();
+    fetchProduct();
   }, [productId]);
+
+  const fetchProduct = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products1')
+        .select('*')
+        .eq('id', productId)
+        .single();
+
+      if (error) throw error;
+      setProduct(data);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+    }
+  };
 
   const fetchReviews = async () => {
     try {
@@ -64,11 +85,58 @@ export default function ProductReviews({ productId }) {
     }
   };
 
+  // ตรวจสอบว่าผู้ใช้ซื้อสินค้านี้แล้วหรือยัง
+  const checkUserPurchase = async () => {
+    try {
+      setCheckingPurchase(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCheckingPurchase(false);
+        return;
+      }
+
+      // ดึงออเดอร์ที่จัดส่งสำเร็จแล้ว
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          status,
+          order_items (
+            product_id
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'delivered');
+
+      if (error) throw error;
+
+      // ตรวจสอบว่ามีสินค้านี้ในออเดอร์ที่จัดส่งสำเร็จหรือไม่
+      const purchased = orders?.some(order => 
+        order.order_items?.some(item => item.product_id === parseInt(productId))
+      );
+
+      setHasPurchased(purchased || false);
+    } catch (error) {
+      console.error('Error checking purchase:', error);
+      setHasPurchased(false);
+    } finally {
+      setCheckingPurchase(false);
+    }
+  };
+
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     
     if (!user) {
-      alert('กรุณาเข้าสู่ระบบก่อนรีวิว');
+      toast.error('กรุณาเข้าสู่ระบบก่อนรีวิว', {
+        duration: 3000,
+        style: {
+          background: '#fff',
+          color: '#333',
+          padding: '16px',
+          borderRadius: '12px',
+        },
+      });
       return;
     }
 
@@ -78,25 +146,64 @@ export default function ProductReviews({ productId }) {
       const { error } = await supabase
         .from('reviews')
         .insert([{
-          product_id: productId,
+          product_id: parseInt(productId),
           user_id: user.id,
           rating: reviewForm.rating,
           title: reviewForm.title,
           comment: reviewForm.comment,
-          reviewer_name: user.user_metadata?.first_name || 'ผู้ใช้',
-          reviewer_email: user.email
+          reviewer_name: user.user_metadata?.first_name || user.user_metadata?.name || 'ผู้ใช้',
+          reviewer_email: user.email,
+          is_verified: hasPurchased,
+          is_approved: false,
+          // ✅ เพิ่มข้อมูลสินค้าที่จำเป็น (NOT NULL columns)
+          product_name_en: product?.nameEN || 'Unknown Product',
+          product_name_th: product?.nameTH || '',
+          product_image: product?.image || ''
         }]);
 
       if (error) throw error;
 
-      alert('รีวิวของคุณถูกส่งแล้ว!');
+      toast.success(
+        <div className="flex items-center gap-3">
+          <CheckCircle className="text-green-500" size={20} />
+          <div>
+            <p className="font-semibold">ส่งรีวิวสำเร็จ! ✨</p>
+            <p className="text-sm text-gray-500">รอการอนุมัติจากแอดมิน</p>
+          </div>
+        </div>,
+        {
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#333',
+            padding: '16px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          },
+        }
+      );
       setShowReviewForm(false);
       setReviewForm({ rating: 5, title: '', comment: '' });
       setHasReviewed(true);
       fetchReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
-      alert('เกิดข้อผิดพลาดในการส่งรีวิว');
+      toast.error(
+        <div>
+          <p className="font-semibold">เกิดข้อผิดพลาด</p>
+          <p className="text-sm">{error.message || 'ไม่สามารถส่งรีวิวได้'}</p>
+        </div>,
+        {
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#333',
+            padding: '16px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          },
+        }
+      );
     } finally {
       setSubmitting(false);
     }
@@ -104,7 +211,15 @@ export default function ProductReviews({ productId }) {
 
   const handleHelpful = async (reviewId) => {
     if (!user) {
-      alert('กรุณาเข้าสู่ระบบก่อน');
+      toast.error('กรุณาเข้าสู่ระบบก่อน', {
+        duration: 3000,
+        style: {
+          background: '#fff',
+          color: '#333',
+          padding: '16px',
+          borderRadius: '12px',
+        },
+      });
       return;
     }
 
@@ -201,14 +316,20 @@ export default function ProductReviews({ productId }) {
           </div>
         </div>
         
-        {user && !hasReviewed && (
-          <button
-            onClick={() => setShowReviewForm(true)}
-            className="flex items-center gap-2 bg-[#dc6fd6] text-white px-4 py-2 rounded-lg hover:bg-[#c05ca8] transition-colors"
-          >
-            <Plus size={16} />
-            เขียนรีวิว
-          </button>
+        {user && !hasReviewed && !checkingPurchase && (
+          hasPurchased ? (
+            <button
+              onClick={() => setShowReviewForm(true)}
+              className="flex items-center gap-2 bg-[#dc6fd6] text-white px-4 py-2 rounded-lg hover:bg-[#c05ca8] transition-colors"
+            >
+              <Plus size={16} />
+              เขียนรีวิว
+            </button>
+          ) : (
+            <div className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-lg">
+              ซื้อสินค้านี้เพื่อเขียนรีวิว
+            </div>
+          )
         )}
       </div>
 
