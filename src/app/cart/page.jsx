@@ -1,12 +1,42 @@
 "use client";
+import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import Link from 'next/link';
-// 🌟 นำเข้าไอคอน Plus และ Minus มาใช้ทำปุ่ม
-import { Minus, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Minus, Plus, X } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import toast from 'react-hot-toast';
 
 export default function CartPage() {
   // 🌟 ดึง updateQuantity มาใช้งาน
   const { cartItems, removeFromCart, updateQuantity } = useCart();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // ตรวจสอบสถานะ Login
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ฟังก์ชันกดปุ่ม Checkout
+  const handleCheckout = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    router.push('/checkout');
+  };
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
@@ -90,17 +120,69 @@ export default function CartPage() {
               </div>
               <p className="text-xs text-gray-500 mb-6 tracking-wide">ภาษีและค่าจัดส่งจะถูกคำนวณในขั้นตอนชำระเงิน</p>
 
-              {/* ✅ เปลี่ยนเป็น Link เพื่อพาไปหน้า Checkout จริงๆ */}
-              <Link
-                href="/checkout"
-                className="inline-block cursor-pointer w-full md:w-auto bg-[#dc6fd6] hover:bg-[#c05ca8] text-white px-12 py-4 rounded text-sm tracking-widest font-bold shadow-md transition-colors text-center"
+              {/* ✅ เปลี่ยนเป็น button เพื่อตรวจสอบ Login ก่อน */}
+              <button
+                onClick={handleCheckout}
+                className="cursor-pointer w-full md:w-auto bg-[#dc6fd6] hover:bg-[#c05ca8] text-white px-12 py-4 rounded text-sm tracking-widest font-bold shadow-md transition-colors text-center"
               >
                 CHECKOUT
-              </Link>
+              </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* 🔐 Modal แจ้งเตือนให้ Login */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in fade-in zoom-in duration-200">
+            {/* ปุ่มปิด */}
+            <button
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+            >
+              <X size={24} />
+            </button>
+
+            {/* ไอคอนและข้อความ */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[#dc6fd6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+
+              <h3 className="text-xl font-bold text-zinc-900 mb-2">กรุณาเข้าสู่ระบบ</h3>
+              <p className="text-gray-500 text-sm mb-6">
+                คุณต้องเข้าสู่ระบบก่อนดำเนินการสั่งซื้อสินค้า
+              </p>
+
+              {/* ปุ่ม */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/login"
+                  className="flex-1 bg-[#dc6fd6] hover:bg-[#c05ca8] text-white py-3 px-6 rounded-lg font-semibold transition-colors text-center"
+                >
+                  เข้าสู่ระบบ
+                </Link>
+                <Link
+                  href="/register"
+                  className="flex-1 border-2 border-[#dc6fd6] text-[#dc6fd6] hover:bg-pink-50 py-3 px-6 rounded-lg font-semibold transition-colors text-center"
+                >
+                  สมัครสมาชิก
+                </Link>
+              </div>
+
+              <button
+                onClick={() => setShowLoginModal(false)}
+                className="mt-4 text-sm text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                ช้อปต่อก่อน
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

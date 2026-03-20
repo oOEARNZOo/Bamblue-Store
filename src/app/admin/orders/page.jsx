@@ -12,7 +12,9 @@ import {
   Package,
   Truck,
   CheckCircle,
-  XCircle
+  XCircle,
+  CreditCard,
+  Image as ImageIcon
 } from 'lucide-react';
 import { OrderListSkeleton } from '../../components/LoadingSkeletons';
 import Link from 'next/link';
@@ -217,6 +219,77 @@ export default function OrderManagementPage() {
     }
   };
 
+  // ฟังก์ชันอนุมัติการชำระเงิน
+  const handleApprovePayment = async (order) => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <div>
+          <p className="font-semibold text-gray-900">อนุมัติการชำระเงิน</p>
+          <p className="text-sm text-gray-600 mt-1">
+            ออเดอร์: {order.order_number}<br/>
+            ยอดเงิน: ฿{order.total?.toLocaleString() || order.total_amount?.toLocaleString() || 0}<br/>
+            ลูกค้ายืนยันเมื่อ: {order.payment_confirmed_at ? new Date(order.payment_confirmed_at).toLocaleString('th-TH') : 'ไม่ระบุ'}
+          </p>
+          <p className="text-xs text-orange-600 mt-2">⚠️ กรุณาตรวจสอบ Statement ธนาคารก่อนอนุมัติ</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              await approvePayment(order.id);
+            }}
+            className="flex-1 bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+          >
+            ✅ ยืนยันอนุมัติ
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+          >
+            ยกเลิก
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 30000,
+    });
+  };
+
+  const approvePayment = async (orderId) => {
+    setUpdatingOrderId(orderId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status: 'paid',
+          payment_verified_at: new Date().toISOString(),
+          payment_verified_by: user?.id
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast.success('อนุมัติการชำระเงินสำเร็จ! ✅', {
+        duration: 3000,
+        style: { background: '#10b981', color: '#fff' },
+      });
+
+      // อัปเดต state
+      setOrders(prev => prev.map(order => 
+        order.id === orderId 
+          ? { ...order, status: 'paid', payment_verified_at: new Date().toISOString() }
+          : order
+      ));
+    } catch (error) {
+      console.error('Error approving payment:', error);
+      toast.error('เกิดข้อผิดพลาด: ' + error.message);
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
   const getStatusConfig = (status) => {
     const configs = {
       pending: {
@@ -225,6 +298,20 @@ export default function OrderManagementPage() {
         color: 'text-yellow-600',
         bg: 'bg-yellow-50',
         border: 'border-yellow-200'
+      },
+      pending_payment_verification: {
+        label: 'รอตรวจสอบการชำระเงิน',
+        icon: CreditCard,
+        color: 'text-orange-600',
+        bg: 'bg-orange-50',
+        border: 'border-orange-200'
+      },
+      paid: {
+        label: 'ชำระเงินแล้ว',
+        icon: CheckCircle,
+        color: 'text-emerald-600',
+        bg: 'bg-emerald-50',
+        border: 'border-emerald-200'
       },
       processing: {
         label: 'กำลังเตรียมสินค้า',
@@ -344,6 +431,8 @@ export default function OrderManagementPage() {
           >
             <option value="all">ทุกสถานะ</option>
             <option value="pending">รอดำเนินการ</option>
+            <option value="pending_payment_verification">รอตรวจสอบการชำระเงิน</option>
+            <option value="paid">ชำระเงินแล้ว</option>
             <option value="processing">กำลังเตรียมสินค้า</option>
             <option value="shipped">จัดส่งแล้ว</option>
             <option value="delivered">จัดส่งสำเร็จ</option>
@@ -430,11 +519,24 @@ export default function OrderManagementPage() {
                           className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <option value="pending">รอดำเนินการ</option>
+                          <option value="pending_payment_verification">รอตรวจสอบการชำระเงิน</option>
+                          <option value="paid">ชำระเงินแล้ว</option>
                           <option value="processing">กำลังเตรียมสินค้า</option>
                           <option value="shipped">จัดส่งแล้ว</option>
                           <option value="delivered">จัดส่งสำเร็จ</option>
                           <option value="cancelled">ยกเลิก</option>
                         </select>
+                      )}
+
+                      {/* ปุ่มอนุมัติการชำระเงิน (สำหรับออเดอร์ที่รอตรวจสอบ) */}
+                      {order.status === 'pending_payment_verification' && (
+                        <button
+                          onClick={() => handleApprovePayment(order)}
+                          className="flex items-center gap-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                        >
+                          <CheckCircle size={16} />
+                          อนุมัติการชำระเงิน
+                        </button>
                       )}
                     </div>
                   </div>

@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Truck, QrCode, ArrowLeft, XCircle, CheckCircle } from 'lucide-react'; // 🌟 เพิ่ม Icon สำหรับ Pop-up
-import { supabase } from '../../lib/supabase'; 
+import { CreditCard, Truck, QrCode, ArrowLeft, XCircle, CheckCircle } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import PromptPayQR from '../components/PromptPayQR';
 
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart(); 
@@ -23,6 +24,11 @@ export default function CheckoutPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 🌟 State สำหรับ PromptPay QR Modal
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [currentOrderNumber, setCurrentOrderNumber] = useState('');
+  const [currentOrderId, setCurrentOrderId] = useState(null);
 
   // 🌟 1. สร้าง State สำหรับจัดการ Pop-up
   const [popup, setPopup] = useState({
@@ -130,7 +136,16 @@ export default function CheckoutPage() {
       // ล้างตะกร้าทันที
       if (clearCart) clearCart();
       
-      // สั่งซื้อสำเร็จ
+      // ถ้าเลือก PromptPay ให้แสดง QR Code Modal
+      if (paymentMethod === 'qr') {
+        setCurrentOrderNumber(orderNumber);
+        setCurrentOrderId(newOrder.id);
+        setShowQRModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // สั่งซื้อสำเร็จ (สำหรับวิธีอื่น)
       setPopup({
         isOpen: true,
         type: 'success',
@@ -387,6 +402,36 @@ export default function CheckoutPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 🏦 PromptPay QR Code Modal */}
+      {showQRModal && (
+        <PromptPayQR
+          phoneNumber="0917484417"
+          amount={total}
+          orderNumber={currentOrderNumber}
+          onClose={() => {
+            setShowQRModal(false);
+            router.push('/orders');
+          }}
+          onSuccess={async () => {
+            // อัปเดตสถานะ order เป็น pending_payment_verification
+            const { error } = await supabase
+              .from('orders')
+              .update({ 
+                status: 'pending_payment_verification'
+              })
+              .eq('id', currentOrderId);
+
+            if (error) {
+              console.error('Error updating order status:', error);
+              throw new Error('ไม่สามารถอัปเดตสถานะออเดอร์ได้: ' + error.message);
+            }
+            
+            setShowQRModal(false);
+            router.push('/orders');
+          }}
+        />
       )}
     </main>
   );
