@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { Heart, Share2, Truck, RefreshCcw, Minus, Plus, X } from 'lucide-react'; // เพิ่ม X ไอคอน
 import Link from 'next/link';
+import Image from 'next/image';
 import ProductReviews from '../../components/ProductReviews';
 import { supabase } from '../../../lib/supabase';
 

@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from './context/CartContext';
 
-// 🌟 1. นำเข้า Supabase (ถ้า Path ผิด ลองแก้เป็น '../lib/supabase' หรือ '../../lib/supabase' ตามไฟล์ของคุณนะครับ)
+// 🌟 1. นำเข้า Supabase
 import { supabase } from '@/lib/supabase';
 import { 
   HeroBannerSkeleton, 
   ProductGridSkeleton 
 } from './components/LoadingSkeletons';
+import { ProductImage, BannerImage } from './components/OptimizedImage';
 
 export default function Home() {
   const { addToCart } = useCart();
@@ -84,11 +85,12 @@ export default function Home() {
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"
               }`}
           >
-            <div
-              className="absolute inset-0 bg-cover bg-top"
-              style={{ backgroundImage: `url('${banner.image}')` }}
-            ></div>
-            <div className="relative h-full flex items-center px-8 md:px-24 z-20">
+            {/* 🖼️ ใช้ BannerImage แทน background-image */}
+            <BannerImage 
+              src={banner.image} 
+              alt={banner.title || 'Banner'} 
+            />
+            <div className="absolute inset-0 h-full flex items-center px-8 md:px-24 z-20">
               <div className="max-w-xl text-center md:text-left mt-10 md:mt-0">
                 <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg mb-2 tracking-wider">
                   {banner.title}
@@ -130,14 +132,17 @@ export default function Home() {
               {newArrivals.map((item) => (
                 <div key={item.id} className="group flex flex-col text-center">
                   <Link href={`/product/${item.id}`} className="block">
-                    {/* 🌟 4. แก้ CSS รูปภาพตรงนี้ เปลี่ยนจาก aspect-3/4 เป็น aspect-[3/4] */}
-                    <div className="w-full bg-gray-100 aspect-[3/4] mb-4 overflow-hidden rounded-md relative cursor-pointer">
-                      <img src={item.image} alt={item.nameEN} className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" />
+                    {/* 🖼️ ใช้ ProductImage แทน img tag */}
+                    <div className="w-full mb-4 rounded-md overflow-hidden cursor-pointer">
+                      <ProductImage 
+                        src={item.image} 
+                        alt={item.nameEN}
+                        className="rounded-md"
+                      />
                     </div>
                     <div>
                       <p className="text-[11px] text-gray-500 mb-1">{item.nameTH}</p>
                       <h4 className="text-sm font-semibold text-zinc-900 mb-1 tracking-wide group-hover:text-pink-400 transition-colors">{item.nameEN}</h4>
-                      {/* 🌟 5. โชว์ราคาพร้อมสัญลักษณ์ ฿ และลูกน้ำ */}
                       <p className="text-sm text-gray-700 mb-4 font-medium">
                         ฿{item.price ? item.price.toLocaleString() : 0}
                       </p>

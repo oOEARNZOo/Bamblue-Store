@@ -11,6 +11,7 @@ import {
   CategoryFilterSkeleton, 
   LoadingSpinner 
 } from '../components/LoadingSkeletons';
+import { ProductImage } from '../components/OptimizedImage';
 
 // 📦 1. แยกเนื้อหาที่ใช้ useSearchParams มาไว้ใน Component ย่อย
 function ProductsContent() {
@@ -130,12 +131,12 @@ function ProductsContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
                         {filteredProducts.map(product => (
                             <Link key={product.id} href={`/product/${product.id}`} className="group cursor-pointer">
-                                {/* 🌟 แก้ไขตรงนี้: เปลี่ยน aspect-3/4 เป็น aspect-[3/4] เพื่อล็อคขนาดรูป */}
-                                <div className="relative aspect-[3/4] bg-gray-100 mb-4 overflow-hidden rounded-md">
-                                    <img
+                                {/* 🖼️ ใช้ ProductImage แทน img tag */}
+                                <div className="relative mb-4 rounded-md overflow-hidden">
+                                    <ProductImage
                                         src={product.image}
                                         alt={product.nameEN}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        className="rounded-md"
                                     />
 
                                     {/* ปุ่มกดถูกใจ (Wishlist) */}

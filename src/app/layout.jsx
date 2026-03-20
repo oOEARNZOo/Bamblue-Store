@@ -15,8 +15,60 @@ const prompt = Prompt({
 });
 
 export const metadata = {
-  title: 'Bamblue Store | K-Fashion',
-  description: 'YOUTH ELEVATED. SIMPLY STYLISH.',
+  title: {
+    default: 'Bamblue Store | K-Fashion Thailand',
+    template: '%s | Bamblue Store',
+  },
+  description: 'YOUTH ELEVATED. SIMPLY STYLISH. ร้านเสื้อผ้าแฟชั่นเกาหลีสไตล์วัยรุ่น คุณภาพดี ราคาถูก จัดส่งฟรีทั่วไทย',
+  keywords: ['เสื้อผ้าแฟชั่น', 'แฟชั่นเกาหลี', 'K-Fashion', 'เสื้อผ้าวัยรุ่น', 'Bamblue', 'ชุดเดรส', 'เสื้อครอป'],
+  authors: [{ name: 'Bamblue Store' }],
+  creator: 'Bamblue Store',
+  publisher: 'Bamblue Store',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://bamblue.store'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Bamblue Store | K-Fashion Thailand',
+    description: 'YOUTH ELEVATED. SIMPLY STYLISH. ร้านเสื้อผ้าแฟชั่นเกาหลีสไตล์วัยรุ่น',
+    url: 'https://bamblue.store',
+    siteName: 'Bamblue Store',
+    locale: 'th_TH',
+    type: 'website',
+    images: [
+      {
+        url: '/Picture/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Bamblue Store - K-Fashion Thailand',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Bamblue Store | K-Fashion Thailand',
+    description: 'YOUTH ELEVATED. SIMPLY STYLISH. ร้านเสื้อผ้าแฟชั่นเกาหลีสไตล์วัยรุ่น',
+    images: ['/Picture/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    // google: 'your-google-verification-code',
+  },
 }
 
 export default function RootLayout({ children }) {
