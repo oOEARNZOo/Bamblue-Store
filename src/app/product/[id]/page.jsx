@@ -218,47 +218,24 @@ export default function ProductDetailPage() {
               {/* ส่วนเลือกจำนวน */}
               <div className="mb-10">
                 <span className="text-sm font-semibold tracking-wide block mb-3">จำนวน</span>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center">
                   {/* ปุ่ม +/- */}
-                  <div className="flex items-center border border-gray-300 w-32 rounded">
+                  <div className="flex items-center border border-gray-300 rounded">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6]"
+                      className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6] transition-colors"
                     >
                       <Minus size={16} />
                     </button>
-                    <input
-                      type="number"
-                      min="1"
-                      max="99"
-                      value={quantity}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 1;
-                        setQuantity(Math.max(1, Math.min(99, val)));
-                      }}
-                      className="w-12 h-10 text-center text-sm font-semibold focus:outline-none border-x border-gray-300"
-                    />
+                    <span className="w-12 h-10 flex items-center justify-center text-sm font-semibold border-x border-gray-300 select-none">
+                      {quantity}
+                    </span>
                     <button
                       onClick={() => setQuantity(Math.min(99, quantity + 1))}
-                      className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6]"
+                      className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6] transition-colors"
                     >
                       <Plus size={16} />
                     </button>
-                  </div>
-                  {/* ปุ่มเลือกจำนวนด่วน */}
-                  <div className="flex gap-2">
-                    {[5, 10].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => setQuantity(num)}
-                        className={`cursor-pointer px-3 py-2 text-xs font-medium rounded border transition-colors ${quantity === num
-                            ? 'bg-zinc-900 text-white border-zinc-900'
-                            : 'border-gray-300 text-gray-600 hover:border-zinc-900'
-                          }`}
-                      >
-                        {num} ชิ้น
-                      </button>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -274,7 +251,7 @@ export default function ProductDetailPage() {
 
                 <button
                   onClick={handleAddToCart}
-                  className="cursor-pointer grow bg-zinc-900 hover:bg-zinc-800 text-white rounded text-sm tracking-widest font-semibold transition-colors flex items-center justify-center"
+                  className="cursor-pointer grow bg-zinc-900 hover:bg-zinc-800 text-white rounded text-sm tracking-widest font-semibold transition-colors flex items-center justify-center h-14"
                 >
                   ใส่ตะกร้า
                 </button>
