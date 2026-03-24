@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useState, useContext, useEffect } from "react";
-import toast from 'react-hot-toast';
+import limitedToast from '../../lib/toast';
 
 const WishlistContext = createContext();
 
@@ -40,14 +40,14 @@ export function WishlistProvider({ children }) {
     setWishlistItems((prevItems) => {
       const isExist = prevItems.find((item) => item.id === product.id);
       if (isExist) {
-        toast('สินค้านี้อยู่ในรายการโปรดแล้ว', {
+        limitedToast.default('สินค้านี้อยู่ในรายการโปรดแล้ว', {
           id: `wishlist-exist-${product.id}`,
           icon: '💖',
           style: { border: '1px solid #f472b6' }
         });
         return prevItems;
       }
-      toast.success(`เพิ่ม ${product.nameEN} ลงรายการโปรดแล้ว!`, {
+      limitedToast.success(`เพิ่ม ${product.nameEN} ลงรายการโปรดแล้ว!`, {
         id: `wishlist-add-${product.id}`
       });
       return [...prevItems, product];
@@ -57,7 +57,7 @@ export function WishlistProvider({ children }) {
   // ลบสินค้าออกจาก Wishlist
   const removeFromWishlist = (productId) => {
     setWishlistItems((prevItems) => prevItems.filter((item) => item.id !== productId));
-    toast('ลบสินค้าออกจากรายการโปรดแล้ว', {
+    limitedToast.default('ลบสินค้าออกจากรายการโปรดแล้ว', {
       id: `wishlist-remove-${productId}`,
       icon: '🗑️',
       style: { border: '1px solid #e4e4e7' }

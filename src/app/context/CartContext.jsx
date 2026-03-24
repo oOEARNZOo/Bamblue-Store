@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useState, useContext, useEffect } from "react";
-import toast from 'react-hot-toast'; 
+import limitedToast from '../../lib/toast'; 
 
 const CartContext = createContext();
 
@@ -59,7 +59,7 @@ export function CartProvider({ children }) {
         return [...prevItems, { ...product, cartKey, size, quantity: quantityToAdd }];
       }
     });
-    toast.success(`เพิ่ม ${product.nameEN} (${size}) x${quantityToAdd} ลงตะกร้าแล้ว!`);
+    limitedToast.success(`เพิ่ม ${product.nameEN} (${size}) x${quantityToAdd} ลงตะกร้าแล้ว!`);
   };
 
   // ฟังก์ชันบวก/ลบจำนวนสินค้าในหน้าตะกร้า (ใช้ cartKey)
@@ -78,7 +78,7 @@ export function CartProvider({ children }) {
   // ฟังก์ชันลบสินค้าออกจากตะกร้าเลย (ใช้ cartKey)
   const removeFromCart = (cartKey) => {
     setCartItems((prevItems) => prevItems.filter((item) => item.cartKey !== cartKey));
-    toast('ลบสินค้าออกจากตะกร้าแล้ว', {
+    limitedToast.default('ลบสินค้าออกจากตะกร้าแล้ว', {
       icon: '🗑️',
       style: { border: '1px solid #e4e4e7' }
     });
