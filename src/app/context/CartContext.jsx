@@ -36,30 +36,37 @@ export function CartProvider({ children }) {
   }, [cartItems, isInitialized]);
 
   // ฟังก์ชันเพิ่มสินค้าลงตะกร้า (จากหน้าสินค้า)
+  // รองรับ quantity และ size จากหน้าสินค้า
   const addToCart = (product) => {
+    const quantityToAdd = product.quantity || 1;
+    const size = product.size || 'M';
+    // ใช้ cartKey เป็น id + size เพื่อให้สินค้าเดียวกันแต่ต่างไซส์เป็นคนละรายการ
+    const cartKey = `${product.id}-${size}`;
+
     setCartItems((prevItems) => {
-      const existingItemIndex = prevItems.findIndex((item) => item.id === product.id);
+      const existingItemIndex = prevItems.findIndex((item) => item.cartKey === cartKey);
 
       if (existingItemIndex !== -1) {
+        // ถ้ามีสินค้าเดียวกัน (id + size) อยู่แล้ว ให้เพิ่มจำนวน
         const updatedItems = [...prevItems];
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + 1
+          quantity: updatedItems[existingItemIndex].quantity + quantityToAdd
         };
         return updatedItems;
       } else {
-        return [...prevItems, { ...product, quantity: 1 }];
+        // ถ้ายังไม่มี ให้เพิ่มใหม่พร้อม cartKey
+        return [...prevItems, { ...product, cartKey, size, quantity: quantityToAdd }];
       }
     });
-    toast.success(`เพิ่ม ${product.nameEN} ลงตะกร้าแล้ว!`);
+    toast.success(`เพิ่ม ${product.nameEN} (${size}) x${quantityToAdd} ลงตะกร้าแล้ว!`);
   };
 
-  // 🌟 [ใหม่!] ฟังก์ชันบวก/ลบจำนวนสินค้าในหน้าตะกร้า
-  const updateQuantity = (productId, amount) => {
+  // ฟังก์ชันบวก/ลบจำนวนสินค้าในหน้าตะกร้า (ใช้ cartKey)
+  const updateQuantity = (cartKey, amount) => {
     setCartItems((prevItems) => 
       prevItems.map((item) => {
-        if (item.id === productId) {
-          // คำนวณจำนวนใหม่ แต่บังคับว่าต้องไม่ต่ำกว่า 1
+        if (item.cartKey === cartKey) {
           const newQuantity = Math.max(1, item.quantity + amount);
           return { ...item, quantity: newQuantity };
         }
@@ -68,16 +75,16 @@ export function CartProvider({ children }) {
     );
   };
 
-  // 🌟 ฟังก์ชันลบสินค้าออกจากตะกร้าเลย (ปุ่ม REMOVE)
-  const removeFromCart = (productId) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+  // ฟังก์ชันลบสินค้าออกจากตะกร้าเลย (ใช้ cartKey)
+  const removeFromCart = (cartKey) => {
+    setCartItems((prevItems) => prevItems.filter((item) => item.cartKey !== cartKey));
     toast('ลบสินค้าออกจากตะกร้าแล้ว', {
       icon: '🗑️',
       style: { border: '1px solid #e4e4e7' }
     });
   };
 
-  // 🌟 อย่าลืมส่ง updateQuantity ออกไปให้หน้าอื่นใช้งานด้วย
+  // อย่าลืมส่ง updateQuantity ออกไปให้หน้าอื่นใช้งานด้วย
   return (
     <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity }}>
       {children}

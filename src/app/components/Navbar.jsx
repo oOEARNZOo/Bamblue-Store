@@ -27,7 +27,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const popularSearches = ['กระเป๋า', 'กางเกง', 'เสื้อกันหนาว', 'รองเท้า'];
+  const popularSearches = ['เสื้อ', 'เดรส', 'ชุดเซ็ต', 'Dress'];
   const [recentSearches, setRecentSearches] = useState([]);
 
   useEffect(() => {
@@ -91,7 +91,27 @@ export default function Navbar() {
     setIsSearchOpen(false);
     setSearchInput('');
     setSuggestions([]);
-    router.push(`/products?search=${encodeURIComponent(term)}`);
+
+    // ตรวจสอบว่าเป็นหมวดหมู่หรือไม่
+    const categoryMap = {
+      'เสื้อ': 'shirt',
+      'shirt': 'shirt',
+      'เดรส': 'dress',
+      'dress': 'dress',
+      'ชุดเซ็ต': 'set',
+      'set': 'set'
+    };
+
+    const lowerTerm = term.toLowerCase();
+    const categoryKey = Object.keys(categoryMap).find(key => key.toLowerCase() === lowerTerm);
+
+    if (categoryKey) {
+      // ถ้าเป็นหมวดหมู่ ให้ลิงค์ไปที่หมวดหมู่โดยตรง
+      router.push(`/products?category=${categoryMap[categoryKey]}`);
+    } else {
+      // ถ้าไม่ใช่หมวดหมู่ ให้ค้นหาปกติ
+      router.push(`/products?search=${encodeURIComponent(term)}`);
+    }
   };
 
   const clearRecentSearches = () => {
@@ -120,7 +140,10 @@ export default function Navbar() {
   const searchRef = useRef(null);
   const profileRef = useRef(null);
 
-  const cartItemCount = cartItems ? cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
+  // นับจำนวนชนิดสินค้า (ไม่ใช่จำนวนชิ้น)
+  const cartItemCount = cartItems ? cartItems.length : 0;
+  // นับจำนวนชิ้นทั้งหมด (สำหรับแสดงในหัวข้อ)
+  const totalQuantity = cartItems ? cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
 
   const calculateTotal = () => {
     if (!cartItems) return 0;
@@ -289,7 +312,7 @@ export default function Navbar() {
               <div className="absolute top-full right-0 mt-3 w-80 bg-white shadow-xl border border-gray-100 rounded-lg p-4 z-50 cursor-default">
                 <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
                   <h3 className="text-sm font-bold text-gray-800">
-                    ตะกร้าสินค้า ({cartItemCount} ชิ้น)
+                    ตะกร้าสินค้า ({totalQuantity} ชิ้น)
                   </h3>
                   <button onClick={() => setIsCartOpen(false)} className="text-gray-400 hover:text-[#dc6fd6] text-xs cursor-pointer">
                     ปิด ✕
@@ -302,18 +325,19 @@ export default function Navbar() {
                   <>
                     <div className="max-h-[60vh] overflow-y-auto space-y-4 mb-4 pr-1">
                       {cartItems.map(item => (
-                        <div key={item.id} className="flex gap-3">
+                        <div key={item.cartKey || item.id} className="flex gap-3">
                           <img src={item.image} alt={item.nameEN} className="w-16 h-20 object-cover rounded shrink-0 bg-gray-50" />
                           <div className="grow flex flex-col justify-center">
                             <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.nameEN}</p>
+                            <p className="text-xs text-gray-500 mb-1">ไซส์: {item.size || 'M'}</p>
                             <p className="text-xs text-[#dc6fd6] font-medium mb-2">฿{Number(item.price).toLocaleString()}</p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center border border-gray-200 rounded w-20 h-7">
-                                <button onClick={() => updateQuantity(item.id, -1)} disabled={item.quantity <= 1} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] disabled:opacity-30 cursor-pointer"><Minus size={12} /></button>
+                                <button onClick={() => updateQuantity(item.cartKey, -1)} disabled={item.quantity <= 1} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] disabled:opacity-30 cursor-pointer"><Minus size={12} /></button>
                                 <span className="w-6 text-center text-xs font-semibold">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] cursor-pointer"><Plus size={12} /></button>
+                                <button onClick={() => updateQuantity(item.cartKey, 1)} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] cursor-pointer"><Plus size={12} /></button>
                               </div>
-                              <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500 cursor-pointer p-1 transition-colors"><Trash2 size={16} /></button>
+                              <button onClick={() => removeFromCart(item.cartKey)} className="text-gray-400 hover:text-red-500 cursor-pointer p-1 transition-colors"><Trash2 size={16} /></button>
                             </div>
                           </div>
                         </div>

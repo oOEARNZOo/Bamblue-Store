@@ -16,8 +16,28 @@ import { ProductImage } from '../components/OptimizedImage';
 // 📦 1. แยกเนื้อหาที่ใช้ useSearchParams มาไว้ใน Component ย่อย
 function ProductsContent() {
     const { addToCart } = useCart();
-    const { addToWishlist, isInWishlist } = useWishlist();
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const [activeCategory, setActiveCategory] = useState('all');
+    const [confirmRemove, setConfirmRemove] = useState(null);
+
+    const handleWishlistClick = (e, product) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (isInWishlist(product.id)) {
+            setConfirmRemove(product.id);
+        } else {
+            addToWishlist(product);
+        }
+    };
+
+    const confirmRemoveWishlist = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (confirmRemove) {
+            removeFromWishlist(confirmRemove);
+            setConfirmRemove(null);
+        }
+    };
 
     // สร้าง State มารับข้อมูลสินค้าจาก Supabase และ State สำหรับ Loading
     const [productsData, setProductsData] = useState([]);
@@ -25,6 +45,17 @@ function ProductsContent() {
 
     const searchParams = useSearchParams();
     const searchQuery = searchParams ? searchParams.get('search') : null;
+    const categoryParam = searchParams ? searchParams.get('category') : null;
+
+    // ตั้งค่า activeCategory จาก URL parameter
+    useEffect(() => {
+        if (categoryParam && ['shirt', 'dress', 'set'].includes(categoryParam)) {
+            setActiveCategory(categoryParam);
+        } else if (!categoryParam) {
+            // ถ้าไม่มี category parameter ให้แสดงทั้งหมด
+            setActiveCategory('all');
+        }
+    }, [categoryParam]);
 
     useEffect(() => {
         async function fetchProducts() {
@@ -139,22 +170,50 @@ function ProductsContent() {
                                         className="rounded-md"
                                     />
 
-                                    {/* ปุ่มกดถูกใจ (Wishlist) */}
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            addToWishlist(product);
-                                        }}
-                                        className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-pink-50 transition-colors cursor-pointer"
-                                        title="เพิ่มลงรายการโปรด"
-                                    >
-                                        <Heart
-                                            size={18}
-                                            strokeWidth={1.5}
-                                            className={`transition-colors ${isInWishlist(product.id) ? 'text-[#dc6fd6] fill-[#dc6fd6]' : 'text-gray-500 hover:text-[#dc6fd6]'}`}
-                                        />
-                                    </button>
+                                    {/* ปุ่มกดถูกใจ (Wishlist) พร้อม Slide confirmation */}
+                                    <div className="absolute top-3 right-3 z-10">
+                                        <div 
+                                            className="flex items-center bg-white/95 backdrop-blur-sm rounded-full shadow-lg overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                                            style={{
+                                                width: confirmRemove === product.id ? '120px' : '34px',
+                                            }}
+                                        >
+                                            {confirmRemove === product.id ? (
+                                                /* ปุ่มยกเลิก + ลบออก */
+                                                <div className="flex items-center gap-1 px-1.5 py-1 w-full animate-in fade-in duration-200">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            setConfirmRemove(null);
+                                                        }}
+                                                        className="px-2 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer whitespace-nowrap"
+                                                    >
+                                                        ยกเลิก
+                                                    </button>
+                                                    <button
+                                                        onClick={confirmRemoveWishlist}
+                                                        className="px-2.5 py-1 bg-red-500 text-white text-xs font-medium rounded-full hover:bg-red-600 transition-colors cursor-pointer whitespace-nowrap"
+                                                    >
+                                                        ลบ
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                /* ปุ่มหัวใจ */
+                                                <button
+                                                    onClick={(e) => handleWishlistClick(e, product)}
+                                                    className="p-2 hover:bg-pink-50 transition-colors cursor-pointer group/btn"
+                                                    title={isInWishlist(product.id) ? "ลบออกจากรายการโปรด" : "เพิ่มลงรายการโปรด"}
+                                                >
+                                                    <Heart
+                                                        size={18}
+                                                        strokeWidth={1.5}
+                                                        className={`transition-colors ${isInWishlist(product.id) ? 'text-[#dc6fd6] fill-[#dc6fd6]' : 'text-gray-500 group-hover/btn:text-[#dc6fd6]'}`}
+                                                    />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
 
                                     <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
                                         <button

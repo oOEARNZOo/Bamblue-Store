@@ -29,17 +29,17 @@ export default function Footer() {
               </li>
               {/* ลิงก์ไปหน้าหมวดหมู่เสื้อ (คุณสามารถสร้างหน้า /products/shirts รับพารามิเตอร์ทีหลังได้) */}
               <li>
-                <Link href="/products?category=shirts" className="text-gray-400 hover:text-[#dc6fd6] transition-colors text-sm inline-block">
+                <Link href="/products?category=shirt" className="text-gray-400 hover:text-[#dc6fd6] transition-colors text-sm inline-block">
                   เสื้อ (Shirts)
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=dresses" className="text-gray-400 hover:text-[#dc6fd6] transition-colors text-sm inline-block">
-                  BOTTOMS เดรส (Dresses)
+                <Link href="/products?category=dress" className="text-gray-400 hover:text-[#dc6fd6] transition-colors text-sm inline-block">
+                  เดรส (Dresses)
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=sets" className="text-gray-400 hover:text-[#dc6fd6] transition-colors text-sm inline-block">
+                <Link href="/products?category=set" className="text-gray-400 hover:text-[#dc6fd6] transition-colors text-sm inline-block">
                   ชุดเซ็ต (Sets)
                 </Link>
               </li>

@@ -83,18 +83,19 @@ export default function RootLayout({ children }) {
           
           {/* 🌟 2. เพิ่ม Toaster ไว้ล่างสุด และตั้งค่าสีให้เข้ากับธีมเว็บเรา */}
           <Toaster 
-            position="bottom-right" /* ให้เด้งขึ้นมาจากมุมขวาล่าง */
+            position="bottom-left" /* ให้เด้งออกมาจากมุมซ้ายล่าง */
             toastOptions={{
               duration: 3000, /* โชว์ 3 วินาทีแล้วหายไปเอง */
               style: {
                 background: '#ffffff',
                 color: '#27272a', /* สีตัวอักษรเทาเข้ม */
                 border: '1px solid #f472b6', /* ขอบสีชมพู Bamblue */
-                padding: '16px',
-                fontSize: '14px',
+                padding: '10px 16px', /* padding เล็กลง */
+                fontSize: '13px', /* ฟอนต์เล็กลง */
                 fontWeight: '500',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                borderRadius: '9999px', /* วงรี (pill shape) */
+                boxShadow: '0 4px 12px -2px rgba(0, 0, 0, 0.15)',
+                maxWidth: '320px', /* จำกัดความกว้าง */
               },
               success: {
                 iconTheme: {

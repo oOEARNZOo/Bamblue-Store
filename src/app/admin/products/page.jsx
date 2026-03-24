@@ -30,8 +30,10 @@ export default function ProductManagementPage() {
     nameTH: '',
     price: '',
     category: 'shirt',
-    image: ''
+    image: '',
+    images: []
   });
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   useEffect(() => {
     checkAdminAccess();
@@ -86,7 +88,8 @@ export default function ProductManagementPage() {
         nameTH: formData.nameTH,
         price: parseFloat(formData.price),
         category: formData.category,
-        image: formData.image
+        image: formData.images[0] || formData.image,
+        images: formData.images
       };
 
       if (editingProduct) {
@@ -128,8 +131,10 @@ export default function ProductManagementPage() {
         nameTH: '',
         price: '',
         category: 'shirt',
-        image: ''
+        image: '',
+        images: []
       });
+      setNewImageUrl('');
       fetchProducts();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -150,8 +155,10 @@ export default function ProductManagementPage() {
       nameTH: product.nameTH || '',
       price: product.price || '',
       category: product.category || 'shirt',
-      image: product.image || ''
+      image: product.image || '',
+      images: product.images || (product.image ? [product.image] : [])
     });
+    setNewImageUrl('');
     setIsModalOpen(true);
   };
 
@@ -237,8 +244,10 @@ export default function ProductManagementPage() {
       nameTH: '',
       price: '',
       category: 'shirt',
-      image: ''
+      image: '',
+      images: []
     });
+    setNewImageUrl('');
     setIsModalOpen(true);
   };
 
@@ -462,32 +471,89 @@ export default function ProductManagementPage() {
                 </div>
               </div>
 
+              {/* ส่วนจัดการรูปภาพหลายรูป */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  URL รูปภาพ *
+                  รูปภาพสินค้า ({formData.images.length} รูป) *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
+                
+                {/* แสดงรูปภาพที่เพิ่มแล้ว */}
+                {formData.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {formData.images.map((img, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={img}
+                          alt={`Product ${index + 1}`}
+                          className={`w-full h-24 object-cover rounded-lg border-2 ${index === 0 ? 'border-[#dc6fd6]' : 'border-gray-200'}`}
+                          onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/150?text=Error';
+                          }}
+                        />
+                        {index === 0 && (
+                          <span className="absolute top-1 left-1 bg-[#dc6fd6] text-white text-[10px] px-1.5 py-0.5 rounded">
+                            หลัก
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = formData.images.filter((_, i) => i !== index);
+                            setFormData({ ...formData, images: newImages });
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={12} />
+                        </button>
+                        {index !== 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newImages = [...formData.images];
+                              [newImages[0], newImages[index]] = [newImages[index], newImages[0]];
+                              setFormData({ ...formData, images: newImages });
+                            }}
+                            className="absolute bottom-1 left-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ตั้งเป็นหลัก
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {formData.image && (
-                <div className="border border-gray-200 rounded-lg p-2">
-                  <img
-                    src={formData.image}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded"
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/400x600?text=Invalid+Image';
-                    }}
+                {/* ช่องเพิ่มรูปภาพใหม่ */}
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none"
+                    placeholder="วาง URL รูปภาพที่นี่..."
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newImageUrl.trim()) {
+                        setFormData({ 
+                          ...formData, 
+                          images: [...formData.images, newImageUrl.trim()] 
+                        });
+                        setNewImageUrl('');
+                      }
+                    }}
+                    disabled={!newImageUrl.trim()}
+                    className="px-4 py-2 bg-[#dc6fd6] text-white rounded-lg hover:bg-[#c05ca8] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-1"
+                  >
+                    <Plus size={16} />
+                    เพิ่ม
+                  </button>
                 </div>
-              )}
+                <p className="text-xs text-gray-500 mt-1">
+                  รูปแรกจะเป็นรูปหลักที่แสดงในหน้าสินค้า (ต้องมีอย่างน้อย 1 รูป)
+                </p>
+              </div>
 
               <div className="flex gap-3 pt-4">
                 <button

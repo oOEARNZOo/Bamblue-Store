@@ -1,15 +1,62 @@
 "use client"; // ต้องมีเพราะเราใช้ useState สำหรับฟอร์มครับ
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 export default function ContactPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [ticketNumber, setTicketNumber] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    subject: 'สอบถามข้อมูลสินค้า',
+    message: ''
+  });
+
+  // ฟังก์ชันจัดการ input พร้อมจำกัดประเภทข้อมูล
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'name') {
+      // ชื่อ: ตัวอักษรเท่านั้น (ไทย/อังกฤษ/เว้นวรรค)
+      const textValue = value.replace(/[0-9]/g, '');
+      setFormData(prev => ({ ...prev, [name]: textValue }));
+      return;
+    }
+    
+    if (name === 'phone') {
+      // เบอร์โทร: ตัวเลขเท่านั้น, สูงสุด 10 หลัก
+      const numericValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+      setFormData(prev => ({ ...prev, [name]: numericValue }));
+      return;
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // ฟังก์ชันสร้างเลขคำร้อง (Ticket Number)
+  const generateTicketNumber = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+    return `TK-${year}${month}${day}-${random}`;
+  };
 
   // ฟังก์ชันจำลองตอนกดส่งข้อความ
   const handleSubmit = (e) => {
     e.preventDefault(); // ป้องกันหน้าเว็บรีเฟรช
+    const newTicket = generateTicketNumber();
+    setTicketNumber(newTicket);
     setIsSubmitted(true);
     // (ในอนาคตเราจะเอาโค้ดส่งอีเมลจริงๆ มาใส่ตรงนี้ครับ)
-    setTimeout(() => setIsSubmitted(false), 5000); // ข้อความสำเร็จจะหายไปใน 5 วิ
+  };
+
+  // ฟังก์ชันส่งคำร้องใหม่
+  const handleNewTicket = () => {
+    setIsSubmitted(false);
+    setTicketNumber('');
   };
 
   return (
@@ -85,14 +132,37 @@ export default function ContactPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">ฝากข้อความถึงเรา</h2>
           
           {isSubmitted ? (
-            <div className="bg-green-50 border border-green-200 text-green-700 p-6 rounded-xl flex flex-col items-center justify-center text-center h-full min-h-75 animate-fade-in">
-              <div className="bg-green-100 p-3 rounded-full mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 text-green-700 p-8 rounded-xl flex flex-col items-center justify-center text-center min-h-[380px]">
+              <div className="bg-green-100 p-4 rounded-full mb-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-10 h-10">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="font-bold text-lg mb-2">ส่งข้อความสำเร็จ!</h3>
-              <p className="text-sm">แอดมินได้รับข้อความของคุณแล้ว จะรีบติดต่อกลับโดยเร็วที่สุดค่ะ 💖</p>
+              <h3 className="font-bold text-xl mb-2">ส่งข้อความสำเร็จ!</h3>
+              <p className="text-sm mb-4">แอดมินได้รับข้อความของคุณแล้ว จะรีบติดต่อกลับโดยเร็วที่สุดค่ะ 💖</p>
+              
+              {/* เลขคำร้อง (Ticket Number) */}
+              <div className="bg-white border border-green-200 rounded-lg px-6 py-4 mb-6 w-full max-w-xs">
+                <p className="text-xs text-gray-500 mb-1">เลขคำร้องของคุณ</p>
+                <p className="text-lg font-bold text-green-600 tracking-wider">{ticketNumber}</p>
+                <p className="text-xs text-gray-400 mt-1">กรุณาเก็บเลขนี้ไว้อ้างอิง</p>
+              </div>
+
+              {/* ปุ่มกลับหน้าหลัก / ส่งคำร้องใหม่ */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
+                <Link 
+                  href="/" 
+                  className="flex-1 bg-pink-500 hover:bg-pink-600 text-white py-2.5 px-4 rounded-lg font-semibold text-sm transition-colors text-center"
+                >
+                  กลับหน้าหลัก
+                </Link>
+                <button 
+                  onClick={handleNewTicket}
+                  className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-2.5 px-4 rounded-lg font-semibold text-sm transition-colors cursor-pointer"
+                >
+                  ส่งคำร้องใหม่
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -100,36 +170,79 @@ export default function ContactPage() {
                 {/* ชื่อ */}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล *</label>
-                  <input type="text" id="name" required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm" placeholder="เช่น แพรวา" />
+                  <input 
+                    type="text" 
+                    id="name" 
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required 
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm" 
+                    placeholder="เช่น แพรวา" 
+                  />
                 </div>
                 {/* เบอร์โทรศัพท์ (เป็นออปชั่นเผื่อโทรกลับ) */}
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ (ถ้ามี)</label>
-                  <input type="tel" id="phone" className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm" placeholder="08X-XXX-XXXX" />
+                  <input 
+                    type="tel" 
+                    id="phone" 
+                    name="phone"
+                    inputMode="numeric"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    maxLength={10}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm" 
+                    placeholder="0812345678" 
+                  />
                 </div>
               </div>
 
               {/* อีเมล */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">อีเมลติดต่อกลับ *</label>
-                <input type="email" id="email" required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm" placeholder="your@email.com" />
+                <input 
+                  type="email" 
+                  id="email" 
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required 
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm" 
+                  placeholder="your@email.com" 
+                />
               </div>
 
               {/* หัวข้อ */}
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">หัวข้อที่ต้องการติดต่อ</label>
-                <select id="subject" className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm bg-white">
-                  <option>สอบถามข้อมูลสินค้า</option>
-                  <option>แจ้งปัญหาการสั่งซื้อ / การชำระเงิน</option>
-                  <option>ติดตามสถานะการจัดส่ง</option>
-                  <option>อื่นๆ</option>
+                <select 
+                  id="subject" 
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm bg-white"
+                >
+                  <option value="สอบถามข้อมูลสินค้า">สอบถามข้อมูลสินค้า</option>
+                  <option value="แจ้งปัญหาการสั่งซื้อ / การชำระเงิน">แจ้งปัญหาการสั่งซื้อ / การชำระเงิน</option>
+                  <option value="ติดตามสถานะการจัดส่ง">ติดตามสถานะการจัดส่ง</option>
+                  <option value="อื่นๆ">อื่นๆ</option>
                 </select>
               </div>
 
               {/* ข้อความ */}
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">รายละเอียด *</label>
-                <textarea id="message" rows="4" required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm resize-none" placeholder="พิมพ์ข้อความของคุณที่นี่..."></textarea>
+                <textarea 
+                  id="message" 
+                  name="message"
+                  rows="4" 
+                  value={formData.message}
+                  onChange={handleChange}
+                  required 
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm resize-none" 
+                  placeholder="พิมพ์ข้อความของคุณที่นี่..."
+                ></textarea>
               </div>
 
               {/* ปุ่มส่ง */}

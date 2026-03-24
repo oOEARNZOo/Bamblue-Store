@@ -50,6 +50,29 @@ export default function CheckoutPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // จำกัดให้ใส่ได้เฉพาะตัวเลขสำหรับบางฟิลด์
+    if (name === 'zipcode') {
+      // รหัสไปรษณีย์: ตัวเลขเท่านั้น, สูงสุด 5 หลัก
+      const numericValue = value.replace(/[^0-9]/g, '').slice(0, 5);
+      setFormData(prev => ({ ...prev, [name]: numericValue }));
+      return;
+    }
+    
+    if (name === 'phone') {
+      // เบอร์โทร: ตัวเลขเท่านั้น, สูงสุด 10 หลัก
+      const numericValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+      setFormData(prev => ({ ...prev, [name]: numericValue }));
+      return;
+    }
+    
+    if (name === 'firstName' || name === 'lastName' || name === 'province') {
+      // ชื่อ, นามสกุล, จังหวัด: ตัวอักษรเท่านั้น (ไทย/อังกฤษ)
+      const textValue = value.replace(/[0-9]/g, '');
+      setFormData(prev => ({ ...prev, [name]: textValue }));
+      return;
+    }
+    
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -268,9 +291,12 @@ export default function CheckoutPage() {
                     <label className="block text-sm text-gray-700 mb-2">รหัสไปรษณีย์</label>
                     <input 
                       type="text" 
+                      inputMode="numeric"
                       name="zipcode"
                       value={formData.zipcode}
                       onChange={handleChange}
+                      placeholder="เช่น 10110"
+                      maxLength={5}
                       className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#dc6fd6] outline-none text-sm" 
                     />
                   </div>
@@ -280,9 +306,12 @@ export default function CheckoutPage() {
                   <label className="block text-sm text-gray-700 mb-2">เบอร์โทรศัพท์</label>
                   <input 
                     type="tel" 
+                    inputMode="numeric"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
+                    placeholder="เช่น 0812345678"
+                    maxLength={10}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#dc6fd6] outline-none text-sm" 
                   />
                 </div>

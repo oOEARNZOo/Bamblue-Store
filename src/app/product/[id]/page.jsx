@@ -31,6 +31,8 @@ export default function ProductDetailPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   // State สำหรับเปิด/ปิด Pop-up แจ้งเตือนว่าเพิ่มสำเร็จ
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // State สำหรับเปิด/ปิด Pop-up แสดงขนาดเสื้อ
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   useEffect(() => {
     async function fetchSingleProduct() {
@@ -47,7 +49,7 @@ export default function ProductDetailPage() {
           setProduct(null);
         } else {
           setProduct(data);
-          setMainImage(data.image); 
+          setMainImage(data.image);
         }
       } catch (err) {
         console.error("System Error:", err);
@@ -138,14 +140,24 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             {/* ฝั่งซ้าย: รูปภาพสินค้า */}
             <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4">
-              <div className="flex md:flex-col gap-4 overflow-x-auto md:w-24 shrink-0">
-                <button className="cursor-pointer w-20 h-28 md:w-full md:h-32 border-2 border-[#dc6fd6] overflow-hidden">
-                  <img src={product.image} className="w-full h-full object-cover" alt={product.nameEN} />
-                </button>
+              {/* Thumbnail รูปภาพ */}
+              <div className="flex md:flex-col gap-3 overflow-x-auto md:w-24 shrink-0">
+                {/* แสดงรูปจาก images array หรือ fallback เป็น image เดี่ยว */}
+                {(product.images && product.images.length > 0 ? product.images : [product.image]).map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setMainImage(img)}
+                    className={`cursor-pointer w-20 h-28 md:w-full md:h-32 border-2 overflow-hidden rounded-lg transition-all ${mainImage === img ? 'border-[#dc6fd6] shadow-md' : 'border-gray-200 hover:border-gray-400'
+                      }`}
+                  >
+                    <img src={img} className="w-full h-full object-cover" alt={`${product.nameEN} ${index + 1}`} />
+                  </button>
+                ))}
               </div>
 
+              {/* รูปภาพหลัก */}
               <div
-                className="grow bg-gray-100 aspect-3/4 md:aspect-auto overflow-hidden relative cursor-zoom-in"
+                className="grow bg-gray-100 aspect-3/4 md:aspect-auto overflow-hidden relative cursor-zoom-in rounded-lg"
                 onMouseEnter={() => setIsZoomed(true)}
                 onMouseLeave={() => setIsZoomed(false)}
                 onMouseMove={handleMouseMove}
@@ -182,7 +194,12 @@ export default function ProductDetailPage() {
               <div className="mb-8">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm font-semibold tracking-wide">ไซส์</span>
-                  <button className="cursor-pointer text-xs text-gray-500 underline hover:text-[#dc6fd6]">ขนาดสินค้า</button>
+                  <button
+                    onClick={() => setShowSizeGuide(true)}
+                    className="cursor-pointer text-xs text-gray-500 underline hover:text-[#dc6fd6]"
+                  >
+                    ขนาดสินค้า
+                  </button>
                 </div>
                 <div className="flex space-x-3">
                   {sizes.map((s) => (
@@ -201,37 +218,60 @@ export default function ProductDetailPage() {
               {/* ส่วนเลือกจำนวน */}
               <div className="mb-10">
                 <span className="text-sm font-semibold tracking-wide block mb-3">จำนวน</span>
-                <div className="flex items-center border border-gray-300 w-32 rounded">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6]"
-                  >
-                    <Minus size={16} />
-                  </button>
-                  <input
-                    type="text"
-                    readOnly
-                    value={quantity}
-                    className="w-12 h-10 text-center text-sm font-semibold focus:outline-none cursor-default"
-                  />
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6]"
-                  >
-                    <Plus size={16} />
-                  </button>
+                <div className="flex items-center gap-3">
+                  {/* ปุ่ม +/- */}
+                  <div className="flex items-center border border-gray-300 w-32 rounded">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6]"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 1;
+                        setQuantity(Math.max(1, Math.min(99, val)));
+                      }}
+                      className="w-12 h-10 text-center text-sm font-semibold focus:outline-none border-x border-gray-300"
+                    />
+                    <button
+                      onClick={() => setQuantity(Math.min(99, quantity + 1))}
+                      className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6]"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                  {/* ปุ่มเลือกจำนวนด่วน */}
+                  <div className="flex gap-2">
+                    {[5, 10].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setQuantity(num)}
+                        className={`cursor-pointer px-3 py-2 text-xs font-medium rounded border transition-colors ${quantity === num
+                            ? 'bg-zinc-900 text-white border-zinc-900'
+                            : 'border-gray-300 text-gray-600 hover:border-zinc-900'
+                          }`}
+                      >
+                        {num} ชิ้น
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               {/* ปุ่ม Wishlist และ Add to cart */}
               <div className="flex space-x-4 mb-10">
-                <button 
+                <button
                   onClick={handleAddWishlist}
                   className={`cursor-pointer w-14 h-14 border rounded flex items-center justify-center transition-colors shrink-0 ${isInWishlist(product.id) ? 'border-[#dc6fd6] text-[#dc6fd6] bg-pink-50' : 'border-gray-300 text-gray-600 hover:border-[#dc6fd6] hover:text-[#dc6fd6]'}`}
                 >
                   <Heart size={24} strokeWidth={1.5} className={isInWishlist(product.id) ? 'fill-[#dc6fd6]' : ''} />
                 </button>
-                
+
                 <button
                   onClick={handleAddToCart}
                   className="cursor-pointer grow bg-zinc-900 hover:bg-zinc-800 text-white rounded text-sm tracking-widest font-semibold transition-colors flex items-center justify-center"
@@ -276,7 +316,7 @@ export default function ProductDetailPage() {
       {showLoginModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button 
+            <button
               onClick={() => setShowLoginModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
             >
@@ -290,13 +330,13 @@ export default function ProductDetailPage() {
               <p className="text-sm text-gray-500">กรุณาเข้าสู่ระบบเพื่อบันทึกสินค้าลงในรายการโปรด (Wishlist) ของคุณ</p>
             </div>
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => setShowLoginModal(false)}
                 className="flex-1 py-3 px-4 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 ปิด
               </button>
-              <button 
+              <button
                 onClick={() => router.push('/login')}
                 className="flex-1 py-3 px-4 bg-[#dc6fd6] text-white rounded-xl text-sm font-semibold hover:bg-[#c05ca8] transition-colors cursor-pointer shadow-md"
               >
@@ -312,6 +352,39 @@ export default function ProductDetailPage() {
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300">
           <Heart size={18} className="text-[#dc6fd6]" fill="currentColor" />
           <span className="text-sm font-medium tracking-wide">เพิ่มลงรายการโปรดเรียบร้อย! ✨</span>
+        </div>
+      )}
+
+      {/* 📏 Pop-up Modal แสดงขนาดเสื้อ */}
+      {showSizeGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-2xl w-full shadow-2xl relative animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-auto">
+            <button
+              onClick={() => setShowSizeGuide(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer z-10"
+            >
+              <X size={24} />
+            </button>
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-bold text-gray-900">ตารางขนาดเสื้อ</h3>
+              <p className="text-sm text-gray-500 mt-1">Size Guide</p>
+            </div>
+            <div className="flex justify-center">
+              <img
+                src="/Picture/size_shirt.jpg"
+                alt="Size Guide"
+                className="max-w-full h-auto rounded-lg"
+              />
+            </div>
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setShowSizeGuide(false)}
+                className="px-6 py-2 bg-zinc-900 text-white rounded-lg text-sm font-semibold hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>

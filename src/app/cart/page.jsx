@@ -63,7 +63,7 @@ export default function CartPage() {
           <div>
             <div className="space-y-6">
               {cartItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between border-b border-gray-200 pb-6">
+                <div key={item.cartKey || item.id} className="flex items-center justify-between border-b border-gray-200 pb-6">
                   <div className="flex items-center space-x-6">
                     <div className="w-24 h-32 bg-gray-100 overflow-hidden rounded shrink-0">
                       <img src={item.image} alt={item.nameEN} className="w-full h-full object-cover" />
@@ -71,14 +71,16 @@ export default function CartPage() {
 
                     <div>
                       <h3 className="font-semibold text-zinc-900 tracking-wide">{item.nameEN}</h3>
-                      <p className="text-xs text-gray-500 mb-2">{item.nameTH}</p>
+                      <p className="text-xs text-gray-500 mb-1">{item.nameTH}</p>
+                      {/* แสดงไซส์สินค้า */}
+                      <p className="text-xs text-[#dc6fd6] font-medium mb-2">ไซส์: {item.size || 'M'}</p>
                       <p className="font-medium text-gray-800 mb-3">฿{Number(item.price).toLocaleString()}</p>
 
-                      {/* 🌟 ปุ่ม + / - */}
+                      {/* ปุ่ม + / - */}
                       <div className="flex items-center border border-gray-300 w-28 rounded">
                         <button
-                          onClick={() => updateQuantity(item.id, -1)}
-                          disabled={item.quantity <= 1} // ปิดปุ่มถ้าจำนวนเหลือแค่ 1
+                          onClick={() => updateQuantity(item.cartKey, -1)}
+                          disabled={item.quantity <= 1}
                           className={`w-8 h-8 flex items-center justify-center transition-colors ${item.quantity <= 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-[#dc6fd6] cursor-pointer'}`}
                         >
                           <Minus size={14} />
@@ -92,7 +94,7 @@ export default function CartPage() {
                         />
 
                         <button
-                          onClick={() => updateQuantity(item.id, 1)}
+                          onClick={() => updateQuantity(item.cartKey, 1)}
                           className="cursor-pointer w-8 h-8 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6] transition-colors"
                         >
                           <Plus size={14} />
@@ -102,7 +104,7 @@ export default function CartPage() {
                   </div>
 
                   <button
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(item.cartKey)}
                     className="cursor-pointer text-xs text-gray-400 hover:text-red-500 tracking-wider transition-colors border-b border-transparent hover:border-red-500"
                   >
                     REMOVE

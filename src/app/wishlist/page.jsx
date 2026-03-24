@@ -1,12 +1,25 @@
 "use client";
+import { useState } from 'react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import Link from 'next/link';
-import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
 
 export default function WishlistPage() {
   const { wishlistItems, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const [confirmRemove, setConfirmRemove] = useState(null);
+
+  const handleRemoveWishlist = (itemId) => {
+    setConfirmRemove(itemId);
+  };
+
+  const confirmRemoveWishlist = () => {
+    if (confirmRemove) {
+      removeFromWishlist(confirmRemove);
+      setConfirmRemove(null);
+    }
+  };
 
   const handleMoveToCart = (item) => {
     const cartProduct = {
@@ -63,17 +76,45 @@ export default function WishlistPage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     </Link>
-                    {/* ปุ่มลบออกจาก Wishlist */}
-                    <button
-                      onClick={() => removeFromWishlist(item.id)}
-                      className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-red-50 transition-colors cursor-pointer group/btn"
-                      title="ลบออกจากรายการโปรด"
-                    >
-                      <Heart
-                        size={18}
-                        className="text-[#dc6fd6] fill-[#dc6fd6] group-hover/btn:text-red-500 group-hover/btn:fill-red-500 transition-colors"
-                      />
-                    </button>
+                    {/* ปุ่มลบออกจาก Wishlist พร้อม Slide confirmation */}
+                    <div className="absolute top-3 right-3">
+                      <div 
+                        className="flex items-center bg-white/95 backdrop-blur-sm rounded-full shadow-lg overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                        style={{
+                          width: confirmRemove === item.id ? '120px' : '34px',
+                        }}
+                      >
+                        {confirmRemove === item.id ? (
+                          /* ปุ่มยกเลิก + ลบออก */
+                          <div className="flex items-center gap-1 px-1.5 py-1 w-full animate-in fade-in duration-200">
+                            <button
+                              onClick={() => setConfirmRemove(null)}
+                              className="px-2 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer whitespace-nowrap"
+                            >
+                              ยกเลิก
+                            </button>
+                            <button
+                              onClick={confirmRemoveWishlist}
+                              className="px-2.5 py-1 bg-red-500 text-white text-xs font-medium rounded-full hover:bg-red-600 transition-colors cursor-pointer whitespace-nowrap"
+                            >
+                              ลบ
+                            </button>
+                          </div>
+                        ) : (
+                          /* ปุ่มหัวใจ */
+                          <button
+                            onClick={() => handleRemoveWishlist(item.id)}
+                            className="p-2 hover:bg-red-50 transition-colors cursor-pointer group/btn"
+                            title="ลบออกจากรายการโปรด"
+                          >
+                            <Heart
+                              size={18}
+                              className="text-[#dc6fd6] fill-[#dc6fd6] group-hover/btn:text-red-500 group-hover/btn:fill-red-500 transition-colors"
+                            />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* รายละเอียดสินค้า */}
@@ -94,23 +135,14 @@ export default function WishlistPage() {
                       </div>
                     </div>
 
-                    {/* ปุ่มย้ายลงตะกร้า + ลบ */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleMoveToCart(item)}
-                        className="flex-1 flex items-center justify-center gap-2 bg-[#dc6fd6] hover:bg-[#c05ca8] text-white py-2.5 rounded-lg text-xs font-bold tracking-wider transition-colors cursor-pointer"
-                      >
-                        <ShoppingCart size={14} />
-                        ย้ายลงตะกร้า
-                      </button>
-                      <button
-                        onClick={() => removeFromWishlist(item.id)}
-                        className="flex items-center justify-center px-3 py-2.5 border border-gray-200 rounded-lg text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors cursor-pointer"
-                        title="ลบ"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                    {/* ปุ่มย้ายลงตะกร้า */}
+                    <button
+                      onClick={() => handleMoveToCart(item)}
+                      className="w-full flex items-center justify-center gap-2 bg-[#dc6fd6] hover:bg-[#c05ca8] text-white py-2.5 rounded-lg text-xs font-bold tracking-wider transition-colors cursor-pointer"
+                    >
+                      <ShoppingCart size={14} />
+                      ย้ายลงตะกร้า
+                    </button>
                   </div>
                 </div>
               ))}
