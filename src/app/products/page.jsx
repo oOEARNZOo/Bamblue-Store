@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { supabase } from '../../lib/supabase';
 import { useSearchParams } from 'next/navigation';
-import { Heart } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
 import { 
   ProductGridSkeleton, 
   CategoryFilterSkeleton, 
@@ -123,22 +123,22 @@ function ProductsContent() {
                 <h2 className="text-lg font-bold text-zinc-900 mb-6 tracking-wide border-b border-gray-100 pb-4">หมวดหมู่สินค้า</h2>
                 <ul className="space-y-4 text-sm font-medium text-gray-600">
                     <li>
-                        <button onClick={() => setActiveCategory('all')} className={`transition-colors cursor-pointer ${activeCategory === 'all' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
+                        <button onClick={() => setActiveCategory('all')} className={`transition-colors cursor-pointer category-btn ${activeCategory === 'all' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
                             ทั้งหมด (All)
                         </button>
                     </li>
                     <li>
-                        <button onClick={() => setActiveCategory('shirt')} className={`transition-colors cursor-pointer ${activeCategory === 'shirt' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
+                        <button onClick={() => setActiveCategory('shirt')} className={`transition-colors cursor-pointer category-btn ${activeCategory === 'shirt' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
                             เสื้อ (Shirts)
                         </button>
                     </li>
                     <li>
-                        <button onClick={() => setActiveCategory('dress')} className={`transition-colors cursor-pointer ${activeCategory === 'dress' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
+                        <button onClick={() => setActiveCategory('dress')} className={`transition-colors cursor-pointer category-btn ${activeCategory === 'dress' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
                             เดรส (Dresses)
                         </button>
                     </li>
                     <li>
-                        <button onClick={() => setActiveCategory('set')} className={`transition-colors cursor-pointer ${activeCategory === 'set' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
+                        <button onClick={() => setActiveCategory('set')} className={`transition-colors cursor-pointer category-btn ${activeCategory === 'set' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
                             ชุดเซ็ต (Sets)
                         </button>
                     </li>
@@ -161,16 +161,16 @@ function ProductsContent() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
                         {filteredProducts.map(product => (
-                            <Link key={product.id} href={`/product/${product.id}`} className="group cursor-pointer">
+                            <Link key={product.id} href={`/product/${product.id}`} className="group cursor-pointer card-hover">
                                 {/* 🖼️ ใช้ ProductImage แทน img tag */}
-                                <div className="relative mb-4 rounded-md overflow-hidden">
+                                <div className="relative mb-4 rounded-2xl overflow-hidden product-card-img">
                                     <ProductImage
                                         src={product.image}
                                         alt={product.nameEN}
-                                        className="rounded-md"
+                                        className="rounded-2xl"
                                     />
 
-                                    {/* ปุ่มกดถูกใจ (Wishlist) พร้อม Slide confirmation */}
+                                    {/* ปุ่ม Wishlist */}
                                     <div className="absolute top-3 right-3 z-10">
                                         <div 
                                             className="flex items-center bg-white/95 backdrop-blur-sm rounded-full shadow-lg overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
@@ -215,18 +215,25 @@ function ProductsContent() {
                                         </div>
                                     </div>
 
-                                    <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                    {/* ปุ่ม Add to Cart - แยกออกมาต่างหาก */}
+                                    <div className="absolute top-14 right-3 z-10">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 e.preventDefault();
                                                 addToCart({ ...product, quantity: 1 });
                                             }}
-                                            className="cursor-pointer w-full bg-white/95 backdrop-blur-sm text-zinc-900 hover:bg-zinc-900 hover:text-white py-3 rounded text-sm font-bold tracking-widest transition-colors shadow-lg"
+                                            className="p-2 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-[#dc6fd6] transition-colors cursor-pointer group/cart w-[34px] h-[34px] flex items-center justify-center"
+                                            title="เพิ่มลงตะกร้า"
                                         >
-                                            ADD TO CART
+                                            <ShoppingCart
+                                                size={18}
+                                                strokeWidth={1.5}
+                                                className="text-gray-500 group-hover/cart:text-white transition-colors"
+                                            />
                                         </button>
                                     </div>
+
                                 </div>
 
                                 <div>

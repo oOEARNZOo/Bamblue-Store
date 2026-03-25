@@ -7,7 +7,6 @@ import { Search, User, ShoppingCart, Minus, Plus, Trash2, Menu, X, Heart } from 
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useRouter } from 'next/navigation';
-import { productsData } from '../../data/products';
 import { supabase } from '../../lib/supabase';
 import { CartSkeleton } from './LoadingSkeletons';
 
@@ -29,6 +28,7 @@ export default function Navbar() {
 
   const popularSearches = ['เสื้อ', 'เดรส', 'ชุดเซ็ต', 'Dress'];
   const [recentSearches, setRecentSearches] = useState([]);
+  const [productsData, setProductsData] = useState([]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -79,6 +79,20 @@ export default function Navbar() {
   useEffect(() => {
     const savedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
     setRecentSearches(savedSearches);
+  }, []);
+
+  // ดึงข้อมูลสินค้าจาก Supabase สำหรับใช้ในช่องค้นหา
+  useEffect(() => {
+    async function fetchProducts() {
+      const { data, error } = await supabase
+        .from('products1')
+        .select('*');
+      
+      if (!error && data) {
+        setProductsData(data);
+      }
+    }
+    fetchProducts();
   }, []);
 
   const handleSearch = (term) => {
@@ -236,7 +250,7 @@ export default function Navbar() {
               </button>
 
               {isProfileOpen && (
-                <div className="absolute top-full right-0 mt-3 w-56 bg-white shadow-xl border border-gray-100 rounded-lg p-2 z-50">
+                <div className="absolute top-full right-0 mt-3 w-56 bg-white shadow-xl border border-gray-100 rounded-lg p-2 z-50 dropdown-animate">
                   <div className="px-4 py-3 border-b border-gray-100 mb-2">
                     <p className="text-xs text-gray-500 mb-1">เข้าสู่ระบบด้วย</p>
                     <p className="text-sm font-semibold text-gray-800 truncate">{user.email}</p>
@@ -309,7 +323,7 @@ export default function Navbar() {
             </button>
 
             {isCartOpen && (
-              <div className="absolute top-full right-0 mt-3 w-80 bg-white shadow-xl border border-gray-100 rounded-lg p-4 z-50 cursor-default">
+              <div className="absolute top-full right-0 mt-3 w-80 bg-white shadow-xl border border-gray-100 rounded-lg p-4 z-50 cursor-default dropdown-animate">
                 <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
                   <h3 className="text-sm font-bold text-gray-800">
                     ตะกร้าสินค้า ({totalQuantity} ชิ้น)
@@ -373,7 +387,7 @@ export default function Navbar() {
       )}
 
       {isSearchOpen && (
-        <div ref={searchRef} className="absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-100 py-8 px-6 z-40 cursor-default">
+        <div ref={searchRef} className="absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-100 py-8 px-6 z-40 cursor-default animate-fade-in-down">
           {/* ส่วนค้นหาเหมือนเดิม ไม่ได้ปรับแก้ครับ */}
           <div className="max-w-4xl mx-auto">
             <div className="relative w-full mb-8">

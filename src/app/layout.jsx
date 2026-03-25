@@ -6,6 +6,7 @@ import { WishlistProvider } from './context/WishlistContext';
 // 🌟 1. นำเข้า Toaster จาก react-hot-toast
 import { Toaster } from 'react-hot-toast'; 
 import { Prompt } from 'next/font/google';
+import PageTransition from './components/PageTransition';
 
 // 🌟 ตั้งค่าฟอนต์ Prompt (รองรับทั้งภาษาไทยและอังกฤษ)
 const prompt = Prompt({
@@ -78,7 +79,9 @@ export default function RootLayout({ children }) {
         <CartProvider>
         <WishlistProvider>
           <Navbar />
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
           <Footer />
           
           {/* 🌟 2. เพิ่ม Toaster ไว้ล่างสุด และตั้งค่าสีให้เข้ากับธีมเว็บเรา */}

@@ -16,3 +16,196 @@
     color: #333333;
   }
 }
+
+/* ============================================
+   🎨 SMOOTH ANIMATIONS FOR BAMBLUE STORE
+   ============================================ */
+
+/* 🌟 Page Transition - Fade In */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🌟 Fade In Up */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🌟 Fade In Down */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🌟 Scale In */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 🌟 Slide In From Left */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 🌟 Slide In From Right */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 🌟 Shimmer for loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ============================================
+   🎯 UTILITY CLASSES
+   ============================================ */
+
+@layer utilities {
+  /* Page Enter Animation */
+  .animate-page-enter {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  /* Fade Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out forwards;
+  }
+  
+  .animate-fade-in-down {
+    animation: fadeInDown 0.25s ease-out forwards;
+  }
+
+  /* Scale Animation */
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  /* Slide Animations */
+  .animate-slide-in-left {
+    animation: slideInLeft 0.35s ease-out forwards;
+  }
+  
+  .animate-slide-in-right {
+    animation: slideInRight 0.35s ease-out forwards;
+  }
+
+  /* Stagger Animation Delays */
+  .delay-75 { animation-delay: 75ms; }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+
+  /* Card Hover - ยกขึ้นเฉยๆ ไม่มี shadow */
+  .card-hover {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-hover:hover {
+    transform: translateY(-6px);
+  }
+
+  /* Button Press Effect */
+  .btn-press:active {
+    transform: scale(0.97);
+  }
+
+  /* Image Zoom on Hover */
+  .img-zoom {
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .img-zoom:hover {
+    transform: scale(1.06);
+  }
+
+  /* Category Button Animation */
+  .category-btn {
+    transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Dropdown Animation */
+  .dropdown-animate {
+    animation: fadeInDown 0.2s ease-out forwards;
+  }
+
+  /* Modal Animation */
+  .modal-animate {
+    animation: scaleIn 0.25s ease-out forwards;
+  }
+
+  /* Skeleton Loading Shimmer */
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+/* ============================================
+   🔄 SMOOTH SCROLL & GLOBAL TRANSITIONS
+   ============================================ */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Global smooth transitions for interactive elements */
+a, button {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Product Card Image Zoom */
+.product-card-img {
+  overflow: hidden;
+}
+.product-card-img img {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.product-card-img:hover img {
+  transform: scale(1.06);
+}
