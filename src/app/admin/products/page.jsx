@@ -31,7 +31,11 @@ export default function ProductManagementPage() {
     price: '',
     category: 'shirt',
     image: '',
-    images: []
+    images: [],
+    stock: 99,
+    is_new: false,
+    discount_percent: 0,
+    original_price: ''
   });
   const [newImageUrl, setNewImageUrl] = useState('');
 
@@ -89,7 +93,11 @@ export default function ProductManagementPage() {
         price: parseFloat(formData.price),
         category: formData.category,
         image: formData.images[0] || formData.image,
-        images: formData.images
+        images: formData.images,
+        stock: parseInt(formData.stock) || 99,
+        is_new: formData.is_new,
+        discount_percent: parseInt(formData.discount_percent) || 0,
+        original_price: formData.discount_percent > 0 ? parseFloat(formData.original_price) || parseFloat(formData.price) : null
       };
 
       if (editingProduct) {
@@ -132,7 +140,11 @@ export default function ProductManagementPage() {
         price: '',
         category: 'shirt',
         image: '',
-        images: []
+        images: [],
+        stock: 99,
+        is_new: false,
+        discount_percent: 0,
+        original_price: ''
       });
       setNewImageUrl('');
       fetchProducts();
@@ -156,7 +168,11 @@ export default function ProductManagementPage() {
       price: product.price || '',
       category: product.category || 'shirt',
       image: product.image || '',
-      images: product.images || (product.image ? [product.image] : [])
+      images: product.images || (product.image ? [product.image] : []),
+      stock: product.stock ?? 99,
+      is_new: product.is_new || false,
+      discount_percent: product.discount_percent || 0,
+      original_price: product.original_price || product.price || ''
     });
     setNewImageUrl('');
     setIsModalOpen(true);
@@ -355,16 +371,53 @@ export default function ProductManagementPage() {
                   <img
                     src={product.image}
                     alt={product.nameEN}
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover ${product.stock === 0 ? 'opacity-50' : ''}`}
                   />
+                  {/* Badges */}
+                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    {product.is_new && (
+                      <span className="bg-emerald-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        NEW
+                      </span>
+                    )}
+                    {product.discount_percent > 0 && (
+                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        -{product.discount_percent}%
+                      </span>
+                    )}
+                    {product.stock === 0 && (
+                      <span className="bg-gray-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        หมด
+                      </span>
+                    )}
+                  </div>
+                  {/* Stock Badge */}
+                  <div className="absolute bottom-2 right-2">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${product.stock > 10 ? 'bg-green-100 text-green-700' : product.stock > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                      คลัง: {product.stock ?? 99}
+                    </span>
+                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">{product.nameEN}</h3>
                   <p className="text-sm text-gray-500 mb-2 line-clamp-1">{product.nameTH}</p>
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-lg font-bold text-[#dc6fd6]">
-                      ฿{product.price?.toLocaleString() || 0}
-                    </p>
+                    <div>
+                      {product.discount_percent > 0 ? (
+                        <div className="flex items-center gap-1">
+                          <p className="text-sm text-gray-400 line-through">
+                            ฿{(product.original_price || product.price)?.toLocaleString()}
+                          </p>
+                          <p className="text-lg font-bold text-red-500">
+                            ฿{Math.round(product.price * (1 - product.discount_percent / 100)).toLocaleString()}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-lg font-bold text-[#dc6fd6]">
+                          ฿{product.price?.toLocaleString() || 0}
+                        </p>
+                      )}
+                    </div>
                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                       {product.category}
                     </span>
@@ -468,6 +521,104 @@ export default function ProductManagementPage() {
                     <option value="dress">เดรส</option>
                     <option value="set">ชุดเซ็ต</option>
                   </select>
+                </div>
+              </div>
+
+              {/* 📦 ส่วนจัดการ Stock, Badges, Discount */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                <h3 className="font-semibold text-gray-800 text-sm">จัดการสต็อกและโปรโมชั่น</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Stock */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      จำนวนในคลัง
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none"
+                      placeholder="99"
+                    />
+                  </div>
+
+                  {/* Discount */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ส่วนลด (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formData.discount_percent}
+                      onChange={(e) => setFormData({ ...formData, discount_percent: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Original Price (แสดงเมื่อมีส่วนลด) */}
+                {formData.discount_percent > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ราคาเดิม (ก่อนลด)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.original_price}
+                      onChange={(e) => setFormData({ ...formData, original_price: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none"
+                      placeholder={formData.price || 'ราคาเดิม'}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      ราคาหลังลด: ฿{formData.price ? Math.round(formData.price * (1 - formData.discount_percent / 100)).toLocaleString() : 0}
+                    </p>
+                  </div>
+                )}
+
+                {/* Is New Toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">สินค้าใหม่</label>
+                    <p className="text-xs text-gray-500">แสดง badge "NEW" บนสินค้า</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, is_new: !formData.is_new })}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${formData.is_new ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                  >
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_new ? 'left-7' : 'left-1'}`}></span>
+                  </button>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, stock: 0 })}
+                    className="text-xs px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    ตั้งเป็นหมด
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, stock: 99 })}
+                    className="text-xs px-3 py-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
+                  >
+                    รีเซ็ตสต็อก (99)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, discount_percent: 0, original_price: '' })}
+                    className="text-xs px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    ยกเลิกส่วนลด
+                  </button>
                 </div>
               </div>
 

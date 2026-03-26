@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useCart } from '../context/CartContext';
@@ -161,90 +161,123 @@ function ProductsContent() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
                         {filteredProducts.map(product => (
-                            <Link key={product.id} href={`/product/${product.id}`} className="group cursor-pointer card-hover">
-                                {/* 🖼️ ใช้ ProductImage แทน img tag */}
-                                <div className="relative mb-4 rounded-2xl overflow-hidden product-card-img">
-                                    <ProductImage
-                                        src={product.image}
-                                        alt={product.nameEN}
-                                        className="rounded-2xl"
-                                    />
+                            <div key={product.id} className="group cursor-pointer card-hover relative">
+                                {/* 🌟 Badges */}
+                                <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
+                                    {product.is_new && (
+                                        <span className="bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                                            NEW
+                                        </span>
+                                    )}
+                                    {product.discount_percent > 0 && (
+                                        <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                                            -{product.discount_percent}%
+                                        </span>
+                                    )}
+                                    {product.stock === 0 && (
+                                        <span className="bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                                            หมด
+                                        </span>
+                                    )}
+                                </div>
 
-                                    {/* ปุ่ม Wishlist */}
-                                    <div className="absolute top-3 right-3 z-10">
-                                        <div 
-                                            className="flex items-center bg-white/95 backdrop-blur-sm rounded-full shadow-lg overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                                            style={{
-                                                width: confirmRemove === product.id ? '120px' : '34px',
-                                            }}
-                                        >
-                                            {confirmRemove === product.id ? (
-                                                /* ปุ่มยกเลิก + ลบออก */
-                                                <div className="flex items-center gap-1 px-1.5 py-1 w-full animate-in fade-in duration-200">
+                                <Link href={`/product/${product.id}`}>
+                                    <div className={`relative mb-4 rounded-2xl overflow-hidden product-card-img ${product.stock === 0 ? 'opacity-60' : ''}`}>
+                                        <ProductImage
+                                            src={product.image}
+                                            alt={product.nameEN}
+                                            className="rounded-2xl"
+                                        />
+
+                                        {/* ปุ่ม Wishlist */}
+                                        <div className="absolute top-3 right-3 z-10">
+                                            <div 
+                                                className="flex items-center bg-white/95 backdrop-blur-sm rounded-full shadow-lg overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                                                style={{
+                                                    width: confirmRemove === product.id ? '120px' : '34px',
+                                                }}
+                                            >
+                                                {confirmRemove === product.id ? (
+                                                    <div className="flex items-center gap-1 px-1.5 py-1 w-full animate-in fade-in duration-200">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                e.preventDefault();
+                                                                setConfirmRemove(null);
+                                                            }}
+                                                            className="px-2 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer whitespace-nowrap"
+                                                        >
+                                                            ยกเลิก
+                                                        </button>
+                                                        <button
+                                                            onClick={confirmRemoveWishlist}
+                                                            className="px-2.5 py-1 bg-red-500 text-white text-xs font-medium rounded-full hover:bg-red-600 transition-colors cursor-pointer whitespace-nowrap"
+                                                        >
+                                                            ลบ
+                                                        </button>
+                                                    </div>
+                                                ) : (
                                                     <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            e.preventDefault();
-                                                            setConfirmRemove(null);
-                                                        }}
-                                                        className="px-2 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer whitespace-nowrap"
+                                                        onClick={(e) => handleWishlistClick(e, product)}
+                                                        className="p-2 hover:bg-pink-50 transition-colors cursor-pointer group/btn"
+                                                        title={isInWishlist(product.id) ? "ลบออกจากรายการโปรด" : "เพิ่มลงรายการโปรด"}
                                                     >
-                                                        ยกเลิก
+                                                        <Heart
+                                                            size={18}
+                                                            strokeWidth={1.5}
+                                                            className={`transition-colors ${isInWishlist(product.id) ? 'text-[#dc6fd6] fill-[#dc6fd6]' : 'text-gray-500 group-hover/btn:text-[#dc6fd6]'}`}
+                                                        />
                                                     </button>
-                                                    <button
-                                                        onClick={confirmRemoveWishlist}
-                                                        className="px-2.5 py-1 bg-red-500 text-white text-xs font-medium rounded-full hover:bg-red-600 transition-colors cursor-pointer whitespace-nowrap"
-                                                    >
-                                                        ลบ
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                /* ปุ่มหัวใจ */
-                                                <button
-                                                    onClick={(e) => handleWishlistClick(e, product)}
-                                                    className="p-2 hover:bg-pink-50 transition-colors cursor-pointer group/btn"
-                                                    title={isInWishlist(product.id) ? "ลบออกจากรายการโปรด" : "เพิ่มลงรายการโปรด"}
-                                                >
-                                                    <Heart
-                                                        size={18}
-                                                        strokeWidth={1.5}
-                                                        className={`transition-colors ${isInWishlist(product.id) ? 'text-[#dc6fd6] fill-[#dc6fd6]' : 'text-gray-500 group-hover/btn:text-[#dc6fd6]'}`}
-                                                    />
-                                                </button>
-                                            )}
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-
-                                    {/* ปุ่ม Add to Cart - แยกออกมาต่างหาก */}
-                                    <div className="absolute top-14 right-3 z-10">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                addToCart({ ...product, quantity: 1 });
-                                            }}
-                                            className="p-2 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-[#dc6fd6] transition-colors cursor-pointer group/cart w-[34px] h-[34px] flex items-center justify-center"
-                                            title="เพิ่มลงตะกร้า"
-                                        >
-                                            <ShoppingCart
-                                                size={18}
-                                                strokeWidth={1.5}
-                                                className="text-gray-500 group-hover/cart:text-white transition-colors"
-                                            />
-                                        </button>
-                                    </div>
-
-                                </div>
+                                </Link>
 
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{product.nameEN}</h3>
-                                    <p className="text-xs text-gray-500 mt-1 mb-2 line-clamp-1">{product.nameTH}</p>
+                                    <Link href={`/product/${product.id}`}>
+                                        <h3 className="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-[#dc6fd6] transition-colors">{product.nameEN}</h3>
+                                        <p className="text-xs text-gray-500 mt-1 mb-2 line-clamp-1">{product.nameTH}</p>
+                                    </Link>
 
-                                    <p className="text-sm font-semibold text-pink-500">
-                                        ฿{product.price ? product.price.toLocaleString() : 0}
-                                    </p>
+                                    {/* 💰 ราคา (แสดงราคาลดถ้ามีส่วนลด) */}
+                                    <div className="mb-3">
+                                        {product.discount_percent > 0 ? (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm text-gray-400 line-through">
+                                                    ฿{(product.original_price || product.price).toLocaleString()}
+                                                </span>
+                                                <span className="text-sm text-red-500 font-bold">
+                                                    ฿{Math.round(product.price * (1 - product.discount_percent / 100)).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm font-semibold text-[#dc6fd6]">
+                                                ฿{product.price ? product.price.toLocaleString() : 0}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* 🛒 ปุ่มเพิ่มลงตะกร้า */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            if (product.stock !== 0) {
+                                                addToCart({ ...product, quantity: 1 });
+                                            }
+                                        }}
+                                        disabled={product.stock === 0}
+                                        className={`w-full py-2 text-xs font-semibold tracking-widest rounded-lg transition-all cursor-pointer ${
+                                            product.stock === 0 
+                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                                : 'border border-gray-300 text-gray-600 hover:bg-[#dc6fd6] hover:text-white hover:border-[#dc6fd6]'
+                                        }`}
+                                    >
+                                        {product.stock === 0 ? 'SOLD OUT' : 'ADD TO CART'}
+                                    </button>
                                 </div>
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 )}

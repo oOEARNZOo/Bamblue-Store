@@ -29,6 +29,7 @@ export default function Navbar() {
   const popularSearches = ['เสื้อ', 'เดรส', 'ชุดเซ็ต', 'Dress'];
   const [recentSearches, setRecentSearches] = useState([]);
   const [productsData, setProductsData] = useState([]);
+  const [selectedIndex, setSelectedIndex] = useState(-1); // สำหรับ Keyboard Navigation
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -87,7 +88,7 @@ export default function Navbar() {
       const { data, error } = await supabase
         .from('products1')
         .select('*');
-      
+
       if (!error && data) {
         setProductsData(data);
       }
@@ -136,6 +137,7 @@ export default function Navbar() {
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
+    setSelectedIndex(-1); // รีเซ็ต index เมื่อพิมพ์ใหม่
 
     if (value.trim().length > 0) {
       const q = value.toLowerCase();
@@ -147,6 +149,49 @@ export default function Navbar() {
       setSuggestions(filtered);
     } else {
       setSuggestions([]);
+    }
+  };
+
+  // ฟังก์ชันจัดการ Keyboard Navigation
+  const handleKeyDown = (e) => {
+    if (suggestions.length === 0) {
+      if (e.key === 'Enter') handleSearch(searchInput);
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < suggestions.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev > 0 ? prev - 1 : suggestions.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0 && suggestions[selectedIndex]) {
+          const item = suggestions[selectedIndex];
+          const term = item.nameEN;
+          const updatedSearches = [term, ...recentSearches.filter(t => t !== term)].slice(0, 5);
+          setRecentSearches(updatedSearches);
+          localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
+          router.push(`/product/${item.id}`);
+          setIsSearchOpen(false);
+          setSearchInput('');
+          setSuggestions([]);
+        } else {
+          handleSearch(searchInput);
+        }
+        break;
+      case 'Escape':
+        setIsSearchOpen(false);
+        setSuggestions([]);
+        break;
     }
   };
 
@@ -217,20 +262,28 @@ export default function Navbar() {
               setIsCartOpen(false);
               setIsProfileOpen(false);
             }}
-            className={`cursor-pointer transition-colors border-none bg-transparent py-2 ${isSearchOpen ? 'text-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}
+            className={`cursor-pointer transition-colors border-none bg-transparent py-2 flex items-center gap-1.5 ${isSearchOpen ? 'text-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}
           >
             <Search size={22} strokeWidth={1.5} />
+            <div className="hidden md:flex flex-col items-start">
+              <span className="text-[10px] text-gray-600 leading-tight">ค้นหา</span>
+              <span className="text-[9px] text-gray-400 leading-tight">ใส่คำค้นหาของคุณ</span>
+            </div>
           </button>
 
           {/* ปุ่ม Wishlist บน Navbar */}
           <Link
             href={user ? "/wishlist" : "/login"}
-            className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center"
+            className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5"
             title="รายการโปรด"
           >
             <Heart size={22} strokeWidth={1.5} />
+            <div className="hidden md:flex flex-col items-start">
+              <span className="text-[10px] text-gray-600 leading-tight">ยินดีต้อนรับ</span>
+              <span className="text-[9px] text-gray-400 leading-tight">รายการโปรด</span>
+            </div>
             {wishlistItems.length > 0 && (
-              <span className="absolute top-0 -right-2 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+              <span className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                 {wishlistItems.length}
               </span>
             )}
@@ -244,9 +297,15 @@ export default function Navbar() {
                   setIsCartOpen(false);
                   setIsSearchOpen(false);
                 }}
-                className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center"
+                className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5"
               >
                 <User size={22} strokeWidth={1.5} className="text-[#dc6fd6]" />
+                <div className="hidden md:flex flex-col items-start">
+                  <span className="text-[10px] text-gray-600 leading-tight">หน้าสมาชิก</span>
+                  <span className="text-[9px] text-gray-800 font-medium leading-tight">
+                    {user.user_metadata?.full_name || user.email?.split('@')[0].toUpperCase()}
+                  </span>
+                </div>
               </button>
 
               {isProfileOpen && (
@@ -300,8 +359,12 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <Link href="/login" className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center">
+            <Link href="/login" className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5">
               <User size={22} strokeWidth={1.5} />
+              <div className="hidden md:flex flex-col items-start">
+                <span className="text-[10px] text-gray-600 leading-tight">หน้าสมาชิก</span>
+                <span className="text-[9px] text-gray-800 font-medium leading-tight">เข้าสู่ระบบ</span>
+              </div>
             </Link>
           )}
 
@@ -312,11 +375,15 @@ export default function Navbar() {
                 setIsSearchOpen(false);
                 setIsProfileOpen(false);
               }}
-              className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors flex items-center py-2 bg-transparent border-none"
+              className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors flex items-center gap-1.5 py-2 bg-transparent border-none"
             >
               <ShoppingCart size={22} strokeWidth={1.5} />
+              <div className="hidden md:flex flex-col items-start">
+                <span className="text-[10px] text-gray-600 leading-tight">YOUR CART</span>
+                <span className="text-[9px] text-gray-400 leading-tight">฿{calculateTotal().toLocaleString()}</span>
+              </div>
               {cartItemCount > 0 && (
-                <span className="absolute top-0 -right-2 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                <span className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                   {cartItemCount}
                 </span>
               )}
@@ -387,49 +454,84 @@ export default function Navbar() {
       )}
 
       {isSearchOpen && (
-        <div ref={searchRef} className="absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-100 py-8 px-6 z-40 cursor-default animate-fade-in-down">
-          {/* ส่วนค้นหาเหมือนเดิม ไม่ได้ปรับแก้ครับ */}
+        <div ref={searchRef} className="absolute top-full left-0 w-full bg-white shadow-xl border-t border-gray-100 py-8 px-6 z-40 cursor-default animate-fade-in-down">
           <div className="max-w-4xl mx-auto">
+            {/* 🔍 ช่องค้นหาพร้อมไอคอน */}
             <div className="relative w-full mb-8">
-              <input
-                type="text"
-                placeholder="ค้นหาสินค้า เช่น เสื้อ, Butterfly..."
-                className="w-full bg-transparent border-b-2 border-gray-200 focus:border-[#dc6fd6] py-2 focus:outline-none text-gray-800 text-lg transition-colors"
-                autoFocus
-                value={searchInput}
-                onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch(searchInput);
-                  }
-                }}
-              />
-              {suggestions.length > 0 && (
-                <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden z-50">
-                  {suggestions.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        const term = item.nameEN;
-                        const updatedSearches = [term, ...recentSearches.filter(t => t !== term)].slice(0, 5);
-                        setRecentSearches(updatedSearches);
-                        localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
-
-                        router.push(`/product/${item.id}`);
-                        setIsSearchOpen(false);
-                        setSearchInput('');
-                        setSuggestions([]);
-                      }}
-                      className="w-full text-left px-4 py-3 flex items-center gap-4 hover:bg-pink-50 transition-colors border-b border-gray-50 last:border-none cursor-pointer"
-                    >
-                      <img src={item.image} alt={item.nameEN} className="w-12 h-16 object-cover rounded bg-gray-100 shrink-0" />
-                      <div>
-                        <p className="text-sm font-bold text-zinc-800 line-clamp-1">{item.nameEN}</p>
-                        <p className="text-xs text-gray-500 line-clamp-1">{item.nameTH}</p>
-                        <p className="text-xs font-bold text-[#dc6fd6] mt-1">{item.price}</p>
+              <div className="relative">
+                <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="ค้นหาสินค้า เช่น เสื้อ, Butterfly, Dress..."
+                  className="w-full pl-8 bg-transparent border-b-2 border-gray-200 focus:border-[#dc6fd6] py-3 focus:outline-none text-gray-800 text-lg transition-colors"
+                  autoFocus
+                  value={searchInput}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                />
+                {searchInput && (
+                  <button 
+                    onClick={() => { setSearchInput(''); setSuggestions([]); setSelectedIndex(-1); }}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+              
+              {/* 💡 Keyboard hint */}
+              {searchInput && (
+                <p className="text-xs text-gray-400 mt-2">
+                  กด <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-mono">↑</kbd> <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-mono">↓</kbd> เพื่อเลือก, <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-mono">Enter</kbd> เพื่อยืนยัน
+                </p>
+              )}
+              
+              {/* 🎯 Suggestions Dropdown */}
+              {searchInput.trim().length > 0 && (
+                <div className="absolute top-full left-0 w-full mt-3 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden z-50">
+                  {suggestions.length > 0 ? (
+                    <>
+                      <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+                        <p className="text-xs text-gray-500">พบ {suggestions.length} รายการ</p>
                       </div>
-                    </button>
-                  ))}
+                      {suggestions.map((item, index) => (
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            const term = item.nameEN;
+                            const updatedSearches = [term, ...recentSearches.filter(t => t !== term)].slice(0, 5);
+                            setRecentSearches(updatedSearches);
+                            localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
+                            router.push(`/product/${item.id}`);
+                            setIsSearchOpen(false);
+                            setSearchInput('');
+                            setSuggestions([]);
+                          }}
+                          className={`w-full text-left px-4 py-3 flex items-center gap-4 transition-colors border-b border-gray-50 last:border-none cursor-pointer ${
+                            index === selectedIndex ? 'bg-pink-50 border-l-4 border-l-[#dc6fd6]' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <img src={item.image} alt={item.nameEN} className="w-14 h-18 object-cover rounded-lg bg-gray-100 shrink-0 shadow-sm" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-zinc-800 line-clamp-1">{item.nameEN}</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">{item.nameTH}</p>
+                            <p className="text-sm font-bold text-[#dc6fd6] mt-1">฿{Number(item.price).toLocaleString()}</p>
+                          </div>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-gray-400">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                          </svg>
+                        </button>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="px-6 py-8 text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Search className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-600 font-medium mb-1">ไม่พบสินค้าที่ค้นหา</p>
+                      <p className="text-sm text-gray-400">ลองค้นหาด้วยคำอื่น เช่น "เสื้อ" หรือ "Dress"</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

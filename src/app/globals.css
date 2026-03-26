@@ -12,7 +12,8 @@
 /* ตั้งค่าพื้นหลังของเว็บให้เป็นสีชมพูอ่อนๆ สไตล์พาสเทล */
 @layer base {
   body {
-    background-color: #fdf2f8;
+    background: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 50%, #fce7f3 100%);
+    background-attachment: fixed;
     color: #333333;
   }
 }
