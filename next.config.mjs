@@ -8,11 +8,7 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
-  // ⚡ Experimental Features for Better Performance
-  experimental: {
-    optimizeCss: true,
-  },
-
+  
   // 🖼️ Image Optimization Config
   images: {
     // รองรับ External Images จาก Supabase และ CDN อื่นๆ
