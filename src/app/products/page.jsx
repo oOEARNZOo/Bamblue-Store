@@ -1,5 +1,5 @@
  "use client";
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -20,7 +20,8 @@ function ProductsContent() {
     const [activeCategory, setActiveCategory] = useState('all');
     const [confirmRemove, setConfirmRemove] = useState(null);
 
-    const handleWishlistClick = (e, product) => {
+    // useCallback เพื่อ optimize - ไม่สร้างฟังก์ชันใหม่ทุกครั้งที่ re-render
+    const handleWishlistClick = useCallback((e, product) => {
         e.stopPropagation();
         e.preventDefault();
         if (isInWishlist(product.id)) {
@@ -28,16 +29,16 @@ function ProductsContent() {
         } else {
             addToWishlist(product);
         }
-    };
+    }, [isInWishlist, addToWishlist]);
 
-    const confirmRemoveWishlist = (e) => {
+    const confirmRemoveWishlist = useCallback((e) => {
         e.stopPropagation();
         e.preventDefault();
         if (confirmRemove) {
             removeFromWishlist(confirmRemove);
             setConfirmRemove(null);
         }
-    };
+    }, [confirmRemove, removeFromWishlist]);
 
     // สร้าง State มารับข้อมูลสินค้าจาก Supabase และ State สำหรับ Loading
     const [productsData, setProductsData] = useState([]);
@@ -75,24 +76,26 @@ function ProductsContent() {
         fetchProducts();
     }, []);
 
-    // ฟังก์ชันกรองสินค้าตามหมวดหมู่ "และ" คำค้นหา
-    const filteredProducts = productsData.filter(product => {
-        // 1. เช็คหมวดหมู่ (ถ้าไม่ได้เลือก 'all')
-        const matchCategory = activeCategory === 'all' || product.category === activeCategory;
+    // useMemo เพื่อ optimize - ไม่คำนวณใหม่ถ้า dependencies ไม่เปลี่ยน
+    const filteredProducts = useMemo(() => {
+        return productsData.filter(product => {
+            // 1. เช็คหมวดหมู่ (ถ้าไม่ได้เลือก 'all')
+            const matchCategory = activeCategory === 'all' || product.category === activeCategory;
 
-        // 2. เช็คคำค้นหา (ถ้ามีคนพิมพ์ค้นหามา)
-        let matchSearch = true;
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            matchSearch =
-                (product.nameEN && product.nameEN.toLowerCase().includes(q)) ||
-                (product.nameTH && product.nameTH.toLowerCase().includes(q)) ||
-                (product.category && product.category.toLowerCase().includes(q));
-        }
+            // 2. เช็คคำค้นหา (ถ้ามีคนพิมพ์ค้นหามา)
+            let matchSearch = true;
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                matchSearch =
+                    (product.nameEN && product.nameEN.toLowerCase().includes(q)) ||
+                    (product.nameTH && product.nameTH.toLowerCase().includes(q)) ||
+                    (product.category && product.category.toLowerCase().includes(q));
+            }
 
-        // สินค้าต้องตรงทั้งหมวดหมู่ และ คำค้นหา
-        return matchCategory && matchSearch;
-    });
+            // สินค้าต้องตรงทั้งหมวดหมู่ และ คำค้นหา
+            return matchCategory && matchSearch;
+        });
+    }, [productsData, activeCategory, searchQuery]);
 
     if (isLoading) {
         return (

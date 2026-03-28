@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useCart } from './context/CartContext';
 import { useWishlist } from './context/WishlistContext';
@@ -18,19 +18,19 @@ export default function Home() {
   const { addToCart } = useCart();
   const { wishlistItems, addToWishlist, removeFromWishlist } = useWishlist();
 
-  // ตรวจสอบว่าสินค้าอยู่ใน wishlist หรือไม่
-  const isInWishlist = (productId) => {
+  // ตรวจสอบว่าสินค้าอยู่ใน wishlist หรือไม่ (useCallback เพื่อ optimize)
+  const isInWishlist = useCallback((productId) => {
     return wishlistItems.some(item => item.id === productId);
-  };
+  }, [wishlistItems]);
 
-  // Toggle wishlist
-  const toggleWishlist = (item) => {
-    if (isInWishlist(item.id)) {
+  // Toggle wishlist (useCallback เพื่อ optimize)
+  const toggleWishlist = useCallback((item) => {
+    if (wishlistItems.some(i => i.id === item.id)) {
       removeFromWishlist(item.id);
     } else {
       addToWishlist(item);
     }
-  };
+  }, [wishlistItems, addToWishlist, removeFromWishlist]);
 
   // 🌟 2. สร้าง State สำหรับรับข้อมูลสินค้าใหม่จาก Supabase
   const [newArrivals, setNewArrivals] = useState([]);
@@ -77,62 +77,46 @@ export default function Home() {
   const nextSlide = () => setCurrentSlide((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
   const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
 
-  // 🌟 3. ฟังก์ชันดึงข้อมูลทั้งหมดจาก Supabase
+  // 🌟 3. ฟังก์ชันดึงข้อมูลทั้งหมดจาก Supabase (Optimized with Promise.all)
   useEffect(() => {
     async function fetchAllData() {
       try {
         setIsLoading(true);
         
-        // ดึง New Arrivals (4 ชิ้นแรก)
-        const { data: newData } = await supabase
-          .from('products1')
-          .select('*')
-          .order('id', { ascending: true })
-          .limit(4);
-        setNewArrivals(newData || []);
+        // 🚀 ดึงข้อมูลทั้งหมดพร้อมกัน (Parallel Fetching)
+        const [newArrivalsRes, bestSellersRes, reviewsRes, orderCountRes, ordersDataRes, allReviewsRes] = await Promise.all([
+          // ดึง New Arrivals (4 ชิ้นแรก)
+          supabase.from('products1').select('*').order('id', { ascending: true }).limit(4),
+          // ดึง Best Sellers (4 ชิ้นสุ่ม)
+          supabase.from('products1').select('*').order('id', { ascending: false }).limit(4),
+          // ดึงรีวิวล่าสุด (3 รีวิว)
+          supabase.from('reviews').select('*').order('created_at', { ascending: false }).limit(3),
+          // นับจำนวนออเดอร์
+          supabase.from('orders').select('*', { count: 'exact', head: true }),
+          // ดึง items จาก orders
+          supabase.from('orders').select('items'),
+          // ดึง ratings จากรีวิว
+          supabase.from('reviews').select('rating')
+        ]);
 
-        // ดึง Best Sellers (4 ชิ้นสุ่ม - เรียงจาก id มากไปน้อย)
-        const { data: bestData } = await supabase
-          .from('products1')
-          .select('*')
-          .order('id', { ascending: false })
-          .limit(4);
-        setBestSellers(bestData || []);
+        // Set ข้อมูลสินค้า
+        setNewArrivals(newArrivalsRes.data || []);
+        setBestSellers(bestSellersRes.data || []);
+        setReviews(reviewsRes.data || []);
 
-        // ดึงรีวิวล่าสุด (3 รีวิว)
-        const { data: reviewData } = await supabase
-          .from('reviews')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(3);
-        setReviews(reviewData || []);
-
-        // 📊 ดึงสถิติจาก Supabase
-        // 1. นับจำนวนออเดอร์ (ลูกค้าที่สั่งซื้อ)
-        const { count: orderCount } = await supabase
-          .from('orders')
-          .select('*', { count: 'exact', head: true });
-
-        // 2. นับจำนวนสินค้าที่ขาย (จาก orders)
-        const { data: ordersData } = await supabase
-          .from('orders')
-          .select('items');
-        const totalSold = ordersData?.reduce((sum, order) => {
+        // คำนวณสถิติ
+        const totalSold = ordersDataRes.data?.reduce((sum, order) => {
           const items = order.items || [];
           return sum + items.reduce((itemSum, item) => itemSum + (item.quantity || 1), 0);
         }, 0) || 0;
 
-        // 3. คำนวณคะแนนเฉลี่ยจากรีวิว
-        const { data: allReviews } = await supabase
-          .from('reviews')
-          .select('rating');
-        const totalReviews = allReviews?.length || 0;
+        const totalReviews = allReviewsRes.data?.length || 0;
         const avgRating = totalReviews > 0 
-          ? (allReviews.reduce((sum, r) => sum + (r.rating || 5), 0) / totalReviews).toFixed(1)
+          ? (allReviewsRes.data.reduce((sum, r) => sum + (r.rating || 5), 0) / totalReviews).toFixed(1)
           : 5.0;
 
         setStats({
-          totalCustomers: orderCount || 0,
+          totalCustomers: orderCountRes.count || 0,
           totalSold: totalSold,
           avgRating: avgRating,
           totalReviews: totalReviews
@@ -148,8 +132,8 @@ export default function Home() {
     fetchAllData();
   }, []);
 
-  // สถิติร้านค้า (ดึงจาก Supabase)
-  const statsDisplay = [
+  // สถิติร้านค้า (useMemo เพื่อ optimize - ไม่ต้องคำนวณใหม่ถ้า stats ไม่เปลี่ยน)
+  const statsDisplay = useMemo(() => [
     { 
       label: 'ลูกค้าที่สั่งซื้อ', 
       value: stats.totalCustomers > 0 ? `${stats.totalCustomers.toLocaleString()}+` : '0', 
@@ -171,7 +155,7 @@ export default function Home() {
       value: '1-3 วัน', 
       icon: '🚚' 
     },
-  ];
+  ], [stats]);
 
   return (
     <main className="min-h-screen flex flex-col">
