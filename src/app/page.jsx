@@ -100,6 +100,10 @@ export default function Home() {
         ]);
 
         // Set ข้อมูลสินค้า
+        console.log('🔍 DEBUG - Product images from Supabase:');
+        newArrivalsRes.data?.forEach(p => {
+          console.log(`  Product ${p.id}: ${p.image}`);
+        });
         setNewArrivals(newArrivalsRes.data || []);
         setBestSellers(bestSellersRes.data || []);
         setReviews(reviewsRes.data || []);
