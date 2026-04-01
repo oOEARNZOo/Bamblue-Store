@@ -323,12 +323,6 @@ export default function CheckoutPage() {
               <h2 className="text-xl font-bold text-zinc-900 mb-6 tracking-wide">วิธีการชำระเงิน</h2>
 
               <div className="space-y-3">
-                <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'credit' ? 'border-[#dc6fd6] bg-pink-50/30' : 'border-gray-200 hover:border-gray-300'}`}>
-                  <input type="radio" name="payment" value="credit" checked={paymentMethod === 'credit'} onChange={() => setPaymentMethod('credit')} className="text-[#dc6fd6] focus:ring-[#dc6fd6]" />
-                  <CreditCard className="mx-4 text-gray-500" size={24} />
-                  <span className="font-medium text-gray-900">บัตรเครดิต / เดบิต</span>
-                </label>
-
                 <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'qr' ? 'border-[#dc6fd6] bg-pink-50/30' : 'border-gray-200 hover:border-gray-300'}`}>
                   <input type="radio" name="payment" value="qr" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} className="text-[#dc6fd6] focus:ring-[#dc6fd6]" />
                   <QrCode className="mx-4 text-gray-500" size={24} />
@@ -345,7 +339,7 @@ export default function CheckoutPage() {
 
           </div>
 
-          {/* 🧾 ฝั่งขวา: สรุปออเดอร์ */}
+          {/* ฝั่งขวา: สรุปออเดอร์ */}
           <div className="w-full lg:w-2/5">
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 sticky top-8">
               <h2 className="text-xl font-bold text-zinc-900 mb-6 tracking-wide">สรุปคำสั่งซื้อ</h2>
@@ -439,23 +433,37 @@ export default function CheckoutPage() {
           phoneNumber="0917484417"
           amount={total}
           orderNumber={currentOrderNumber}
+          mockMode={true} // เปลี่ยนเป็น false เมื่อต้องการใช้ระบบจริง
           onClose={() => {
             setShowQRModal(false);
             router.push('/orders');
           }}
-          onSuccess={async () => {
-            // อัปเดตสถานะ order เป็น pending_payment_verification
-            const { error } = await supabase
+          onSuccess={async (paymentData) => {
+            console.log('💰 Payment Data:', paymentData);
+            
+            // อัปเดตสถานะ order เป็น paid (ชำระเงินแล้ว) สำหรับ Mock Mode
+            // หรือ pending_payment_verification สำหรับ Real Mode
+            const newStatus = paymentData?.mockMode ? 'paid' : 'pending_payment_verification';
+            
+            console.log('📊 New Status:', newStatus);
+            console.log('🆔 Order ID:', currentOrderId);
+            
+            const { data, error } = await supabase
               .from('orders')
               .update({ 
-                status: 'pending_payment_verification'
+                status: newStatus,
+                payment_confirmed_at: new Date().toISOString(),
+                payment_method_details: paymentData ? JSON.stringify(paymentData) : null
               })
-              .eq('id', currentOrderId);
+              .eq('id', currentOrderId)
+              .select();
 
             if (error) {
-              console.error('Error updating order status:', error);
+              console.error('❌ Error updating order status:', error);
               throw new Error('ไม่สามารถอัปเดตสถานะออเดอร์ได้: ' + error.message);
             }
+            
+            console.log('✅ Order updated successfully:', data);
             
             setShowQRModal(false);
             router.push('/orders');

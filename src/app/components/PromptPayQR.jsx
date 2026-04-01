@@ -30,7 +30,8 @@ export default function PromptPayQR({
   orderNumber = '',
   onClose,
   onSuccess,
-  onTimeout
+  onTimeout,
+  mockMode = true // เปิด Mock Mode เป็นค่าเริ่มต้น (สำหรับ Portfolio)
 }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [copiedPhone, setCopiedPhone] = useState(false);
@@ -41,6 +42,8 @@ export default function PromptPayQR({
   const [currentStep, setCurrentStep] = useState(1); // 1: สแกน, 2: โอน, 3: ยืนยัน
   const [transactionRef, setTransactionRef] = useState('');
   const [isExpired, setIsExpired] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationProgress, setVerificationProgress] = useState(0);
 
   // สร้าง QR Code ด้วย PromptPay QR API
   useEffect(() => {
@@ -97,21 +100,79 @@ export default function PromptPayQR({
     link.click();
   };
 
-  // ยืนยันการชำระเงิน
+  // ยืนยันการชำระเงิน (Mock Mode + Real Mode)
   const handleConfirmPayment = async () => {
     if (isProcessing || isExpired) return;
+    
+    console.log('🎭 Mock Mode Status:', mockMode);
+    
     setIsProcessing(true);
+    setIsVerifying(true);
     setCurrentStep(3);
     
     try {
-      if (onSuccess) {
-        await onSuccess(transactionRef);
+      if (mockMode) {
+        console.log('✅ Using Mock Mode - Auto verification');
+        // 🎭 Mock Mode - จำลองการตรวจสอบแบบ real-time
+        
+        // Step 1: เชื่อมต่อระบบ (0-30%)
+        for (let i = 0; i <= 30; i += 10) {
+          setVerificationProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        // Step 2: ตรวจสอบธุรกรรม (30-70%)
+        for (let i = 30; i <= 70; i += 10) {
+          setVerificationProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
+        // Step 3: ยืนยันการชำระเงิน (70-100%)
+        for (let i = 70; i <= 100; i += 10) {
+          setVerificationProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        // จำลองความสำเร็จ 95% (5% จะแสดง error เพื่อความสมจริง)
+        const isSuccess = Math.random() > 0.05;
+        
+        if (!isSuccess) {
+          throw new Error('ไม่พบรายการโอนเงิน กรุณาลองใหม่อีกครั้ง');
+        }
+        
+        // สำเร็จ - เรียก callback
+        const paymentData = {
+          transactionRef: transactionRef || `MOCK-${Date.now()}`,
+          amount: amount,
+          timestamp: new Date().toISOString(),
+          mockMode: true
+        };
+        
+        console.log('📤 Sending payment data:', paymentData);
+        
+        if (onSuccess) {
+          await onSuccess(paymentData);
+        }
+        
+      } else {
+        console.log('🔍 Using Real Mode - Manual verification required');
+        // 🔍 Real Mode - ใช้ Payment Gateway API (Omise, 2C2P, etc.)
+        // TODO: เพิ่มการเชื่อมต่อกับ Payment Gateway จริงตรงนี้
+        if (onSuccess) {
+          await onSuccess({
+            transactionRef: transactionRef,
+            mockMode: false
+          });
+        }
       }
+      
       setConfirmed(true);
     } catch (error) {
       console.error('Error confirming payment:', error);
-      alert('เกิดข้อผิดพลาด: ' + error.message);
+      alert('⚠️ ' + error.message);
       setIsProcessing(false);
+      setIsVerifying(false);
+      setVerificationProgress(0);
       setCurrentStep(2);
     }
   };
@@ -234,6 +295,17 @@ export default function PromptPayQR({
             ))}
           </div>
 
+          {/* Mock Mode Badge */}
+          {mockMode && (
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-xl">🎭</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-yellow-900">Demo Mode</p>
+                <p className="text-xs text-yellow-700">ระบบจำลองการตรวจสอบอัตโนมัติ (สำหรับ Portfolio)</p>
+              </div>
+            </div>
+          )}
+
           {/* Order Info */}
           <div className="bg-gray-50 rounded-xl p-4 text-center">
             <p className="text-sm text-gray-500 mb-1">เลขที่ออเดอร์</p>
@@ -353,6 +425,32 @@ export default function PromptPayQR({
             </div>
           </div>
 
+          {/* Verification Progress */}
+          {isVerifying && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-blue-900">
+                  🔍 กำลังตรวจสอบการชำระเงิน...
+                </span>
+                <span className="text-sm font-bold text-blue-600">{verificationProgress}%</span>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-300 ease-out"
+                  style={{ width: `${verificationProgress}%` }}
+                />
+              </div>
+              
+              <p className="text-xs text-blue-600 text-center">
+                {verificationProgress < 30 && '📡 เชื่อมต่อกับระบบธนาคาร...'}
+                {verificationProgress >= 30 && verificationProgress < 70 && '🔎 ตรวจสอบรายการโอนเงิน...'}
+                {verificationProgress >= 70 && '✅ ยืนยันการชำระเงิน...'}
+              </p>
+            </div>
+          )}
+
           {/* Confirm Payment Button */}
           <button
             onClick={handleConfirmPayment}
@@ -366,7 +464,7 @@ export default function PromptPayQR({
             {isProcessing ? (
               <span className="flex items-center justify-center gap-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                กำลังดำเนินการ...
+                {mockMode ? 'กำลังตรวจสอบอัตโนมัติ...' : 'กำลังดำเนินการ...'}
               </span>
             ) : (
               '✅ ชำระเงินแล้ว'
