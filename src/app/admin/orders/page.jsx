@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
-import { 
-  ShoppingCart, 
+import {
+  ShoppingCart,
   Search,
   Eye,
   X,
@@ -91,7 +91,7 @@ export default function OrderManagementPage() {
   const handleStatusChange = async (orderId, newStatus) => {
     // ป้องกันการอัปเดตซ้ำ
     if (updatingOrderId === orderId) return;
-    
+
     // ถ้าเป็นการยกเลิกออเดอร์ ให้แสดง confirmation
     if (newStatus === 'cancelled') {
       toast((t) => (
@@ -139,14 +139,14 @@ export default function OrderManagementPage() {
         .select('id, status')
         .eq('id', orderId)
         .single();
-      
+
       console.log('Existing order:', existingOrder);
-      
+
       if (fetchError) {
         console.error('Error fetching existing order:', fetchError);
         throw fetchError;
       }
-      
+
       if (!existingOrder) {
         console.error('Order not found:', orderId);
         throw new Error('ไม่พบออเดอร์ที่ต้องการอัปเดต');
@@ -168,13 +168,13 @@ export default function OrderManagementPage() {
         }
         throw error;
       }
-      
+
       if (!data || data.length === 0) {
         console.error('No rows updated');
         throw new Error('ไม่สามารถอัปเดตออเดอร์ได้');
       }
 
-      const successMessage = newStatus === 'cancelled' 
+      const successMessage = newStatus === 'cancelled'
         ? 'ยกเลิกออเดอร์สำเร็จ!'
         : `เปลี่ยนสถานะออเดอร์เป็น "${getStatusLabel(newStatus)}" สำเร็จ!`;
 
@@ -191,19 +191,19 @@ export default function OrderManagementPage() {
         .from('orders')
         .select('*, order_items(*)')
         .order('created_at', { ascending: false });
-      
+
       setOrders(updatedOrders || []);
-      
+
       if (selectedOrder?.id === orderId) {
         const updatedOrder = updatedOrders?.find(o => o.id === orderId);
         if (updatedOrder) {
           setSelectedOrder(updatedOrder);
         }
       }
-      
+
       // Force re-render
       setForceUpdate(prev => prev + 1);
-      
+
       console.log('Order status updated successfully');
     } catch (error) {
       console.error('Error updating status:', error);
@@ -226,8 +226,8 @@ export default function OrderManagementPage() {
         <div>
           <p className="font-semibold text-gray-900">อนุมัติการชำระเงิน</p>
           <p className="text-sm text-gray-600 mt-1">
-            ออเดอร์: {order.order_number}<br/>
-            ยอดเงิน: ฿{order.total?.toLocaleString() || order.total_amount?.toLocaleString() || 0}<br/>
+            ออเดอร์: {order.order_number}<br />
+            ยอดเงิน: ฿{order.total?.toLocaleString() || order.total_amount?.toLocaleString() || 0}<br />
             ลูกค้ายืนยันเมื่อ: {order.payment_confirmed_at ? new Date(order.payment_confirmed_at).toLocaleString('th-TH') : 'ไม่ระบุ'}
           </p>
           <p className="text-xs text-orange-600 mt-2">⚠️ กรุณาตรวจสอบ Statement ธนาคารก่อนอนุมัติ</p>
@@ -259,10 +259,10 @@ export default function OrderManagementPage() {
     setUpdatingOrderId(orderId);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const { error } = await supabase
         .from('orders')
-        .update({ 
+        .update({
           status: 'paid',
           payment_verified_at: new Date().toISOString(),
           payment_verified_by: user?.id
@@ -277,8 +277,8 @@ export default function OrderManagementPage() {
       });
 
       // อัปเดต state
-      setOrders(prev => prev.map(order => 
-        order.id === orderId 
+      setOrders(prev => prev.map(order =>
+        order.id === orderId
           ? { ...order, status: 'paid', payment_verified_at: new Date().toISOString() }
           : order
       ));
@@ -356,7 +356,7 @@ export default function OrderManagementPage() {
 
   const filteredOrders = orders.filter(order => {
     const matchStatus = selectedStatus === 'all' || order.status === selectedStatus;
-    const matchSearch = !searchQuery || 
+    const matchSearch = !searchQuery ||
       order.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -512,9 +512,9 @@ export default function OrderManagementPage() {
                           key={`${order.id}-${order.status}-${forceUpdate}`}
                           value={order.status}
                           onChange={(e) => {
-  console.log('Dropdown changed:', order.id, 'to:', e.target.value);
-  handleStatusChange(order.id, e.target.value);
-}}
+                            console.log('Dropdown changed:', order.id, 'to:', e.target.value);
+                            handleStatusChange(order.id, e.target.value);
+                          }}
                           disabled={updatingOrderId === order.id}
                           className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -628,9 +628,9 @@ export default function OrderManagementPage() {
                     key={`${selectedOrder.id}-${selectedOrder.status}-${forceUpdate}`}
                     value={selectedOrder.status}
                     onChange={(e) => {
-  console.log('Modal dropdown changed:', selectedOrder.id, 'to:', e.target.value);
-  handleStatusChange(selectedOrder.id, e.target.value);
-}}
+                      console.log('Modal dropdown changed:', selectedOrder.id, 'to:', e.target.value);
+                      handleStatusChange(selectedOrder.id, e.target.value);
+                    }}
                     disabled={updatingOrderId === selectedOrder.id}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >

@@ -184,7 +184,6 @@ export default function UserManagementPage() {
     const mostUsed = Object.entries(paymentMethods).sort((a, b) => b[1] - a[1])[0]?.[0];
 
     const methodNames = {
-      'credit': 'บัตรเครดิต/เดบิต',
       'qr': 'สแกนจ่าย (PromptPay)',
       'cod': 'เก็บเงินปลายทาง'
     };

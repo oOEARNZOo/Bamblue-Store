@@ -40,32 +40,8 @@ export default function ProductManagementPage() {
   const [newImageUrl, setNewImageUrl] = useState('');
 
   useEffect(() => {
-    checkAdminAccess();
     fetchProducts();
   }, []);
-
-  const checkAdminAccess = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      const isAdminUser = user.email === 'admin@bamblue.com' ||
-        user.email === 'earn.hcg32@gmail.com' ||
-        user.user_metadata?.role === 'admin' ||
-        user.email?.includes('admin');
-
-      if (!isAdminUser) {
-        router.push('/');
-        return;
-      }
-    } catch (error) {
-      console.error('Admin check error:', error);
-      router.push('/login');
-    }
-  };
 
   const fetchProducts = async () => {
     try {
