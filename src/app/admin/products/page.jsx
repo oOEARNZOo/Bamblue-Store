@@ -374,12 +374,6 @@ export default function ProductManagementPage() {
                       </span>
                     )}
                   </div>
-                  {/* Stock Badge */}
-                  <div className="absolute bottom-2 right-2">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${product.stock > 10 ? 'bg-green-100 text-green-700' : product.stock > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                      คลัง: {product.stock ?? 99}
-                    </span>
-                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">{product.nameEN}</h3>
