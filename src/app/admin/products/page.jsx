@@ -35,7 +35,8 @@ export default function ProductManagementPage() {
     stock: 99,
     is_new: false,
     discount_percent: 0,
-    original_price: ''
+    original_price: '',
+    size_stock: { S: 0, M: 0, L: 0, XL: 0 }
   });
   const [newImageUrl, setNewImageUrl] = useState('');
 
@@ -63,6 +64,9 @@ export default function ProductManagementPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // คำนวณ stock รวมจาก size_stock อัตโนมัติ
+      const totalStock = Object.values(formData.size_stock).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
+      
       const productData = {
         nameEN: formData.nameEN,
         nameTH: formData.nameTH,
@@ -70,10 +74,11 @@ export default function ProductManagementPage() {
         category: formData.category,
         image: formData.images[0] || formData.image,
         images: formData.images,
-        stock: parseInt(formData.stock) || 99,
+        stock: totalStock,
         is_new: formData.is_new,
         discount_percent: parseInt(formData.discount_percent) || 0,
-        original_price: formData.discount_percent > 0 ? parseFloat(formData.original_price) || parseFloat(formData.price) : null
+        original_price: formData.discount_percent > 0 ? parseFloat(formData.original_price) || parseFloat(formData.price) : null,
+        size_stock: formData.size_stock
       };
 
       if (editingProduct) {
@@ -120,7 +125,8 @@ export default function ProductManagementPage() {
         stock: 99,
         is_new: false,
         discount_percent: 0,
-        original_price: ''
+        original_price: '',
+        size_stock: { S: 0, M: 0, L: 0, XL: 0 }
       });
       setNewImageUrl('');
       fetchProducts();
@@ -148,7 +154,8 @@ export default function ProductManagementPage() {
       stock: product.stock ?? 99,
       is_new: product.is_new || false,
       discount_percent: product.discount_percent || 0,
-      original_price: product.original_price || product.price || ''
+      original_price: product.original_price || product.price || '',
+      size_stock: product.size_stock || { S: 0, M: 0, L: 0, XL: 0 }
     });
     setNewImageUrl('');
     setIsModalOpen(true);
@@ -504,21 +511,40 @@ export default function ProductManagementPage() {
               <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                 <h3 className="font-semibold text-gray-800 text-sm">จัดการสต็อกและโปรโมชั่น</h3>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Stock */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      จำนวนในคลัง
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none"
-                      placeholder="99"
-                    />
+                {/* 👕 Size Stock - จำนวนสต็อกของแต่ละไซส์ */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    จำนวนสต็อกแต่ละไซส์
+                  </label>
+                  <div className="grid grid-cols-4 gap-3">
+                    {['S', 'M', 'L', 'XL'].map((size) => (
+                      <div key={size}>
+                        <label className="block text-xs text-gray-600 mb-1 font-semibold text-center">
+                          {size}
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={formData.size_stock[size]}
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            size_stock: { 
+                              ...formData.size_stock, 
+                              [size]: parseInt(e.target.value) || 0 
+                            }
+                          })}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none text-center"
+                          placeholder="0"
+                        />
+                      </div>
+                    ))}
                   </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 สต็อกรวม: {Object.values(formData.size_stock).reduce((sum, val) => sum + (parseInt(val) || 0), 0)} ตัว
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
 
                   {/* Discount */}
                   <div>
@@ -573,20 +599,20 @@ export default function ProductManagementPage() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, stock: 0 })}
-                    className="text-xs px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                    onClick={() => setFormData({ ...formData, size_stock: { S: 10, M: 25, L: 15, XL: 5 } })}
+                    className="text-xs px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
                   >
-                    ตั้งเป็นหมด
+                    ตั้งสต็อกแต่ละไซส์ (default)
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, stock: 99 })}
-                    className="text-xs px-3 py-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
+                    onClick={() => setFormData({ ...formData, size_stock: { S: 0, M: 0, L: 0, XL: 0 } })}
+                    className="text-xs px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
                   >
-                    รีเซ็ตสต็อก (99)
+                    ล้างสต็อกทุกไซส์
                   </button>
                   <button
                     type="button"

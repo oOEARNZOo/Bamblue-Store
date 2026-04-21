@@ -60,6 +60,29 @@ export default function ProductDetailPage() {
 
     if (productId) {
       fetchSingleProduct();
+      
+      // Subscribe to real-time updates for this product
+      const channel = supabase
+        .channel(`product-${productId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'products1',
+            filter: `id=eq.${productId}`
+          },
+          (payload) => {
+            console.log('สต็อกอัพเดต real-time:', payload.new);
+            setProduct(payload.new);
+          }
+        )
+        .subscribe();
+
+      // Cleanup: Unsubscribe when component unmounts
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [productId]);
 
@@ -110,13 +133,37 @@ export default function ProductDetailPage() {
   const sizes = ['S', 'M', 'L', 'XL'];
   const skuCode = `BMB-${product.id}00${selectedSize}`;
 
+  // ดึงข้อมูล size_stock จาก product
+  const sizeStock = product.size_stock || { S: 0, M: 0, L: 0, XL: 0 };
+
+  // Debug: ดูว่า size_stock มีข้อมูลหรือไม่
+  console.log('📦 Product size_stock:', product.size_stock);
+  console.log('📦 Size stock values:', sizeStock);
+
+  // เช็คว่า size ที่เลือกมีสต็อกเหลือหรือไม่
+  const selectedSizeStock = sizeStock[selectedSize] || 0;
+  const isOutOfStock = selectedSizeStock === 0;
+  const isLowStock = selectedSizeStock > 0 && selectedSizeStock <= 5;
+
   const handleAddToCart = () => {
+    // ตรวจสอบสต็อกก่อนเพิ่มลงตะกร้า
+    if (isOutOfStock) {
+      alert(`ไซส์ ${selectedSize} หมดสต็อกแล้ว กรุณาเลือกไซส์อื่น`);
+      return;
+    }
+
+    if (quantity > selectedSizeStock) {
+      alert(`สต็อกไซส์ ${selectedSize} เหลือเพียง ${selectedSizeStock} ตัว`);
+      return;
+    }
+
     addToCart({
       ...product,
       image: mainImage,
       size: selectedSize,
       quantity: quantity
     });
+    setShowSuccessModal(true);
   };
 
   const handleMouseMove = (e) => {
@@ -201,18 +248,44 @@ export default function ProductDetailPage() {
                     ขนาดสินค้า
                   </button>
                 </div>
-                <div className="flex space-x-3">
-                  {sizes.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setSelectedSize(s)}
-                      className={`cursor-pointer w-12 h-12 rounded-full border flex items-center justify-center text-sm transition-all
-                        ${selectedSize === s ? 'bg-zinc-900 text-white border-zinc-900' : 'border-gray-300 text-gray-600 hover:border-zinc-900'}`}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-3">
+                  {sizes.map((s) => {
+                    const stock = sizeStock[s] || 0;
+                    const isAvailable = stock > 0;
+
+                    return (
+                      <div key={s} className="relative">
+                        <button
+                          onClick={() => isAvailable && setSelectedSize(s)}
+                          disabled={!isAvailable}
+                          className={`cursor-pointer w-16 h-16 rounded-lg border flex flex-col items-center justify-center text-sm transition-all
+                            ${!isAvailable ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60' : 
+                              selectedSize === s ? 'bg-zinc-900 text-white border-zinc-900' : 
+                              'border-gray-300 text-gray-600 hover:border-zinc-900'}`}
+                        >
+                          <span className="font-semibold">{s}</span>
+                          <span className={`text-xs mt-0.5 ${
+                            !isAvailable ? 'text-red-500' : 
+                            selectedSize === s ? 'text-white/80' : 
+                            stock <= 5 ? 'text-orange-500' : 'text-gray-500'
+                          }`}>
+                            {!isAvailable ? 'หมด' : `${stock} ตัว`}
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
+
+                {/* แสดงคำเตือนสต็อกใกล้หมด */}
+                {isLowStock && (
+                  <div className="mt-3 flex items-center gap-2 text-orange-600 text-sm">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>สินค้าใกล้หมด! เหลือเพียง {selectedSizeStock} ตัวเท่านั้น</span>
+                  </div>
+                )}
               </div>
 
               {/* ส่วนเลือกจำนวน */}
