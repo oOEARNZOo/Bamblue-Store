@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 // นำเข้าไอคอน Heart มาเพิ่ม
 import { Search, User, ShoppingCart, Minus, Plus, Trash2, Menu, X, Heart } from 'lucide-react';
@@ -228,22 +229,23 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="bg-white border-b border-gray-100 py-4 px-6 sticky top-0 z-50">
+    <nav className="bg-white border-b border-gray-100 py-3 px-6 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
 
-        <Link href="/" className="cursor-pointer text-2xl font-bold tracking-tight">
-          Bamblue <span className="text-[#dc6fd6]">store</span>
+        <Link href="/" className="cursor-pointer flex items-center gap-2">
+          <img src="/Picture/icon.png" alt="Bamblue Logo" className="w-12 h-12 object-contain" />
+          <span className="text-xl font-bold tracking-tight whitespace-nowrap">Bamblue <span className="text-[#dc6fd6]">store</span></span>
         </Link>
 
-        <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
-          <Link href="/" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>หน้าหลัก</Link>
-          <Link href="/products" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/products' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>สินค้าทั้งหมด</Link>
-          <Link href="/reviews" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/reviews' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>รีวิวจากลูกค้า</Link>
-          <Link href="/promotions" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/promotions' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>ข่าวสารโปรโมชั่น</Link>
-          <Link href="/contact" className={`cursor-pointer px-4 py-2 rounded-lg transition-colors ${pathname === '/contact' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>ติดต่อเรา</Link>
+        <div className="hidden lg:flex items-center space-x-6 text-sm font-medium text-gray-600">
+          <Link href="/" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>หน้าหลัก</Link>
+          <Link href="/products" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/products' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>สินค้าทั้งหมด</Link>
+          <Link href="/reviews" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/reviews' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>รีวิว</Link>
+          <Link href="/promotions" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/promotions' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>โปรโมชั่น</Link>
+          <Link href="/contact" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/contact' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>ติดต่อเรา</Link>
         </div>
 
-        <div className="flex items-center space-x-5 text-gray-700">
+        <div className="flex items-center space-x-6 text-gray-700">
           <button
             onClick={() => {
               setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -253,7 +255,7 @@ export default function Navbar() {
             }}
             className="md:hidden cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2"
           >
-            {isMobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+            {isMobileMenuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
           </button>
 
           <button
@@ -264,11 +266,7 @@ export default function Navbar() {
             }}
             className={`cursor-pointer transition-colors border-none bg-transparent py-2 flex items-center gap-1.5 ${isSearchOpen ? 'text-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}
           >
-            <Search size={22} strokeWidth={1.5} />
-            <div className="hidden md:flex flex-col items-start">
-              <span className="text-[10px] text-gray-600 leading-tight">ค้นหา</span>
-              <span className="text-[9px] text-gray-400 leading-tight">ใส่คำค้นหาของคุณ</span>
-            </div>
+            <Search size={20} strokeWidth={1.5} />
           </button>
 
           {/* ปุ่ม Wishlist บน Navbar */}
@@ -277,11 +275,7 @@ export default function Navbar() {
             className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5"
             title="รายการโปรด"
           >
-            <Heart size={22} strokeWidth={1.5} />
-            <div className="hidden md:flex flex-col items-start">
-              <span className="text-[10px] text-gray-600 leading-tight">ยินดีต้อนรับ</span>
-              <span className="text-[9px] text-gray-400 leading-tight">รายการโปรด</span>
-            </div>
+            <Heart size={20} strokeWidth={1.5} />
             {wishlistItems.length > 0 && (
               <span className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                 {wishlistItems.length}
@@ -299,20 +293,14 @@ export default function Navbar() {
                 }}
                 className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5"
               >
-                <User size={22} strokeWidth={1.5} className="text-[#dc6fd6]" />
-                <div className="hidden md:flex flex-col items-start">
-                  <span className="text-[10px] text-gray-600 leading-tight">หน้าสมาชิก</span>
-                  <span className="text-[9px] text-gray-800 font-medium leading-tight">
-                    {user.user_metadata?.full_name || user.email?.split('@')[0].toUpperCase()}
-                  </span>
-                </div>
+                <User size={20} strokeWidth={1.5} className="text-[#dc6fd6]" />
               </button>
 
               {isProfileOpen && (
                 <div className="absolute top-full right-0 mt-3 w-56 bg-white shadow-xl border border-gray-100 rounded-lg p-2 z-50 dropdown-animate">
                   <div className="px-4 py-3 border-b border-gray-100 mb-2">
                     <p className="text-xs text-gray-500 mb-1">เข้าสู่ระบบด้วย</p>
-                    <p className="text-sm font-semibold text-gray-800 truncate">{user.email}</p>
+                    <p className="text-sm font-semibold text-gray-800 truncate">{user.user_metadata?.full_name || user.email?.split('@')[0]}</p>
                     {isAdmin && (
                       <span className="inline-block mt-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
                         Admin
@@ -360,11 +348,7 @@ export default function Navbar() {
             </div>
           ) : (
             <Link href="/login" className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5">
-              <User size={22} strokeWidth={1.5} />
-              <div className="hidden md:flex flex-col items-start">
-                <span className="text-[10px] text-gray-600 leading-tight">หน้าสมาชิก</span>
-                <span className="text-[9px] text-gray-800 font-medium leading-tight">เข้าสู่ระบบ</span>
-              </div>
+              <User size={20} strokeWidth={1.5} />
             </Link>
           )}
 
@@ -377,11 +361,7 @@ export default function Navbar() {
               }}
               className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors flex items-center gap-1.5 py-2 bg-transparent border-none"
             >
-              <ShoppingCart size={22} strokeWidth={1.5} />
-              <div className="hidden md:flex flex-col items-start">
-                <span className="text-[10px] text-gray-600 leading-tight">YOUR CART</span>
-                <span className="text-[9px] text-gray-400 leading-tight">฿{calculateTotal().toLocaleString()}</span>
-              </div>
+              <ShoppingCart size={20} strokeWidth={1.5} />
               {cartItemCount > 0 && (
                 <span className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                   {cartItemCount}

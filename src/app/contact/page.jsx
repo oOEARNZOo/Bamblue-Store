@@ -227,12 +227,12 @@ export default function ContactPage() {
                   name="subject"
                   value={formData.subject}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm bg-white"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all text-sm bg-white cursor-pointer"
                 >
-                  <option value="สอบถามข้อมูลสินค้า">สอบถามข้อมูลสินค้า</option>
-                  <option value="แจ้งปัญหาการสั่งซื้อ / การชำระเงิน">แจ้งปัญหาการสั่งซื้อ / การชำระเงิน</option>
-                  <option value="ติดตามสถานะการจัดส่ง">ติดตามสถานะการจัดส่ง</option>
-                  <option value="อื่นๆ">อื่นๆ</option>
+                  <option value="สอบถามข้อมูลสินค้า" className="cursor-pointer">สอบถามข้อมูลสินค้า</option>
+                  <option value="แจ้งปัญหาการสั่งซื้อ / การชำระเงิน" className="cursor-pointer">แจ้งปัญหาการสั่งซื้อ / การชำระเงิน</option>
+                  <option value="ติดตามสถานะการจัดส่ง" className="cursor-pointer">ติดตามสถานะการจัดส่ง</option>
+                  <option value="อื่นๆ" className="cursor-pointer">อื่นๆ</option>
                 </select>
               </div>
 
