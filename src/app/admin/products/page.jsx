@@ -16,6 +16,21 @@ import { ProductGridSkeleton } from '../../components/LoadingSkeletons';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
+// Default form data เพื่อใช้ reset และป้องกัน undefined
+const DEFAULT_FORM_DATA = {
+  nameEN: '',
+  nameTH: '',
+  price: '',
+  category: 'shirt',
+  image: '',
+  images: [],
+  stock: 99,
+  is_new: false,
+  discount_percent: 0,
+  original_price: '',
+  size_stock: { S: 0, M: 0, L: 0, XL: 0 }
+};
+
 export default function ProductManagementPage() {
   const router = useRouter();
   const [products, setProducts] = useState([]);
@@ -25,19 +40,7 @@ export default function ProductManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [deletingProductId, setDeletingProductId] = useState(null);
-  const [formData, setFormData] = useState({
-    nameEN: '',
-    nameTH: '',
-    price: '',
-    category: 'shirt',
-    image: '',
-    images: [],
-    stock: 99,
-    is_new: false,
-    discount_percent: 0,
-    original_price: '',
-    size_stock: { S: 0, M: 0, L: 0, XL: 0 }
-  });
+  const [formData, setFormData] = useState({ ...DEFAULT_FORM_DATA });
   const [newImageUrl, setNewImageUrl] = useState('');
 
   useEffect(() => {
@@ -65,7 +68,8 @@ export default function ProductManagementPage() {
     e.preventDefault();
     try {
       // คำนวณ stock รวมจาก size_stock อัตโนมัติ
-      const totalStock = Object.values(formData.size_stock).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
+      const sizeStock = formData.size_stock || { S: 0, M: 0, L: 0, XL: 0 };
+      const totalStock = Object.values(sizeStock).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
       
       const productData = {
         nameEN: formData.nameEN,
@@ -115,19 +119,7 @@ export default function ProductManagementPage() {
       // Reset and refresh
       setIsModalOpen(false);
       setEditingProduct(null);
-      setFormData({
-        nameEN: '',
-        nameTH: '',
-        price: '',
-        category: 'shirt',
-        image: '',
-        images: [],
-        stock: 99,
-        is_new: false,
-        discount_percent: 0,
-        original_price: '',
-        size_stock: { S: 0, M: 0, L: 0, XL: 0 }
-      });
+      setFormData({ ...DEFAULT_FORM_DATA });
       setNewImageUrl('');
       fetchProducts();
     } catch (error) {
@@ -238,14 +230,7 @@ export default function ProductManagementPage() {
 
   const openAddModal = () => {
     setEditingProduct(null);
-    setFormData({
-      nameEN: '',
-      nameTH: '',
-      price: '',
-      category: 'shirt',
-      image: '',
-      images: []
-    });
+    setFormData({ ...DEFAULT_FORM_DATA });
     setNewImageUrl('');
     setIsModalOpen(true);
   };
@@ -423,7 +408,7 @@ export default function ProductManagementPage() {
       </div>
 
       {/* Modal */}
-      {isModalOpen && (
+      {isModalOpen && formData && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
@@ -519,14 +504,17 @@ export default function ProductManagementPage() {
                         <input
                           type="number"
                           min="0"
-                          value={formData.size_stock[size]}
-                          onChange={(e) => setFormData({ 
-                            ...formData, 
-                            size_stock: { 
-                              ...formData.size_stock, 
-                              [size]: parseInt(e.target.value) || 0 
-                            }
-                          })}
+                          value={formData.size_stock?.[size] ?? 0}
+                          onChange={(e) => {
+                            const currentSizeStock = formData.size_stock || { S: 0, M: 0, L: 0, XL: 0 };
+                            setFormData({ 
+                              ...formData, 
+                              size_stock: { 
+                                ...currentSizeStock, 
+                                [size]: parseInt(e.target.value) || 0 
+                              }
+                            });
+                          }}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#dc6fd6] focus:border-[#dc6fd6] outline-none text-center"
                           placeholder="0"
                         />
@@ -534,7 +522,7 @@ export default function ProductManagementPage() {
                     ))}
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    💡 สต็อกรวม: {Object.values(formData.size_stock).reduce((sum, val) => sum + (parseInt(val) || 0), 0)} ตัว
+                    💡 สต็อกรวม: {Object.values(formData.size_stock || { S: 0, M: 0, L: 0, XL: 0 }).reduce((sum, val) => sum + (parseInt(val) || 0), 0)} ตัว
                   </p>
                 </div>
                 

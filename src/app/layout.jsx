@@ -7,12 +7,17 @@ import { WishlistProvider } from './context/WishlistContext';
 import { Toaster } from 'react-hot-toast'; 
 import { Prompt } from 'next/font/google';
 
-// 🌟 ตั้งค่าฟอนต์ Prompt (รองรับทั้งภาษาไทยและอังกฤษ)
 const prompt = Prompt({
   subsets: ['latin', 'thai'],
-  weight: ['300', '400', '500', '600', '700'], // ดึงน้ำหนักตัวบางไปจนถึงตัวหนามาใช้
+  weight: ['300', '400', '500', '600', '700', '800'],
   display: 'swap',
 });
+
+/*
+// 🌟 ตั้งค่าฟอนต์ Prompt (รองรับทั้งภาษาไทยและอังกฤษ)
+  weight: ['300', '400', '500', '600', '700'], // ดึงน้ำหนักตัวบางไปจนถึงตัวหนามาใช้
+
+*/
 
 export const metadata = {
   title: {

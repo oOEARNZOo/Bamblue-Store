@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
+import { checkIsAdminCached } from '../../lib/adminCheck';
 import AdminSidebar from '../components/AdminSidebar';
 
 export default function AdminLayout({ children }) {
@@ -22,10 +23,7 @@ export default function AdminLayout({ children }) {
         return;
       }
 
-      const isAdminUser = user.email === 'admin@bamblue.com' ||
-        user.email === 'earn.hcg32@gmail.com' ||
-        user.user_metadata?.role === 'admin' ||
-        user.email?.includes('admin');
+      const isAdminUser = await checkIsAdminCached(user);
 
       if (!isAdminUser) {
         router.push('/');

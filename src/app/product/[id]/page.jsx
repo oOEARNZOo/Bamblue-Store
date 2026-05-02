@@ -9,6 +9,19 @@ import Image from 'next/image';
 import ProductReviews from '../../components/ProductReviews';
 import { supabase } from '../../../lib/supabase';
 
+const PRODUCT_SIZES = ['S', 'M', 'L', 'XL'];
+const DEFAULT_SIZE_STOCK = { S: 0, M: 0, L: 0, XL: 0 };
+
+const normalizeSizeStock = (sizeStock) => ({
+  ...DEFAULT_SIZE_STOCK,
+  ...(sizeStock || {})
+});
+
+const getStockForSize = (sizeStock, size) => {
+  const stock = Number(sizeStock?.[size] ?? 0);
+  return Number.isFinite(stock) ? Math.max(0, stock) : 0;
+};
+
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params?.id;
@@ -29,8 +42,6 @@ export default function ProductDetailPage() {
 
   // State สำหรับเปิด/ปิด Pop-up แจ้งเตือนให้ Login
   const [showLoginModal, setShowLoginModal] = useState(false);
-  // State สำหรับเปิด/ปิด Pop-up แจ้งเตือนว่าเพิ่มสำเร็จ
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   // State สำหรับเปิด/ปิด Pop-up แสดงขนาดเสื้อ
   const [showSizeGuide, setShowSizeGuide] = useState(false);
 
@@ -86,6 +97,27 @@ export default function ProductDetailPage() {
     }
   }, [productId]);
 
+  useEffect(() => {
+    if (!product) return;
+
+    const stockBySize = normalizeSizeStock(product.size_stock);
+    const currentStock = getStockForSize(stockBySize, selectedSize);
+
+    if (currentStock > 0 && quantity > currentStock) {
+      setQuantity(currentStock);
+      return;
+    }
+
+    if (currentStock <= 0) {
+      const firstAvailableSize = PRODUCT_SIZES.find((size) => getStockForSize(stockBySize, size) > 0);
+
+      if (firstAvailableSize && firstAvailableSize !== selectedSize) {
+        setSelectedSize(firstAvailableSize);
+        setQuantity(1);
+      }
+    }
+  }, [product, selectedSize, quantity]);
+
   // ฟังก์ชันจัดการ Wishlist (เชื่อมกับ WishlistContext)
   const handleAddWishlist = async () => {
     try {
@@ -130,20 +162,23 @@ export default function ProductDetailPage() {
     );
   }
 
-  const sizes = ['S', 'M', 'L', 'XL'];
   const skuCode = `BMB-${product.id}00${selectedSize}`;
 
   // ดึงข้อมูล size_stock จาก product
-  const sizeStock = product.size_stock || { S: 0, M: 0, L: 0, XL: 0 };
-
-  // Debug: ดูว่า size_stock มีข้อมูลหรือไม่
-  console.log('📦 Product size_stock:', product.size_stock);
-  console.log('📦 Size stock values:', sizeStock);
+  const sizeStock = normalizeSizeStock(product.size_stock);
 
   // เช็คว่า size ที่เลือกมีสต็อกเหลือหรือไม่
-  const selectedSizeStock = sizeStock[selectedSize] || 0;
+  const selectedSizeStock = getStockForSize(sizeStock, selectedSize);
   const isOutOfStock = selectedSizeStock === 0;
   const isLowStock = selectedSizeStock > 0 && selectedSizeStock <= 5;
+  const canDecreaseQuantity = quantity > 1;
+  const canIncreaseQuantity = !isOutOfStock && quantity < selectedSizeStock;
+
+  const handleSizeSelect = (size) => {
+    const stock = getStockForSize(sizeStock, size);
+    setSelectedSize(size);
+    setQuantity((currentQuantity) => Math.min(Math.max(1, currentQuantity), stock));
+  };
 
   const handleAddToCart = () => {
     // ตรวจสอบสต็อกก่อนเพิ่มลงตะกร้า
@@ -161,9 +196,10 @@ export default function ProductDetailPage() {
       ...product,
       image: mainImage,
       size: selectedSize,
+      size_stock: sizeStock,
+      stockLimit: selectedSizeStock,
       quantity: quantity
     });
-    setShowSuccessModal(true);
   };
 
   const handleMouseMove = (e) => {
@@ -184,9 +220,9 @@ export default function ProductDetailPage() {
             <span className="text-gray-900">{product.nameEN}</span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* ฝั่งซ้าย: รูปภาพสินค้า */}
-            <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4">
+            <div className="lg:col-span-6 flex flex-col-reverse md:flex-row gap-4">
               {/* Thumbnail รูปภาพ */}
               <div className="flex md:flex-col gap-3 overflow-x-auto md:w-24 shrink-0">
                 {/* แสดงรูปจาก images array หรือ fallback เป็น image เดี่ยว */}
@@ -194,7 +230,7 @@ export default function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setMainImage(img)}
-                    className={`cursor-pointer w-20 h-28 md:w-full md:h-32 border-2 overflow-hidden rounded-lg transition-all ${mainImage === img ? 'border-[#dc6fd6] shadow-md' : 'border-gray-200 hover:border-gray-400'
+                    className={`cursor-pointer w-20 h-28 md:w-full md:h-28 border-2 overflow-hidden rounded-lg transition-all ${mainImage === img ? 'border-[#dc6fd6] shadow-md' : 'border-gray-200 hover:border-gray-400'
                       }`}
                   >
                     <img src={img} className="w-full h-full object-cover" alt={`${product.nameEN} ${index + 1}`} />
@@ -204,7 +240,7 @@ export default function ProductDetailPage() {
 
               {/* รูปภาพหลัก */}
               <div
-                className="grow bg-gray-100 aspect-3/4 md:aspect-auto overflow-hidden relative cursor-zoom-in rounded-lg"
+                className="grow bg-gray-100 aspect-[3/4] max-h-[580px] overflow-hidden relative cursor-zoom-in rounded-xl"
                 onMouseEnter={() => setIsZoomed(true)}
                 onMouseLeave={() => setIsZoomed(false)}
                 onMouseMove={handleMouseMove}
@@ -212,7 +248,7 @@ export default function ProductDetailPage() {
                 {mainImage && (
                   <img
                     src={mainImage}
-                    className="w-full h-full object-cover transition-transform duration-200 ease-out"
+                    className="w-full h-full object-cover object-center transition-transform duration-200 ease-out"
                     alt={product.nameEN}
                     style={{
                       transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
@@ -224,7 +260,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* ฝั่งขวา: รายละเอียดสินค้า */}
-            <div className="lg:col-span-5 flex flex-col pt-4">
+            <div className="lg:col-span-6 flex flex-col pt-4">
               <p className="text-sm text-gray-500 mb-1">{product.nameTH}</p>
               <h1 className="text-3xl font-bold text-zinc-900 mb-2 tracking-wide">{product.nameEN}</h1>
               <p className="text-xs text-gray-400 mb-6">SKU: {skuCode}</p>
@@ -249,14 +285,14 @@ export default function ProductDetailPage() {
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {sizes.map((s) => {
-                    const stock = sizeStock[s] || 0;
+                  {PRODUCT_SIZES.map((s) => {
+                    const stock = getStockForSize(sizeStock, s);
                     const isAvailable = stock > 0;
 
                     return (
                       <div key={s} className="relative">
                         <button
-                          onClick={() => isAvailable && setSelectedSize(s)}
+                          onClick={() => isAvailable && handleSizeSelect(s)}
                           disabled={!isAvailable}
                           className={`cursor-pointer w-16 h-16 rounded-lg border flex flex-col items-center justify-center text-sm transition-all
                             ${!isAvailable ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60' : 
@@ -295,8 +331,11 @@ export default function ProductDetailPage() {
                   {/* ปุ่ม +/- */}
                   <div className="flex items-center border border-gray-300 rounded">
                     <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6] transition-colors"
+                      onClick={() => setQuantity((currentQuantity) => Math.max(1, currentQuantity - 1))}
+                      disabled={!canDecreaseQuantity}
+                      className={`w-10 h-10 flex items-center justify-center transition-colors ${
+                        canDecreaseQuantity ? 'cursor-pointer text-gray-600 hover:text-[#dc6fd6]' : 'cursor-not-allowed text-gray-300'
+                      }`}
                     >
                       <Minus size={16} />
                     </button>
@@ -304,8 +343,11 @@ export default function ProductDetailPage() {
                       {quantity}
                     </span>
                     <button
-                      onClick={() => setQuantity(Math.min(99, quantity + 1))}
-                      className="cursor-pointer w-10 h-10 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6] transition-colors"
+                      onClick={() => setQuantity((currentQuantity) => Math.min(selectedSizeStock, currentQuantity + 1))}
+                      disabled={!canIncreaseQuantity}
+                      className={`w-10 h-10 flex items-center justify-center transition-colors ${
+                        canIncreaseQuantity ? 'cursor-pointer text-gray-600 hover:text-[#dc6fd6]' : 'cursor-not-allowed text-gray-300'
+                      }`}
                     >
                       <Plus size={16} />
                     </button>
@@ -324,9 +366,12 @@ export default function ProductDetailPage() {
 
                 <button
                   onClick={handleAddToCart}
-                  className="cursor-pointer grow bg-zinc-900 hover:bg-zinc-800 text-white rounded text-sm tracking-widest font-semibold transition-colors flex items-center justify-center h-14"
+                  disabled={isOutOfStock}
+                  className={`grow text-white rounded text-sm tracking-widest font-semibold transition-colors flex items-center justify-center h-14 ${
+                    isOutOfStock ? 'cursor-not-allowed bg-gray-300' : 'cursor-pointer bg-zinc-900 hover:bg-zinc-800'
+                  }`}
                 >
-                  ใส่ตะกร้า
+                  {isOutOfStock ? 'สินค้าหมด' : 'ใส่ตะกร้า'}
                 </button>
               </div>
 
@@ -394,14 +439,6 @@ export default function ProductDetailPage() {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* 🌟 Pop-up Toast แจ้งเตือนเมื่อเพิ่มลง Wishlist สำเร็จ */}
-      {showSuccessModal && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300">
-          <Heart size={18} className="text-[#dc6fd6]" fill="currentColor" />
-          <span className="text-sm font-medium tracking-wide">เพิ่มลงรายการโปรดเรียบร้อย! ✨</span>
         </div>
       )}
 

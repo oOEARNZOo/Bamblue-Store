@@ -10,9 +10,10 @@ import { useWishlist } from '../context/WishlistContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import { CartSkeleton } from './LoadingSkeletons';
+import { checkIsAdminCached } from '../../lib/adminCheck';
 
 export default function Navbar() {
-  const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, getItemStockLimit } = useCart();
   const { wishlistItems } = useWishlist();
   const pathname = usePathname();
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const [mounted, setMounted] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -38,13 +40,10 @@ export default function Navbar() {
       const currentUser = session?.user || null;
       setUser(currentUser);
 
-      // ตรวจสอบว่าเป็น admin หรือไม่
+      // ✅ ตรวจสอบว่าเป็น admin ด้วย helper function (ไม่ hardcode email)
       if (currentUser) {
-        const isAdminUser = currentUser.email === 'admin@bamblue.com' ||
-          currentUser.email === 'earn.hcg32@gmail.com' ||
-          currentUser.user_metadata?.role === 'admin' ||
-          currentUser.email?.includes('admin');
-        setIsAdmin(isAdminUser);
+        const adminStatus = await checkIsAdminCached(currentUser);
+        setIsAdmin(adminStatus);
       } else {
         setIsAdmin(false);
       }
@@ -52,17 +51,14 @@ export default function Navbar() {
 
     fetchUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const currentUser = session?.user || null;
       setUser(currentUser);
 
-      // ตรวจสอบว่าเป็น admin หรือไม่
+      // ✅ ตรวจสอบว่าเป็น admin ด้วย helper function
       if (currentUser) {
-        const isAdminUser = currentUser.email === 'admin@bamblue.com' ||
-          currentUser.email === 'earn.hcg32@gmail.com' ||
-          currentUser.user_metadata?.role === 'admin' ||
-          currentUser.email?.includes('admin');
-        setIsAdmin(isAdminUser);
+        const adminStatus = await checkIsAdminCached(currentUser);
+        setIsAdmin(adminStatus);
       } else {
         setIsAdmin(false);
       }
@@ -79,6 +75,7 @@ export default function Navbar() {
   };
 
   useEffect(() => {
+    setMounted(true);
     const savedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
     setRecentSearches(savedSearches);
   }, []);
@@ -86,12 +83,35 @@ export default function Navbar() {
   // ดึงข้อมูลสินค้าจาก Supabase สำหรับใช้ในช่องค้นหา
   useEffect(() => {
     async function fetchProducts() {
-      const { data, error } = await supabase
-        .from('products1')
-        .select('*');
+      try {
+        // ✅ ตรวจสอบ localStorage cache ก่อน (cache 1 ชั่วโมง)
+        const cachedProducts = localStorage.getItem('navbar_products_cache');
+        const cacheTimestamp = localStorage.getItem('navbar_products_cache_time');
+        const now = Date.now();
+        const CACHE_DURATION = 60 * 60 * 1000; // 1 ชั่วโมง
 
-      if (!error && data) {
-        setProductsData(data);
+        if (cachedProducts && cacheTimestamp) {
+          const isExpired = now - parseInt(cacheTimestamp) > CACHE_DURATION;
+          if (!isExpired) {
+            // ✅ ใช้ cache ที่ยังไม่หมดอายุ
+            setProductsData(JSON.parse(cachedProducts));
+            return;
+          }
+        }
+
+        // ✅ ถ้า cache หมดอายุหรือไม่มี ให้ดึงใหม่
+        const { data, error } = await supabase
+          .from('products1')
+          .select('*');
+
+        if (!error && data) {
+          setProductsData(data);
+          // ✅ บันทึก cache ใหม่
+          localStorage.setItem('navbar_products_cache', JSON.stringify(data));
+          localStorage.setItem('navbar_products_cache_time', now.toString());
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err);
       }
     }
     fetchProducts();
@@ -276,7 +296,7 @@ export default function Navbar() {
             title="รายการโปรด"
           >
             <Heart size={20} strokeWidth={1.5} />
-            {wishlistItems.length > 0 && (
+            {mounted && wishlistItems.length > 0 && (
               <span className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                 {wishlistItems.length}
               </span>
@@ -362,7 +382,7 @@ export default function Navbar() {
               className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors flex items-center gap-1.5 py-2 bg-transparent border-none"
             >
               <ShoppingCart size={20} strokeWidth={1.5} />
-              {cartItemCount > 0 && (
+              {mounted && cartItemCount > 0 && (
                 <span className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                   {cartItemCount}
                 </span>
@@ -385,7 +405,11 @@ export default function Navbar() {
                 ) : (
                   <>
                     <div className="max-h-[60vh] overflow-y-auto space-y-4 mb-4 pr-1">
-                      {cartItems.map(item => (
+                      {cartItems.map(item => {
+                        const stockLimit = getItemStockLimit(item);
+                        const isAtStockLimit = stockLimit !== null && item.quantity >= stockLimit;
+
+                        return (
                         <div key={item.cartKey || item.id} className="flex gap-3">
                           <img src={item.image} alt={item.nameEN} className="w-16 h-20 object-cover rounded shrink-0 bg-gray-50" />
                           <div className="grow flex flex-col justify-center">
@@ -396,13 +420,14 @@ export default function Navbar() {
                               <div className="flex items-center border border-gray-200 rounded w-20 h-7">
                                 <button onClick={() => updateQuantity(item.cartKey, -1)} disabled={item.quantity <= 1} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] disabled:opacity-30 cursor-pointer"><Minus size={12} /></button>
                                 <span className="w-6 text-center text-xs font-semibold">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.cartKey, 1)} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] cursor-pointer"><Plus size={12} /></button>
+                                <button onClick={() => updateQuantity(item.cartKey, 1)} disabled={isAtStockLimit} className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-[#dc6fd6] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"><Plus size={12} /></button>
                               </div>
                               <button onClick={() => removeFromCart(item.cartKey)} className="text-gray-400 hover:text-red-500 cursor-pointer p-1 transition-colors"><Trash2 size={16} /></button>
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <div className="border-t border-gray-100 pt-4">
                       <div className="flex justify-between items-center mb-4">

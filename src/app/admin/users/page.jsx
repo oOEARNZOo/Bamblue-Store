@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
+import { checkIsAdminCached } from '../../../lib/adminCheck';
 import {
   Users,
   Search,
@@ -30,8 +31,14 @@ export default function UserManagementPage() {
   const [loadingOrders, setLoadingOrders] = useState(false);
 
   useEffect(() => {
-    checkAdminAccess();
-    fetchUsers();
+    const initializePage = async () => {
+      const hasAccess = await checkAdminAccess();
+      if (hasAccess) {
+        fetchUsers();
+      }
+    };
+
+    initializePage();
   }, []);
 
   const checkAdminAccess = async () => {
@@ -39,21 +46,21 @@ export default function UserManagementPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/login');
-        return;
+        return false;
       }
 
-      const isAdminUser = user.email === 'admin@bamblue.com' ||
-        user.email === 'earn.hcg32@gmail.com' ||
-        user.user_metadata?.role === 'admin' ||
-        user.email?.includes('admin');
+      const isAdminUser = await checkIsAdminCached(user);
 
       if (!isAdminUser) {
         router.push('/');
-        return;
+        return false;
       }
+
+      return true;
     } catch (error) {
       console.error('Admin check error:', error);
       router.push('/login');
+      return false;
     }
   };
 

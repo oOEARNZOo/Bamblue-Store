@@ -61,19 +61,19 @@ export default function WishlistPage() {
         ) : (
           <div>
             {/* Grid แสดงสินค้า */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
               {wishlistItems.map((item) => (
                 <div
                   key={item.id}
-                  className="group bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                  className="group relative"
                 >
                   {/* รูปสินค้า */}
-                  <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
+                  <div className="relative mb-4 aspect-[3/4] bg-gray-50 overflow-hidden rounded-2xl product-card-img">
                     <Link href={`/product/${item.id}`}>
                       <img
                         src={item.image}
                         alt={item.nameEN}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover rounded-2xl"
                       />
                     </Link>
                     {/* ปุ่มลบออกจาก Wishlist พร้อม Slide confirmation */}
@@ -118,7 +118,7 @@ export default function WishlistPage() {
                   </div>
 
                   {/* รายละเอียดสินค้า */}
-                  <div className="p-4">
+                  <div>
                     <Link href={`/product/${item.id}`}>
                       <h3 className="text-sm font-bold text-zinc-800 mb-1 line-clamp-1 hover:text-[#dc6fd6] transition-colors">
                         {item.nameEN}
@@ -126,7 +126,7 @@ export default function WishlistPage() {
                     </Link>
                     <p className="text-xs text-gray-500 mb-3 line-clamp-1">{item.nameTH}</p>
 
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <span className="text-base font-bold text-zinc-900">{item.price}</span>
                         {item.oldPrice && (
@@ -138,7 +138,7 @@ export default function WishlistPage() {
                     {/* ปุ่มย้ายลงตะกร้า */}
                     <button
                       onClick={() => handleMoveToCart(item)}
-                      className="w-full flex items-center justify-center gap-2 bg-[#dc6fd6] hover:bg-[#c05ca8] text-white py-2.5 rounded-lg text-xs font-bold tracking-wider transition-colors cursor-pointer"
+                      className="w-full flex items-center justify-center gap-2 bg-[#dc6fd6] hover:bg-[#c05ca8] text-white py-2 rounded-lg text-xs font-bold tracking-wider transition-colors cursor-pointer"
                     >
                       <ShoppingCart size={14} />
                       ย้ายลงตะกร้า

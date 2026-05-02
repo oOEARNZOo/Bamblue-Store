@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 
 export default function CartPage() {
   // 🌟 ดึง updateQuantity มาใช้งาน
-  const { cartItems, removeFromCart, updateQuantity } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getItemStockLimit } = useCart();
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -62,7 +62,11 @@ export default function CartPage() {
         ) : (
           <div>
             <div className="space-y-6">
-              {cartItems.map((item) => (
+              {cartItems.map((item) => {
+                const stockLimit = getItemStockLimit(item);
+                const isAtStockLimit = stockLimit !== null && item.quantity >= stockLimit;
+
+                return (
                 <div key={item.cartKey || item.id} className="flex items-center justify-between border-b border-gray-200 pb-6">
                   <div className="flex items-center space-x-6">
                     <div className="w-24 h-32 bg-gray-100 overflow-hidden rounded shrink-0">
@@ -95,7 +99,10 @@ export default function CartPage() {
 
                         <button
                           onClick={() => updateQuantity(item.cartKey, 1)}
-                          className="cursor-pointer w-8 h-8 flex items-center justify-center text-gray-600 hover:text-[#dc6fd6] transition-colors"
+                          disabled={isAtStockLimit}
+                          className={`w-8 h-8 flex items-center justify-center transition-colors ${
+                            isAtStockLimit ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-[#dc6fd6] cursor-pointer'
+                          }`}
                         >
                           <Plus size={14} />
                         </button>
@@ -110,7 +117,8 @@ export default function CartPage() {
                     REMOVE
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-12 bg-gray-50 p-8 rounded-md text-right">

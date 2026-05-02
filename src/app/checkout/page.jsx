@@ -6,6 +6,69 @@ import { useRouter } from 'next/navigation';
 import { CreditCard, Truck, QrCode, ArrowLeft, XCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import PromptPayQR from '../components/PromptPayQR';
+import { validateCheckoutForm, getErrorMessage } from '../../lib/validation';
+
+const DEFAULT_SIZE_STOCK = { S: 0, M: 0, L: 0, XL: 0 };
+
+const getStockForSize = (sizeStock, size) => {
+  const stockBySize = { ...DEFAULT_SIZE_STOCK, ...(sizeStock || {}) };
+  const stock = Number(stockBySize[size] ?? 0);
+  return Number.isFinite(stock) ? Math.max(0, stock) : 0;
+};
+
+const validateCartStock = async (cartItems) => {
+  const productIds = [...new Set(cartItems.map((item) => item.id))];
+
+  const { data, error } = await supabase
+    .from('products1')
+    .select('id, nameEN, size_stock, stock')
+    .in('id', productIds);
+
+  if (error) throw error;
+
+  const productsById = new Map((data || []).map((product) => [String(product.id), product]));
+  const groupedItems = new Map();
+
+  cartItems.forEach((item) => {
+    const size = item.size || 'M';
+    const key = `${item.id}-${size}`;
+    const current = groupedItems.get(key) || {
+      productId: item.id,
+      nameEN: item.nameEN,
+      size,
+      quantity: 0
+    };
+
+    current.quantity += Number(item.quantity) || 0;
+    groupedItems.set(key, current);
+  });
+
+  const issues = [];
+
+  groupedItems.forEach((item) => {
+    const product = productsById.get(String(item.productId));
+
+    if (!product) {
+      issues.push(`${item.nameEN} ไม่พบสินค้าในระบบ`);
+      return;
+    }
+
+    const stockLimit = product.size_stock
+      ? getStockForSize(product.size_stock, item.size)
+      : Number(product.stock) || 0;
+
+    if (item.quantity > stockLimit) {
+      issues.push(`${product.nameEN || item.nameEN} ไซส์ ${item.size} เหลือ ${stockLimit} ตัว`);
+    }
+  });
+
+  return {
+    isValid: issues.length === 0,
+    message: issues.length
+      ? `สินค้าในตะกร้าเกินจำนวนสต็อก: ${issues.join(', ')}`
+      : ''
+  };
+};
 
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart(); 
@@ -29,6 +92,9 @@ export default function CheckoutPage() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [currentOrderNumber, setCurrentOrderNumber] = useState('');
   const [currentOrderId, setCurrentOrderId] = useState(null);
+
+  // 🌟 State สำหรับเก็บ validation errors
+  const [formErrors, setFormErrors] = useState({});
 
   // 🌟 1. สร้าง State สำหรับจัดการ Pop-up
   const [popup, setPopup] = useState({
@@ -78,12 +144,56 @@ export default function CheckoutPage() {
 
   // ฟังก์ชันยืนยันสั่งซื้อ
   const handleConfirmOrder = async () => {
-    // Validate form
-    if (!formData.firstName || !formData.phone || !formData.address) {
+    // ✅ ตรวจสอบ validation ก่อน
+    const validation = validateCheckoutForm(formData);
+
+    if (!validation.isValid) {
+      setFormErrors(validation.errors);
       setPopup({
         isOpen: true,
         type: 'error',
-        message: 'กรุณากรอกชื่อ ที่อยู่ และเบอร์โทรศัพท์ให้ครบถ้วนด้วยนะครับ'
+        message: getErrorMessage(validation.errors)
+      });
+      return;
+    }
+
+    // ✅ ตรวจสอบว่าตะกร้าไม่ว่าง
+    if (!cartItems || cartItems.length === 0) {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        message: 'ตะกร้าของคุณว่างเปล่า กรุณาเลือกสินค้า'
+      });
+      return;
+    }
+
+    try {
+      const stockValidation = await validateCartStock(cartItems);
+
+      if (!stockValidation.isValid) {
+        setPopup({
+          isOpen: true,
+          type: 'error',
+          message: stockValidation.message
+        });
+        return;
+      }
+    } catch (error) {
+      console.error('Error validating stock:', error);
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        message: 'ไม่สามารถตรวจสอบสต็อกสินค้าล่าสุดได้ กรุณาลองใหม่อีกครั้ง'
+      });
+      return;
+    }
+
+    // ✅ ตรวจสอบราคารวม
+    if (total <= 0) {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        message: 'ราคารวมไม่ถูกต้อง'
       });
       return;
     }
@@ -159,6 +269,9 @@ export default function CheckoutPage() {
       // ล้างตะกร้าทันที
       if (clearCart) clearCart();
       
+      // ล้าง validation errors
+      setFormErrors({});
+
       // ถ้าเลือก PromptPay ให้แสดง QR Code Modal
       if (paymentMethod === 'qr') {
         setCurrentOrderNumber(orderNumber);

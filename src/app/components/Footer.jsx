@@ -104,7 +104,7 @@ export default function Footer() {
 
         {/* เส้นแบ่งด้านล่าง & Copyright */}
         <div className="pt-8 border-t border-gray-800 text-center flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-500 text-xs">
+          <p className="text-gray-500 text-xs" suppressHydrationWarning>
             © {new Date().getFullYear()} Bamblue store. All rights reserved.
           </p>
           <div className="flex space-x-4">

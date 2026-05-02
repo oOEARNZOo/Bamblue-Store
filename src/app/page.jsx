@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useCart } from './context/CartContext';
 import { useWishlist } from './context/WishlistContext';
@@ -12,7 +12,7 @@ import {
   HeroBannerSkeleton, 
   ProductGridSkeleton 
 } from './components/LoadingSkeletons';
-import { ProductImage, BannerImage } from './components/OptimizedImage';
+import { ProductImage } from './components/OptimizedImage';
 
 export default function Home() {
   const { addToCart } = useCart();
@@ -37,30 +37,45 @@ export default function Home() {
   const [bestSellers, setBestSellers] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalCustomers: 0,
-    totalSold: 0,
-    avgRating: 0,
-    totalReviews: 0
-  });
+  const [newArrivalPage, setNewArrivalPage] = useState(0);
+  const [newArrivalVisibleCount, setNewArrivalVisibleCount] = useState(4);
+  const newArrivalCarouselRef = useRef(null);
 
   // ข้อมูลแบนเนอร์ (ปรับปรุงให้ครบถ้วน)
   const banners = [
     {
       id: 1,
       image: "/Picture/banner1.png",
-      title: "YOUTH ELEVATED",
+      title: "YOUTH\nELEVATED",
       subtitle: "SIMPLY STYLISH",
-      btnText: "SHOP NOW",
-      link: "/products"
+      description: "คอลเลกชันโทนพาสเทล ใส่ง่าย ถ่ายรูปขึ้น และแต่งได้ทุกวัน",
+      btnText: "SHOP THE DROP",
+      link: "/products",
+      accent: "from-[#f78bdc] to-[#b987ff]",
+      bg: "from-[#281329] via-[#6d416d] to-[#f7ccd9]",
+      showcase: [
+        "/Picture/product 2/Candy Floss Ruffle Dress/product 1.1.png",
+        "/Picture/product 2/White Marshmallow Layered Dress/product 1.1.png",
+        "/Picture/product 2/Fairy Blossom Mini Dress/product 1.1.png",
+        "/Picture/product 2/Blue Sky Cropped Set/product 1.1.png"
+      ]
     },
     {
       id: 2,
       image: "/Picture/banner2.png",
       title: "NEW COLLECTION",
       subtitle: "SPRING 2026",
+      description: "เดรสและเสื้อครอปดีเทลหวาน พร้อมโปรเปิดตัวสำหรับลุคใหม่ของคุณ",
       btnText: "EXPLORE NOW",
-      link: "/products?category=dress"
+      link: "/products?category=dress",
+      accent: "from-[#ff8ab8] to-[#ffbd7a]",
+      bg: "from-[#3a1b26] via-[#b76f86] to-[#ffe1bf]",
+      showcase: [
+        "/Picture/product 2/Pearl Kiss Ribbon Camisole/product 9.1.jpg",
+        "/Picture/product 2/Butterfly Lemonade Ruched Top/product 1.1.png",
+        "/Picture/product 2/Vintage Solstice Bodycon Dress/product 1.1.png",
+        "/Picture/product 2/Choco Glaze Ribbon Tube/product 1.1.jpg"
+      ]
     }
   ];
 
@@ -77,6 +92,58 @@ export default function Home() {
   const nextSlide = () => setCurrentSlide((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
   const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
 
+  useEffect(() => {
+    const updateVisibleCount = () => {
+      if (window.innerWidth < 640) {
+        setNewArrivalVisibleCount(1);
+      } else if (window.innerWidth < 1024) {
+        setNewArrivalVisibleCount(2);
+      } else {
+        setNewArrivalVisibleCount(4);
+      }
+    };
+
+    updateVisibleCount();
+    window.addEventListener('resize', updateVisibleCount);
+    return () => window.removeEventListener('resize', updateVisibleCount);
+  }, []);
+
+  const newArrivalTotalPages = Math.ceil(newArrivals.length / newArrivalVisibleCount);
+  const newArrivalMaxPage = Math.max(newArrivalTotalPages - 1, 0);
+  const showNewArrivalControls = newArrivals.length > newArrivalVisibleCount;
+
+  useEffect(() => {
+    setNewArrivalPage((prev) => Math.min(prev, newArrivalMaxPage));
+  }, [newArrivalMaxPage]);
+
+  useEffect(() => {
+    const carousel = newArrivalCarouselRef.current;
+    const firstCard = carousel?.querySelector('[data-new-arrival-card="true"]');
+
+    if (!carousel || !firstCard) return;
+
+    const styles = window.getComputedStyle(carousel);
+    const gap = parseFloat(styles.columnGap || styles.gap || '0');
+    const cardWidth = firstCard.getBoundingClientRect().width;
+    const targetCardIndex = Math.min(
+      newArrivalPage * newArrivalVisibleCount,
+      Math.max(newArrivals.length - newArrivalVisibleCount, 0)
+    );
+
+    carousel.scrollTo({
+      left: targetCardIndex * (cardWidth + gap),
+      behavior: 'smooth'
+    });
+  }, [newArrivalPage, newArrivalVisibleCount, newArrivals.length]);
+
+  const nextNewArrival = () => {
+    setNewArrivalPage((prev) => Math.min(prev + 1, newArrivalMaxPage));
+  };
+
+  const prevNewArrival = () => {
+    setNewArrivalPage((prev) => Math.max(prev - 1, 0));
+  };
+
   // 🌟 3. ฟังก์ชันดึงข้อมูลทั้งหมดจาก Supabase (Optimized with Promise.all)
   useEffect(() => {
     async function fetchAllData() {
@@ -84,19 +151,13 @@ export default function Home() {
         setIsLoading(true);
         
         // 🚀 ดึงข้อมูลทั้งหมดพร้อมกัน (Parallel Fetching)
-        const [newArrivalsRes, bestSellersRes, reviewsRes, orderCountRes, ordersDataRes, allReviewsRes] = await Promise.all([
+        const [newArrivalsRes, bestSellersRes, reviewsRes] = await Promise.all([
           // ดึง New Arrivals (4 ชิ้นแรก)
-          supabase.from('products1').select('*').order('id', { ascending: true }).limit(4),
+          supabase.from('products1').select('*').eq('is_new', true).order('id', { ascending: true }),
           // ดึง Best Sellers (4 ชิ้นสุ่ม)
           supabase.from('products1').select('*').order('id', { ascending: false }).limit(4),
           // ดึงรีวิวล่าสุด (3 รีวิว)
-          supabase.from('reviews').select('*').order('created_at', { ascending: false }).limit(3),
-          // นับจำนวนออเดอร์
-          supabase.from('orders').select('*', { count: 'exact', head: true }),
-          // ดึง items จาก orders
-          supabase.from('orders').select('items'),
-          // ดึง ratings จากรีวิว
-          supabase.from('reviews').select('rating')
+          supabase.from('reviews').select('*').order('created_at', { ascending: false }).limit(3)
         ]);
 
         // Set ข้อมูลสินค้า
@@ -108,24 +169,6 @@ export default function Home() {
         setBestSellers(bestSellersRes.data || []);
         setReviews(reviewsRes.data || []);
 
-        // คำนวณสถิติ
-        const totalSold = ordersDataRes.data?.reduce((sum, order) => {
-          const items = order.items || [];
-          return sum + items.reduce((itemSum, item) => itemSum + (item.quantity || 1), 0);
-        }, 0) || 0;
-
-        const totalReviews = allReviewsRes.data?.length || 0;
-        const avgRating = totalReviews > 0 
-          ? (allReviewsRes.data.reduce((sum, r) => sum + (r.rating || 5), 0) / totalReviews).toFixed(1)
-          : 5.0;
-
-        setStats({
-          totalCustomers: orderCountRes.count || 0,
-          totalSold: totalSold,
-          avgRating: avgRating,
-          totalReviews: totalReviews
-        });
-
       } catch (err) {
         console.error("System Error:", err);
       } finally {
@@ -136,90 +179,108 @@ export default function Home() {
     fetchAllData();
   }, []);
 
-  // สถิติร้านค้า (useMemo เพื่อ optimize - ไม่ต้องคำนวณใหม่ถ้า stats ไม่เปลี่ยน)
-  const statsDisplay = useMemo(() => [
-    { 
-      label: 'ลูกค้าที่สั่งซื้อ', 
-      value: stats.totalCustomers > 0 ? `${stats.totalCustomers.toLocaleString()}+` : '0', 
-      icon: '❤️' 
-    },
-    { 
-      label: 'สินค้าที่ขายแล้ว', 
-      value: stats.totalSold > 0 ? `${stats.totalSold.toLocaleString()}+` : '0', 
-      icon: '📦' 
-    },
-    { 
-      label: 'คะแนนเฉลี่ย', 
-      value: `${stats.avgRating}/5`, 
-      icon: '⭐',
-      subtext: stats.totalReviews > 0 ? `(${stats.totalReviews} รีวิว)` : ''
-    },
-    { 
-      label: 'จัดส่งภายใน', 
-      value: '1-3 วัน', 
-      icon: '🚚' 
-    },
-  ], [stats]);
-
   return (
     <main className="min-h-screen flex flex-col">
 
       {/* 🌟 Section 1: Hero Banner Slider (แก้ไขความสูงตรงนี้) 🌟 */}
-      <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-100 group">
+      <section className="group relative isolate h-[560px] w-full overflow-hidden bg-[#fbf7fb] md:h-[650px]">
         {banners.map((banner, index) => (
           <div
             key={banner.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
               }`}
           >
             {/* 🖼️ ใช้ BannerImage แทน background-image */}
-            <BannerImage 
-              src={banner.image} 
-              alt={banner.title || 'Banner'} 
-            />
+            <div className={`absolute inset-0 bg-gradient-to-br ${banner.bg}`} />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_26%,rgba(255,255,255,0.34),transparent_24%),radial-gradient(circle_at_45%_86%,rgba(220,111,214,0.34),transparent_30%)]" />
+            <div className="absolute inset-y-0 right-0 hidden w-[64%] lg:block">
+              <div className="absolute right-[7%] top-[9%] h-[460px] w-[460px] rounded-full bg-white/18 blur-3xl" />
+              <div className="absolute right-[18%] top-[16%] h-[360px] w-[360px] rounded-full bg-[#ffd8ec]/30 blur-2xl" />
+              {banner.showcase.map((image, imageIndex) => (
+                <div
+                  key={image}
+                  className={`absolute rounded-[2.2rem] border border-white/45 bg-white/24 p-2 shadow-[0_28px_90px_rgba(28,15,36,0.24)] backdrop-blur-md ${[
+                    'right-[28%] top-[9%] w-52 -rotate-6',
+                    'right-[7%] top-[19%] w-48 rotate-5',
+                    'right-[34%] bottom-[8%] w-44 rotate-3',
+                    'right-[10%] bottom-[12%] w-40 -rotate-6'
+                  ][imageIndex]}`}
+                >
+                  <ProductImage
+                    src={image}
+                    alt={`${banner.title} product ${imageIndex + 1}`}
+                    className="rounded-[1.6rem]"
+                    showZoom={false}
+                  />
+                </div>
+              ))}
+            </div>
             
             {/* 🌟 Gradient Overlay เพื่อให้อ่านข้อความง่ายขึ้น */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent z-10" />
+            <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#17101f]/82 via-[#4f4057]/34 to-transparent" />
+            <div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_18%_28%,rgba(220,111,214,0.38),transparent_28%),radial-gradient(circle_at_74%_18%,rgba(255,255,255,0.22),transparent_24%)]" />
+            <div className="hero-noise absolute inset-0 z-10 opacity-[0.16]" />
             
-            <div className="absolute inset-0 h-full flex items-center px-8 md:px-24 z-20">
-              <div className={`max-w-xl text-center md:text-left mt-10 md:mt-0 ${index === currentSlide ? 'animate-fade-in-up' : ''}`}>
+            <div className="absolute inset-0 z-20 flex items-center px-6 sm:px-10 lg:px-24">
+              <div className={`mt-8 max-w-[620px] text-left md:mt-0 ${index === currentSlide ? 'animate-hero-copy' : ''}`}>
+                <div className={`mb-6 h-1.5 w-24 rounded-full bg-gradient-to-r ${banner.accent}`} />
                 {banner.subtitle && (
-                  <p className="text-sm md:text-base font-medium text-[#dc6fd6] mb-2 tracking-widest uppercase">
+                  <p className="mb-4 text-xs font-bold uppercase tracking-[0.38em] text-white/75 md:text-sm">
                     {banner.subtitle}
                   </p>
                 )}
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 tracking-wider leading-tight">
+                <h1 className="whitespace-pre-line text-[3.7rem] font-black uppercase leading-[0.88] tracking-[-0.055em] text-white drop-shadow-[0_12px_38px_rgba(0,0,0,0.34)] sm:text-7xl lg:text-[6.8rem]">
                   {banner.title}
                 </h1>
-                <p className="text-white/80 text-sm md:text-base mb-8 max-w-md hidden md:block">
+                <p className="hidden">
                   ค้นพบคอลเลกชันใหม่ล่าสุด สไตล์มินิมอลที่เหมาะกับทุกโอกาส
                 </p>
+                <p className="mt-7 max-w-md text-sm font-medium leading-7 text-white/84 md:text-base">
+                  {banner.description}
+                </p>
+                <div className="mt-9 flex flex-wrap items-center gap-4">
                 {banner.btnText && (
                   <Link 
                     href={banner.link || '/products'}
-                    className="inline-flex items-center gap-2 px-8 py-3 bg-[#dc6fd6] hover:bg-[#c55fc6] text-white font-semibold text-sm tracking-wider rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-pink-500/30"
+                    className={`inline-flex items-center gap-3 rounded-full bg-gradient-to-r ${banner.accent} px-8 py-3.5 text-sm font-black uppercase tracking-[0.18em] text-white shadow-[0_18px_42px_rgba(220,111,214,0.34)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(220,111,214,0.42)]`}
                   >
                     {banner.btnText}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.4} stroke="currentColor" className="h-4 w-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                     </svg>
                   </Link>
                 )}
-              </div>
+                  <Link
+                    href="/products?category=dress"
+                    className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:bg-white hover:text-[#2b2030]"
+                  >
+                    View Dresses
+                  </Link>
+                </div>
+                </div>
+            </div>
+
+            <div className="absolute bottom-8 left-6 z-20 hidden text-[10px] font-bold uppercase tracking-[0.28em] text-white/60 md:left-24 md:block">
+              Bamblue Store / K-Fashion Thailand
             </div>
           </div>
         ))}
 
-        <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-white/30 hover:bg-white/50 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+        <button onClick={prevSlide} aria-label="Previous banner" className="absolute left-4 top-1/2 z-30 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/35 bg-white/16 text-white opacity-0 shadow-lg backdrop-blur-xl transition-all hover:-translate-x-1 hover:bg-white hover:text-[#302238] group-hover:opacity-100 md:left-7">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="h-6 w-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
         </button>
-        <button onClick={nextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-white/30 hover:bg-white/50 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+        <button onClick={nextSlide} aria-label="Next banner" className="absolute right-4 top-1/2 z-30 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/35 bg-white/16 text-white opacity-0 shadow-lg backdrop-blur-xl transition-all hover:translate-x-1 hover:bg-white hover:text-[#302238] group-hover:opacity-100 md:right-7">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="h-6 w-6"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
         </button>
 
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+        <div className="absolute bottom-8 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/30 bg-white/18 px-3 py-2 backdrop-blur-xl">
           {banners.map((_, index) => (
-            <button key={index} onClick={() => setCurrentSlide(index)} className={`w-3 h-3 rounded-full transition-all cursor-pointer shadow-md ${index === currentSlide ? "bg-white scale-110" : "bg-white/50 hover:bg-white/80"}`}></button>
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              aria-label={`Go to banner ${index + 1}`}
+              className={`h-2.5 rounded-full transition-all ${index === currentSlide ? "w-10 bg-white" : "w-2.5 bg-white/45 hover:bg-white/80"}`}
+            />
           ))}
         </div>
       </section>
@@ -227,17 +288,48 @@ export default function Home() {
 
       {/* 🌟 Section 2: NEW ARRIVALS */}
       <section className="py-20 bg-gradient-to-b from-white via-purple-50 to-pink-50">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <h3 className="text-2xl tracking-widest text-[#dc6fd6] border-gray-200 border-b font-medium">NEW ARRIVALS</h3>
           </div>
 
           {isLoading ? (
             <ProductGridSkeleton count={4} />
+          ) : newArrivals.length === 0 ? (
+            <p className="text-center text-sm text-gray-500">ยังไม่มีสินค้าใหม่ในตอนนี้</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="relative">
+              {showNewArrivalControls && (
+                <>
+                  <button
+                    onClick={prevNewArrival}
+                    disabled={newArrivalPage === 0}
+                    aria-label="Previous new arrival"
+                    className="absolute -left-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-700 shadow-lg ring-1 ring-gray-200 transition-all hover:bg-[#dc6fd6] hover:text-white disabled:pointer-events-none disabled:opacity-30 lg:flex"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={nextNewArrival}
+                    disabled={newArrivalPage === newArrivalMaxPage}
+                    aria-label="Next new arrival"
+                    className="absolute -right-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-700 shadow-lg ring-1 ring-gray-200 transition-all hover:bg-[#dc6fd6] hover:text-white disabled:pointer-events-none disabled:opacity-30 lg:flex"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </button>
+                </>
+              )}
+
+              <div
+                ref={newArrivalCarouselRef}
+                className="flex snap-x snap-mandatory gap-6 overflow-hidden scroll-smooth"
+              >
               {newArrivals.map((item) => (
-                <div key={item.id} className="group flex flex-col text-center relative">
+                <div key={item.id} data-new-arrival-card="true" className="group relative flex shrink-0 snap-start flex-col text-center transition-transform duration-500 ease-out basis-full sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]">
                   {/* 🌟 Badges */}
                   <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                     {item.is_new && (
@@ -313,30 +405,40 @@ export default function Home() {
                   </button>
                 </div>
               ))}
+              </div>
+
+              {showNewArrivalControls && (
+                <div className="mt-8 flex items-center justify-center gap-3 lg:hidden">
+                  <button
+                    onClick={prevNewArrival}
+                    disabled={newArrivalPage === 0}
+                    aria-label="Previous new arrival"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 shadow-md ring-1 ring-gray-200 transition-all hover:bg-[#dc6fd6] hover:text-white disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={nextNewArrival}
+                    disabled={newArrivalPage === newArrivalMaxPage}
+                    aria-label="Next new arrival"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 shadow-md ring-1 ring-gray-200 transition-all hover:bg-[#dc6fd6] hover:text-white disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
       </section>
 
-      {/* 🌟 Section 3: สถิติร้านค้า (Social Proof Stats) */}
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {statsDisplay.map((stat, index) => (
-              <div key={index} className="text-center p-6 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 hover:shadow-lg transition-shadow">
-                <span className="text-3xl mb-2 block">{stat.icon}</span>
-                <p className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">{stat.value}</p>
-                <p className="text-sm text-gray-500">{stat.label}</p>
-                {stat.subtext && <p className="text-xs text-gray-400 mt-1">{stat.subtext}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* 🌟 Section 4: BEST SELLERS */}
       <section className="py-20 bg-gradient-to-b from-pink-50 via-white to-purple-50">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-sm text-[#dc6fd6] font-medium tracking-widest uppercase mb-2 block">สินค้ายอดนิยม</span>
             <h3 className="text-2xl tracking-widest text-gray-800 font-bold">BEST SELLERS</h3>
@@ -345,7 +447,7 @@ export default function Home() {
           {isLoading ? (
             <ProductGridSkeleton count={4} />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {bestSellers.map((item) => (
                 <div key={item.id} className="group flex flex-col text-center relative">
                   {/* 🌟 Badges */}

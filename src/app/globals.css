@@ -12,6 +12,7 @@
 /* ตั้งค่าพื้นหลังของเว็บให้เป็นสีชมพูอ่อนๆ สไตล์พาสเทล */
 @layer base {
   body {
+    font-family: "Prompt", "Noto Sans Thai", sans-serif;
     background: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 50%, #fce7f3 100%);
     background-attachment: fixed;
     color: #333333;
@@ -67,6 +68,32 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes productCardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.98);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes heroCopyReveal {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
   }
 }
 
@@ -128,6 +155,22 @@
     animation: scaleIn 0.3s ease-out forwards;
   }
 
+  .animate-product-card-reveal {
+    animation: productCardReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+    will-change: transform, opacity, filter;
+  }
+
+  .animate-hero-copy {
+    animation: heroCopyReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .hero-noise {
+    background-image:
+      radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.32) 0 1px, transparent 1px),
+      radial-gradient(circle at 70% 65%, rgba(255, 255, 255, 0.18) 0 1px, transparent 1px);
+    background-size: 28px 28px, 36px 36px;
+  }
+
   /* Slide Animations */
   .animate-slide-in-left {
     animation: slideInLeft 0.35s ease-out forwards;
@@ -185,6 +228,22 @@
     background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-product-card-reveal {
+      animation: none;
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+
+    .animate-hero-copy {
+      animation: none;
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
   }
 }
 
