@@ -187,6 +187,7 @@ export default function ProductDetailPage() {
       ? `ไซส์ ${selectedSize} เหลือน้อย ${selectedSizeStock} ตัว`
       : `ไซส์ ${selectedSize} พร้อมส่ง ${selectedSizeStock} ตัว`;
   const wishlistActive = isInWishlist(product.id);
+  const demoShareUrl = `https://bamblue-store.demo/product/${productId}`;
 
   const handleSizeSelect = (size) => {
     const stock = getStockForSize(sizeStock, size);
@@ -420,7 +421,16 @@ export default function ProductDetailPage() {
 
               <div className="flex items-center space-x-4 mt-6 mb-8">
                 <span className="text-sm text-gray-500">แชร์สินค้า:</span>
-                <a href={`https://bamblue-store.demo/product/${productId}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer text-gray-400 hover:text-[#dc6fd6]"><Share2 size={18} /></a>
+                <a
+                  href={demoShareUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500 transition-colors hover:border-[#dc6fd6] hover:text-[#dc6fd6]"
+                  aria-label="Open demo product share link"
+                >
+                  <Share2 size={16} />
+                  <span>Demo link</span>
+                </a>
               </div>
 
             </div>
@@ -433,7 +443,7 @@ export default function ProductDetailPage() {
         </section>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white/95 px-4 py-3 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white/95 px-4 py-3 shadow-lg backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-lg items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium text-gray-500">ไซส์ {selectedSize} · {quantity} ชิ้น</p>
