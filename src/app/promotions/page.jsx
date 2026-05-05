@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Sun, Tag } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabasePublic } from '../../lib/supabase';
 
 const formatPrice = (price) => {
   return Number(price || 0).toLocaleString('th-TH');
@@ -26,7 +26,7 @@ export default function PromotionsPage() {
   useEffect(() => {
     const fetchSaleProducts = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabasePublic
           .from('products1')
           .select('id, nameEN, nameTH, price, original_price, image, images, discount_percent, category')
           .gt('discount_percent', 0)

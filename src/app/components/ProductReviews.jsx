@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabasePublic } from '../../lib/supabase';
 import { Star, ThumbsUp, User, Calendar, MessageSquare, Plus, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -34,7 +34,7 @@ export default function ProductReviews({ productId }) {
 
   const fetchProduct = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabasePublic
         .from('products1')
         .select(PRODUCT_REVIEW_PRODUCT_COLUMNS)
         .eq('id', productId)
@@ -50,7 +50,7 @@ export default function ProductReviews({ productId }) {
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await supabasePublic
         .from('reviews')
         .select(PRODUCT_REVIEW_COLUMNS)
         .eq('product_id', productId)

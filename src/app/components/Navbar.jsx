@@ -8,7 +8,7 @@ import { Search, User, ShoppingCart, Minus, Plus, Trash2, Menu, X, Heart } from 
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabasePublic } from '../../lib/supabase';
 import { CartSkeleton } from './LoadingSkeletons';
 import { checkIsAdminCached } from '../../lib/adminCheck';
 
@@ -106,7 +106,7 @@ export default function Navbar() {
         }
 
         // ✅ ถ้า cache หมดอายุหรือไม่มี ให้ดึงใหม่
-        const { data, error } = await supabase
+        const { data, error } = await supabasePublic
           .from('products1')
           .select(NAVBAR_PRODUCT_COLUMNS)
           .order('id', { ascending: false });

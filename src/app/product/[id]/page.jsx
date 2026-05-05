@@ -6,7 +6,7 @@ import { useWishlist } from '../../context/WishlistContext';
 import { Heart, Share2, Truck, RefreshCcw, Minus, Plus, X } from 'lucide-react'; // เพิ่ม X ไอคอน
 import Link from 'next/link';
 import ProductReviews from '../../components/ProductReviews';
-import { supabase } from '../../../lib/supabase';
+import { supabase, supabasePublic } from '../../../lib/supabase';
 import { limitedToast, shopToast } from '../../../lib/toast';
 
 const PRODUCT_SIZES = ['S', 'M', 'L', 'XL'];
@@ -69,7 +69,7 @@ export default function ProductDetailPage() {
     async function fetchSingleProduct() {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
+        const { data, error } = await supabasePublic
           .from('products1')
           .select(PRODUCT_DETAIL_COLUMNS)
           .eq('id', productId)

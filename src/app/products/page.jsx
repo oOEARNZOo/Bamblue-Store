@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useWishlist } from '../context/WishlistContext';
-import { supabase } from '../../lib/supabase';
+import { supabasePublic } from '../../lib/supabase';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, Heart, Search, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import {
@@ -192,7 +192,7 @@ function ProductsContent() {
 
     useEffect(() => {
         async function fetchProducts() {
-            const { data, error } = await supabase
+            const { data, error } = await supabasePublic
                 .from('products1')
                 .select(PRODUCT_LIST_COLUMNS)
                 .order('id', { ascending: true });

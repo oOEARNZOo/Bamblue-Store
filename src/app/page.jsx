@@ -6,7 +6,7 @@ import { useWishlist } from './context/WishlistContext';
 import { Heart, MessageSquare, RefreshCcw, Ruler, ShieldCheck, Trash2, Truck, X } from 'lucide-react';
 
 // 🌟 1. นำเข้า Supabase
-import { supabase } from '@/lib/supabase';
+import { supabasePublic } from '@/lib/supabase';
 import { 
   HeroBannerSkeleton, 
   ProductGridSkeleton 
@@ -171,11 +171,11 @@ export default function Home() {
         // 🚀 ดึงข้อมูลทั้งหมดพร้อมกัน (Parallel Fetching)
         const [newArrivalsRes, bestSellersRes, reviewsRes] = await Promise.all([
           // ดึง New Arrivals (4 ชิ้นแรก)
-          supabase.from('products1').select(PRODUCT_CARD_COLUMNS).eq('is_new', true).order('id', { ascending: true }).limit(12),
+          supabasePublic.from('products1').select(PRODUCT_CARD_COLUMNS).eq('is_new', true).order('id', { ascending: true }).limit(12),
           // ดึง Best Sellers (4 ชิ้นสุ่ม)
-          supabase.from('products1').select(PRODUCT_CARD_COLUMNS).order('id', { ascending: false }).limit(4),
+          supabasePublic.from('products1').select(PRODUCT_CARD_COLUMNS).order('id', { ascending: false }).limit(4),
           // ดึงรีวิวล่าสุด (3 รีวิว)
-          supabase.from('reviews').select(HOME_REVIEW_COLUMNS).eq('is_approved', true).order('created_at', { ascending: false }).limit(3)
+          supabasePublic.from('reviews').select(HOME_REVIEW_COLUMNS).eq('is_approved', true).order('created_at', { ascending: false }).limit(3)
         ]);
 
         // Set ข้อมูลสินค้า
