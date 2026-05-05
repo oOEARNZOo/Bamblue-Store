@@ -7,7 +7,7 @@ import { Heart, Share2, Truck, RefreshCcw, Minus, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import ProductReviews from '../../components/ProductReviews';
 import { supabase } from '../../../lib/supabase';
-import { shopToast } from '../../../lib/toast';
+import { limitedToast, shopToast } from '../../../lib/toast';
 
 const PRODUCT_SIZES = ['S', 'M', 'L', 'XL'];
 const DEFAULT_SIZE_STOCK = { S: 0, M: 0, L: 0, XL: 0 };
@@ -24,6 +24,23 @@ const getStockForSize = (sizeStock, size) => {
 };
 
 const formatPrice = (price) => Number(price || 0).toLocaleString('th-TH');
+
+const copyTextToClipboard = async (text) => {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.setAttribute('readonly', '');
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+  document.body.appendChild(textArea);
+  textArea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textArea);
+};
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -187,7 +204,6 @@ export default function ProductDetailPage() {
       ? `ไซส์ ${selectedSize} เหลือน้อย ${selectedSizeStock} ตัว`
       : `ไซส์ ${selectedSize} พร้อมส่ง ${selectedSizeStock} ตัว`;
   const wishlistActive = isInWishlist(product.id);
-  const demoShareUrl = `https://bamblue-store.demo/product/${productId}`;
 
   const handleSizeSelect = (size) => {
     const stock = getStockForSize(sizeStock, size);
@@ -217,6 +233,46 @@ export default function ProductDetailPage() {
       stockLimit: selectedSizeStock,
       quantity: quantity
     });
+  };
+
+  const handleShareProduct = async () => {
+    if (typeof window === 'undefined') return;
+
+    const shareUrl = `${window.location.origin}/product/${productId}`;
+    const shareTitle = product.nameEN || product.nameTH || 'Bamblue store';
+    const shareText = `${shareTitle} - Bamblue store`;
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl
+        });
+        return;
+      }
+
+      await copyTextToClipboard(shareUrl);
+      limitedToast.success('คัดลอกลิงก์สินค้าแล้ว', {
+        id: `product-share-${productId}`,
+        duration: 2200
+      });
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+
+      try {
+        await copyTextToClipboard(shareUrl);
+        limitedToast.success('คัดลอกลิงก์สินค้าแล้ว', {
+          id: `product-share-${productId}`,
+          duration: 2200
+        });
+      } catch {
+        limitedToast.error('ไม่สามารถแชร์ลิงก์ได้', {
+          id: `product-share-error-${productId}`,
+          duration: 2600
+        });
+      }
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -421,16 +477,15 @@ export default function ProductDetailPage() {
 
               <div className="flex items-center space-x-4 mt-6 mb-8">
                 <span className="text-sm text-gray-500">แชร์สินค้า:</span>
-                <a
-                  href={demoShareUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={handleShareProduct}
                   className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500 transition-colors hover:border-[#dc6fd6] hover:text-[#dc6fd6]"
-                  aria-label="Open demo product share link"
+                  aria-label="แชร์ลิงก์สินค้า"
                 >
                   <Share2 size={16} />
-                  <span>Demo link</span>
-                </a>
+                  <span>แชร์ลิงก์</span>
+                </button>
               </div>
 
             </div>
