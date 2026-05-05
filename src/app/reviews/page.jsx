@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { supabase } from '../../lib/supabase';
+import { supabasePublic } from '../../lib/supabase';
 import { CheckCircle, MessageSquare, ShoppingBag, SlidersHorizontal, Star } from 'lucide-react';
 
 const PUBLIC_REVIEW_COLUMNS = 'id, rating, title, comment, reviewer_name, created_at, is_verified';
@@ -89,7 +89,7 @@ export default function ReviewsPage() {
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await supabasePublic
         .from('reviews')
         .select(PUBLIC_REVIEW_COLUMNS)
         .eq('is_approved', true)
