@@ -1,28 +1,262 @@
 "use client";
 import { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { supabase } from '../../lib/supabase';
 import { useSearchParams } from 'next/navigation';
-import { Heart, ShoppingCart, Trash2, X } from 'lucide-react';
+import { ArrowUpDown, Heart, Search, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import {
     ProductGridSkeleton,
-    CategoryFilterSkeleton,
-    LoadingSpinner
+    CategoryFilterSkeleton
 } from '../components/LoadingSkeletons';
 import { ProductImage } from '../components/OptimizedImage';
 
 const PRODUCT_LIST_COLUMNS = 'id, nameEN, nameTH, category, price, original_price, image, images, is_new, discount_percent, stock, size_stock';
+const ITEMS_PER_PAGE = 12;
 
-// 📦 1. แยกเนื้อหาที่ใช้ useSearchParams มาไว้ใน Component ย่อย
+const CATEGORIES = [
+    { id: 'all', label: 'ทั้งหมด', labelEn: 'All' },
+    { id: 'shirt', label: 'เสื้อ', labelEn: 'Shirts' },
+    { id: 'dress', label: 'เดรส', labelEn: 'Dresses' },
+    { id: 'set', label: 'ชุดเซ็ต', labelEn: 'Sets' }
+];
+
+const SORT_OPTIONS = [
+    { id: 'featured', label: 'แนะนำ' },
+    { id: 'newest', label: 'ใหม่ล่าสุด' },
+    { id: 'price-low', label: 'ราคาต่ำ-สูง' },
+    { id: 'price-high', label: 'ราคาสูง-ต่ำ' },
+    { id: 'discount', label: 'ลดเยอะสุด' }
+];
+
+const normalizeSizeStock = (sizeStock) => sizeStock || {};
+const formatPrice = (price) => Number(price || 0).toLocaleString('th-TH');
+const getSalePrice = (product) => {
+    const discount = Number(product.discount_percent || 0);
+    const price = Number(product.price || 0);
+    return discount > 0 ? Math.round(price * (1 - discount / 100)) : price;
+};
+
+const getTotalStock = (product) => {
+    const sizeStock = normalizeSizeStock(product.size_stock);
+    const stockFromSizes = Object.values(sizeStock).reduce((sum, value) => sum + Math.max(0, Number(value || 0)), 0);
+    return stockFromSizes > 0 ? stockFromSizes : Math.max(0, Number(product.stock || 0));
+};
+
+function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, onConfirmRemove, isInWishlist, style }) {
+    const salePrice = getSalePrice(product);
+    const originalPrice = Number(product.original_price || product.price || 0);
+    const totalStock = getTotalStock(product);
+    const isSoldOut = totalStock === 0;
+    const wishlistActive = isInWishlist(product.id);
+
+    return (
+        <article className="group relative animate-product-card-reveal" style={style}>
+            <Link href={`/product/${product.id}`} className="block">
+                <div className={`relative mb-4 overflow-hidden rounded-2xl bg-gray-100 transition-transform duration-300 group-hover:-translate-y-1 ${isSoldOut ? 'opacity-65' : ''}`}>
+                    <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
+                        {product.is_new && (
+                            <span className="rounded-full bg-emerald-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+                                NEW
+                            </span>
+                        )}
+                        {product.discount_percent > 0 && (
+                            <span className="rounded-full bg-red-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+                                -{product.discount_percent}%
+                            </span>
+                        )}
+                        {isSoldOut && (
+                            <span className="rounded-full bg-gray-700 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+                                หมด
+                            </span>
+                        )}
+                    </div>
+
+                    <ProductImage
+                        src={product.image}
+                        alt={product.nameEN}
+                        className="rounded-2xl transition-transform duration-500 group-hover:scale-105"
+                    />
+
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                </div>
+            </Link>
+
+            <div className="absolute right-3 top-3 z-20">
+                <div
+                    className="flex items-center overflow-hidden rounded-full bg-white/95 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out"
+                    style={{ width: confirmRemove === product.id ? '72px' : '36px' }}
+                >
+                    {confirmRemove === product.id ? (
+                        <div className="flex w-full items-center gap-1 px-1 py-1">
+                            <button
+                                onClick={(e) => onCancelRemove(e)}
+                                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[0px] text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                                aria-label="Cancel remove"
+                            >
+                                <X size={14} />
+                                ยกเลิก
+                            </button>
+                            <button
+                                onClick={onConfirmRemove}
+                                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-500 text-[0px] text-white transition-colors hover:bg-red-600"
+                                aria-label={`Confirm remove ${product.nameEN} from wishlist`}
+                            >
+                                <Trash2 size={14} />
+                                ลบ
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={(e) => onWishlistClick(e, product)}
+                            className="cursor-pointer p-2.5 transition-colors hover:bg-pink-50"
+                            title={wishlistActive ? 'ลบออกจากรายการโปรด' : 'เพิ่มลงรายการโปรด'}
+                        >
+                            <Heart
+                                size={18}
+                                strokeWidth={1.5}
+                                className={`transition-colors ${wishlistActive ? 'fill-[#dc6fd6] text-[#dc6fd6]' : 'text-gray-500 hover:text-[#dc6fd6]'}`}
+                            />
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div>
+                <Link href={`/product/${product.id}`}>
+                    <h3 className="line-clamp-1 text-sm font-bold text-gray-950 transition-colors group-hover:text-[#dc6fd6]">
+                        {product.nameEN}
+                    </h3>
+                    <p className="mt-1 line-clamp-1 text-xs text-gray-500">{product.nameTH}</p>
+                </Link>
+
+                <div className="mt-2 flex min-h-6 items-center gap-2">
+                    {product.discount_percent > 0 ? (
+                        <>
+                            <span className="text-sm font-medium text-gray-400 line-through">฿{formatPrice(originalPrice)}</span>
+                            <span className="text-sm font-black text-red-500">฿{formatPrice(salePrice)}</span>
+                        </>
+                    ) : (
+                        <span className="text-sm font-black text-[#dc6fd6]">฿{formatPrice(salePrice)}</span>
+                    )}
+                </div>
+
+                <div className="mt-2 flex items-center justify-between text-[11px] font-medium text-gray-500">
+                    <span>{isSoldOut ? 'สินค้าหมด' : `พร้อมส่ง ${totalStock} ตัว`}</span>
+                    {product.discount_percent > 0 && <span className="text-red-500">Sale</span>}
+                </div>
+
+                <Link
+                    href={`/product/${product.id}`}
+                    className={`mt-3 flex h-10 w-full items-center justify-center rounded-lg border text-xs font-bold tracking-widest transition-all ${
+                        isSoldOut
+                            ? 'border-gray-200 bg-gray-100 text-gray-400'
+                            : 'border-gray-300 text-gray-700 hover:border-[#dc6fd6] hover:bg-[#dc6fd6] hover:text-white'
+                    }`}
+                >
+                    {isSoldOut ? 'ดูรายละเอียด' : 'เลือกไซส์'}
+                </Link>
+            </div>
+        </article>
+    );
+}
+
 function ProductsContent() {
-    const { addToCart } = useCart();
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const [activeCategory, setActiveCategory] = useState('all');
     const [confirmRemove, setConfirmRemove] = useState(null);
+    const [productsData, setProductsData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState('featured');
+    const [saleOnly, setSaleOnly] = useState(false);
+    const [inStockOnly, setInStockOnly] = useState(false);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-    // useCallback เพื่อ optimize - ไม่สร้างฟังก์ชันใหม่ทุกครั้งที่ re-render
+    const searchParams = useSearchParams();
+    const urlSearchQuery = searchParams ? searchParams.get('search') : null;
+    const categoryParam = searchParams ? searchParams.get('category') : null;
+
+    useEffect(() => {
+        if (categoryParam && ['shirt', 'dress', 'set'].includes(categoryParam)) {
+            setActiveCategory(categoryParam);
+        } else if (!categoryParam) {
+            setActiveCategory('all');
+        }
+    }, [categoryParam]);
+
+    useEffect(() => {
+        setSearchTerm(urlSearchQuery || '');
+    }, [urlSearchQuery]);
+
+    useEffect(() => {
+        async function fetchProducts() {
+            const { data, error } = await supabase
+                .from('products1')
+                .select(PRODUCT_LIST_COLUMNS)
+                .order('id', { ascending: true });
+
+            if (error) {
+                console.error('Error fetching products:', error);
+            } else {
+                setProductsData(data || []);
+            }
+            setIsLoading(false);
+        }
+
+        fetchProducts();
+    }, []);
+
+    const categoryCounts = useMemo(() => {
+        return CATEGORIES.reduce((counts, category) => {
+            counts[category.id] = category.id === 'all'
+                ? productsData.length
+                : productsData.filter((product) => product.category === category.id).length;
+            return counts;
+        }, {});
+    }, [productsData]);
+
+    const filteredProducts = useMemo(() => {
+        const query = searchTerm.trim().toLowerCase();
+
+        const filtered = productsData.filter((product) => {
+            const matchCategory = activeCategory === 'all' || product.category === activeCategory;
+            const matchSearch = !query ||
+                product.nameEN?.toLowerCase().includes(query) ||
+                product.nameTH?.toLowerCase().includes(query) ||
+                product.category?.toLowerCase().includes(query);
+            const matchSale = !saleOnly || Number(product.discount_percent || 0) > 0;
+            const matchStock = !inStockOnly || getTotalStock(product) > 0;
+
+            return matchCategory && matchSearch && matchSale && matchStock;
+        });
+
+        return [...filtered].sort((a, b) => {
+            if (sortBy === 'newest') return Number(b.id || 0) - Number(a.id || 0);
+            if (sortBy === 'price-low') return getSalePrice(a) - getSalePrice(b);
+            if (sortBy === 'price-high') return getSalePrice(b) - getSalePrice(a);
+            if (sortBy === 'discount') return Number(b.discount_percent || 0) - Number(a.discount_percent || 0);
+            return Number(a.id || 0) - Number(b.id || 0);
+        });
+    }, [productsData, activeCategory, searchTerm, saleOnly, inStockOnly, sortBy]);
+
+    const paginatedProducts = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredProducts, currentPage]);
+
+    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+    const hasActiveFilters = activeCategory !== 'all' || searchTerm || saleOnly || inStockOnly || sortBy !== 'featured';
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeCategory, searchTerm, saleOnly, inStockOnly, sortBy]);
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [currentPage]);
+
     const handleWishlistClick = useCallback((e, product) => {
         e.stopPropagation();
         e.preventDefault();
@@ -42,99 +276,56 @@ function ProductsContent() {
         }
     }, [confirmRemove, removeFromWishlist]);
 
-    // สร้าง State มารับข้อมูลสินค้าจาก Supabase และ State สำหรับ Loading
-    const [productsData, setProductsData] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 12;
-
-    const searchParams = useSearchParams();
-    const searchQuery = searchParams ? searchParams.get('search') : null;
-    const categoryParam = searchParams ? searchParams.get('category') : null;
-
-    // ตั้งค่า activeCategory จาก URL parameter
-    useEffect(() => {
-        if (categoryParam && ['shirt', 'dress', 'set'].includes(categoryParam)) {
-            setActiveCategory(categoryParam);
-        } else if (!categoryParam) {
-            // ถ้าไม่มี category parameter ให้แสดงทั้งหมด
-            setActiveCategory('all');
-        }
-    }, [categoryParam]);
-
-    useEffect(() => {
-        async function fetchProducts() {
-            // ดึงข้อมูลจากตาราง products1 ของคุณ
-            const { data, error } = await supabase
-                .from('products1')
-                .select(PRODUCT_LIST_COLUMNS)
-                .order('id', { ascending: true });
-
-            if (error) {
-                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
-            } else {
-                setProductsData(data); // เอาข้อมูลที่ดึงได้มาใส่ใน State
-            }
-            setIsLoading(false); // ปิดสถานะ Loading เมื่อดึงข้อมูลเสร็จ
-        }
-
-        fetchProducts();
+    const cancelRemoveWishlist = useCallback((e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setConfirmRemove(null);
     }, []);
 
-    // useMemo เพื่อ optimize - ไม่คำนวณใหม่ถ้า dependencies ไม่เปลี่ยน
-    const filteredProducts = useMemo(() => {
-        return productsData.filter(product => {
-            // 1. เช็คหมวดหมู่ (ถ้าไม่ได้เลือก 'all')
-            const matchCategory = activeCategory === 'all' || product.category === activeCategory;
+    const clearFilters = useCallback(() => {
+        setActiveCategory('all');
+        setSearchTerm('');
+        setSortBy('featured');
+        setSaleOnly(false);
+        setInStockOnly(false);
+        setIsFilterOpen(false);
+    }, []);
 
-            // 2. เช็คคำค้นหา (ถ้ามีคนพิมพ์ค้นหามา)
-            let matchSearch = true;
-            if (searchQuery) {
-                const q = searchQuery.toLowerCase();
-                matchSearch =
-                    (product.nameEN && product.nameEN.toLowerCase().includes(q)) ||
-                    (product.nameTH && product.nameTH.toLowerCase().includes(q)) ||
-                    (product.category && product.category.toLowerCase().includes(q));
-            }
-
-            // สินค้าต้องตรงทั้งหมวดหมู่ และ คำค้นหา
-            return matchCategory && matchSearch;
-        });
-    }, [productsData, activeCategory, searchQuery]);
-
-    // คำนวณสินค้าที่จะแสดงในหน้าปัจจุบัน
-    const paginatedProducts = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        return filteredProducts.slice(startIndex, endIndex);
-    }, [filteredProducts, currentPage]);
-
-    // คำนวณจำนวนหน้าทั้งหมด
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-
-    // Reset เป็นหน้าแรกเมื่อ filter เปลี่ยน
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [activeCategory, searchQuery]);
-
-    // Scroll ไปด้านบนเมื่อเปลี่ยนหน้า
-    useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, [currentPage]);
+    const categoryFilter = (
+        <div className="space-y-2">
+            {CATEGORIES.map((category) => (
+                <button
+                    key={category.id}
+                    onClick={() => {
+                        setActiveCategory(category.id);
+                        setIsFilterOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
+                        activeCategory === category.id
+                            ? 'bg-[#dc6fd6] text-white shadow-sm'
+                            : 'text-gray-600 hover:bg-pink-50 hover:text-[#dc6fd6]'
+                    }`}
+                >
+                    <span>{category.label} ({category.labelEn})</span>
+                    <span className={`text-xs ${activeCategory === category.id ? 'text-white/80' : 'text-gray-400'}`}>
+                        {categoryCounts[category.id] || 0}
+                    </span>
+                </button>
+            ))}
+        </div>
+    );
 
     if (isLoading) {
         return (
-            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-12">
-                {/* Category Filter Skeleton */}
-                <aside className="w-full md:w-56 shrink-0">
-                    <h2 className="text-lg font-bold text-zinc-900 mb-6 tracking-wide border-b border-gray-100 pb-4">หมวดหมู่สินค้า</h2>
+            <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 md:flex-row md:gap-12">
+                <aside className="hidden w-60 shrink-0 md:block">
+                    <h2 className="mb-6 border-b border-gray-100 pb-4 text-lg font-bold tracking-wide text-zinc-900">หมวดหมู่สินค้า</h2>
                     <CategoryFilterSkeleton />
                 </aside>
 
-                {/* Product Grid Skeleton */}
                 <div className="flex-1">
-                    <div className="flex justify-between items-end mb-8">
-                        <h1 className="text-3xl font-bold tracking-widest text-zinc-900">ALL PRODUCTS</h1>
+                    <div className="mb-8 flex items-end justify-between">
+                        <h1 className="text-3xl font-black tracking-widest text-zinc-900">ALL PRODUCTS</h1>
                         <p className="text-sm text-gray-500">กำลังโหลด...</p>
                     </div>
                     <ProductGridSkeleton count={8} />
@@ -144,222 +335,198 @@ function ProductsContent() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-12">
-
-            {/* 🗂️ แถบเมนูกรองหมวดหมู่ด้านซ้าย (Sidebar) */}
-            <aside className="w-full md:w-56 shrink-0">
-                <h2 className="text-lg font-bold text-zinc-900 mb-6 tracking-wide border-b border-gray-100 pb-4">หมวดหมู่สินค้า</h2>
-                <ul className="space-y-4 text-sm font-medium text-gray-600">
-                    <li>
-                        <button onClick={() => setActiveCategory('all')} className={`transition-colors cursor-pointer category-btn ${activeCategory === 'all' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
-                            ทั้งหมด (All)
-                        </button>
-                    </li>
-                    <li>
-                        <button onClick={() => setActiveCategory('shirt')} className={`transition-colors cursor-pointer category-btn ${activeCategory === 'shirt' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
-                            เสื้อ (Shirts)
-                        </button>
-                    </li>
-                    <li>
-                        <button onClick={() => setActiveCategory('dress')} className={`transition-colors cursor-pointer category-btn ${activeCategory === 'dress' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
-                            เดรส (Dresses)
-                        </button>
-                    </li>
-                    <li>
-                        <button onClick={() => setActiveCategory('set')} className={`transition-colors cursor-pointer category-btn ${activeCategory === 'set' ? 'text-pink-400 font-bold' : 'hover:text-pink-400'}`}>
-                            ชุดเซ็ต (Sets)
-                        </button>
-                    </li>
-                </ul>
-            </aside>
-
-            {/* 🖼️ พื้นที่โชว์สินค้า (Product Grid) */}
-            <div className="flex-1">
-                <div className="flex justify-between items-end mb-8">
-                    <h1 className="text-3xl font-bold tracking-widest text-zinc-900">
-                        ALL PRODUCTS
-                    </h1>
-                    <p className="text-sm text-gray-500">พบ {filteredProducts.length} รายการ</p>
-                </div>
-
-                {filteredProducts.length === 0 ? (
-                    <div className="text-center py-20 bg-gray-50 rounded-md">
-                        <p className="text-gray-500">ไม่พบสินค้าในหมวดหมู่นี้</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
-                            {paginatedProducts.map((product, index) => (
-                                <div
-                                    key={product.id}
-                                    className="group cursor-pointer card-hover relative animate-product-card-reveal"
-                                    style={{ animationDelay: `${Math.min(index * 85, 680)}ms` }}
-                                >
-                                    {/* 🌟 Badges */}
-                                    <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
-                                        {product.is_new && (
-                                            <span className="bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                                                NEW
-                                            </span>
-                                        )}
-                                        {product.discount_percent > 0 && (
-                                            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                                                -{product.discount_percent}%
-                                            </span>
-                                        )}
-                                        {product.stock === 0 && (
-                                            <span className="bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                                                หมด
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <Link href={`/product/${product.id}`}>
-                                        <div className={`relative mb-4 rounded-2xl overflow-hidden product-card-img ${product.stock === 0 ? 'opacity-60' : ''}`}>
-                                            <ProductImage
-                                                src={product.image}
-                                                alt={product.nameEN}
-                                                className="rounded-2xl"
-                                            />
-
-                                            {/* ปุ่ม Wishlist */}
-                                            <div className="absolute top-3 right-3 z-10">
-                                                <div
-                                                    className="flex items-center bg-white/95 backdrop-blur-sm rounded-full shadow-lg overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                                                    style={{
-                                                        width: confirmRemove === product.id ? '72px' : '34px',
-                                                    }}
-                                                >
-                                                    {confirmRemove === product.id ? (
-                                                        <div className="flex items-center gap-1 px-1 py-1 w-full animate-in fade-in duration-200">
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    e.preventDefault();
-                                                                    setConfirmRemove(null);
-                                                                }}
-                                                                className="flex h-7 w-7 items-center justify-center rounded-full text-[0px] text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors cursor-pointer"
-                                                                aria-label="Cancel remove"
-                                                            >
-                                                                <X size={14} />
-                                                                ยกเลิก
-                                                            </button>
-                                                            <button
-                                                                onClick={confirmRemoveWishlist}
-                                                                className="flex h-7 w-7 items-center justify-center bg-red-500 text-[0px] text-white rounded-full hover:bg-red-600 transition-colors cursor-pointer"
-                                                                aria-label={`Confirm remove ${product.nameEN} from wishlist`}
-                                                            >
-                                                                <Trash2 size={14} />
-                                                                ลบ
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={(e) => handleWishlistClick(e, product)}
-                                                            className="p-2 hover:bg-pink-50 transition-colors cursor-pointer group/btn"
-                                                            title={isInWishlist(product.id) ? "ลบออกจากรายการโปรด" : "เพิ่มลงรายการโปรด"}
-                                                        >
-                                                            <Heart
-                                                                size={18}
-                                                                strokeWidth={1.5}
-                                                                className={`transition-colors ${isInWishlist(product.id) ? 'text-[#dc6fd6] fill-[#dc6fd6]' : 'text-gray-500 group-hover/btn:text-[#dc6fd6]'}`}
-                                                            />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Link>
-
-                                    <div>
-                                        <Link href={`/product/${product.id}`}>
-                                            <h3 className="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-[#dc6fd6] transition-colors">{product.nameEN}</h3>
-                                            <p className="text-xs text-gray-500 mt-1 mb-2 line-clamp-1">{product.nameTH}</p>
-                                        </Link>
-
-                                        {/* 💰 ราคา (แสดงราคาลดถ้ามีส่วนลด) */}
-                                        <div className="mb-3">
-                                            {product.discount_percent > 0 ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm text-gray-400 line-through">
-                                                        ฿{(product.original_price || product.price).toLocaleString()}
-                                                    </span>
-                                                    <span className="text-sm text-red-500 font-bold">
-                                                        ฿{Math.round(product.price * (1 - product.discount_percent / 100)).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm font-semibold text-[#dc6fd6]">
-                                                    ฿{product.price ? product.price.toLocaleString() : 0}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* 🛒 ปุ่มเพิ่มลงตะกร้า */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                if (product.stock !== 0) {
-                                                    addToCart({ ...product, quantity: 1 });
-                                                }
-                                            }}
-                                            disabled={product.stock === 0}
-                                            className={`w-full py-2 text-xs font-semibold tracking-widest rounded-lg transition-all cursor-pointer ${product.stock === 0
-                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                : 'border border-gray-300 text-gray-600 hover:bg-[#dc6fd6] hover:text-white hover:border-[#dc6fd6]'
-                                                }`}
-                                        >
-                                            {product.stock === 0 ? 'SOLD OUT' : 'ADD TO CART'}
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+        <>
+            <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 md:flex-row md:gap-12">
+                <aside className="hidden w-60 shrink-0 md:block">
+                    <div className="sticky top-28">
+                        <div className="mb-5 flex items-center justify-between border-b border-gray-100 pb-4">
+                            <h2 className="text-lg font-bold tracking-wide text-zinc-900">หมวดหมู่สินค้า</h2>
+                            {hasActiveFilters && (
+                                <button onClick={clearFilters} className="text-xs font-semibold text-[#dc6fd6] hover:text-[#c655c7]">
+                                    ล้าง
+                                </button>
+                            )}
                         </div>
+                        {categoryFilter}
+                    </div>
+                </aside>
 
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="flex justify-center items-center gap-2 mt-12">
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-[#dc6fd6] hover:text-white hover:border-[#dc6fd6] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
-                                >
-                                    ก่อนหน้า
-                                </button>
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                                    <button
-                                        key={page}
-                                        onClick={() => setCurrentPage(page)}
-                                        className={`px-4 py-2 rounded-lg border transition-all cursor-pointer ${currentPage === page
-                                            ? 'bg-[#dc6fd6] text-white border-[#dc6fd6]'
-                                            : 'border-gray-300 text-gray-600 hover:bg-[#dc6fd6] hover:text-white hover:border-[#dc6fd6]'
-                                            }`}
-                                    >
-                                        {page}
-                                    </button>
+                <section className="min-w-0 flex-1">
+                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h1 className="text-3xl font-black tracking-widest text-zinc-900 md:text-4xl">
+                                ALL PRODUCTS
+                            </h1>
+                            <p className="mt-2 text-sm text-gray-500">
+                                พบ {filteredProducts.length} รายการจากทั้งหมด {productsData.length} รายการ
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setIsFilterOpen(true)}
+                            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 text-sm font-bold text-gray-700 md:hidden"
+                        >
+                            <SlidersHorizontal size={18} />
+                            ตัวกรอง
+                        </button>
+                    </div>
+
+                    <div className="mb-8 grid gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm lg:grid-cols-[1fr_220px_auto_auto]">
+                        <label className="relative block">
+                            <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="ค้นหาสินค้า..."
+                                className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm outline-none transition-colors focus:border-[#dc6fd6]"
+                            />
+                        </label>
+
+                        <label className="relative block">
+                            <ArrowUpDown className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm font-semibold text-gray-700 outline-none transition-colors focus:border-[#dc6fd6]"
+                            >
+                                {SORT_OPTIONS.map((option) => (
+                                    <option key={option.id} value={option.id}>{option.label}</option>
                                 ))}
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-[#dc6fd6] hover:text-white hover:border-[#dc6fd6] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
-                                >
-                                    ถัดไป
-                                </button>
+                            </select>
+                        </label>
+
+                        <button
+                            onClick={() => setSaleOnly((value) => !value)}
+                            className={`h-11 rounded-xl px-4 text-sm font-bold transition-colors ${
+                                saleOnly ? 'bg-red-500 text-white' : 'bg-gray-50 text-gray-600 hover:bg-pink-50 hover:text-[#dc6fd6]'
+                            }`}
+                        >
+                            ลดราคา
+                        </button>
+
+                        <button
+                            onClick={() => setInStockOnly((value) => !value)}
+                            className={`h-11 rounded-xl px-4 text-sm font-bold transition-colors ${
+                                inStockOnly ? 'bg-emerald-500 text-white' : 'bg-gray-50 text-gray-600 hover:bg-pink-50 hover:text-[#dc6fd6]'
+                            }`}
+                        >
+                            พร้อมส่ง
+                        </button>
+                    </div>
+
+                    {filteredProducts.length === 0 ? (
+                        <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 text-center">
+                            <p className="text-lg font-bold text-gray-900">ไม่พบสินค้าที่ตรงกับตัวกรอง</p>
+                            <p className="mt-2 text-sm text-gray-500">ลองเปลี่ยนคำค้นหา หมวดหมู่ หรือปิดตัวกรองบางรายการ</p>
+                            <button
+                                onClick={clearFilters}
+                                className="mt-5 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-zinc-800"
+                            >
+                                ล้างตัวกรอง
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {paginatedProducts.map((product, index) => (
+                                    <ProductCard
+                                        key={product.id}
+                                        product={product}
+                                        confirmRemove={confirmRemove}
+                                        onWishlistClick={handleWishlistClick}
+                                        onCancelRemove={cancelRemoveWishlist}
+                                        onConfirmRemove={confirmRemoveWishlist}
+                                        isInWishlist={isInWishlist}
+                                        style={{ animationDelay: `${Math.min(index * 85, 680)}ms` }}
+                                    />
+                                ))}
                             </div>
-                        )}
-                    </>
-                )}
+
+                            {totalPages > 1 && (
+                                <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-all hover:border-[#dc6fd6] hover:bg-[#dc6fd6] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        ก่อนหน้า
+                                    </button>
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                        <button
+                                            key={page}
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-all ${
+                                                currentPage === page
+                                                    ? 'border-[#dc6fd6] bg-[#dc6fd6] text-white'
+                                                    : 'border-gray-300 text-gray-600 hover:border-[#dc6fd6] hover:bg-[#dc6fd6] hover:text-white'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-all hover:border-[#dc6fd6] hover:bg-[#dc6fd6] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        ถัดไป
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </section>
             </div>
-        </div>
+
+            {isFilterOpen && (
+                <div className="fixed inset-0 z-50 md:hidden">
+                    <button
+                        className="absolute inset-0 bg-black/35"
+                        onClick={() => setIsFilterOpen(false)}
+                        aria-label="Close filters"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-white p-5 shadow-2xl">
+                        <div className="mb-5 flex items-center justify-between">
+                            <h2 className="text-lg font-black text-gray-950">ตัวกรองสินค้า</h2>
+                            <button
+                                onClick={() => setIsFilterOpen(false)}
+                                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600"
+                                aria-label="Close filters"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                        {categoryFilter}
+                        <div className="mt-5 grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setSaleOnly((value) => !value)}
+                                className={`h-11 rounded-xl text-sm font-bold ${saleOnly ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                            >
+                                ลดราคา
+                            </button>
+                            <button
+                                onClick={() => setInStockOnly((value) => !value)}
+                                className={`h-11 rounded-xl text-sm font-bold ${inStockOnly ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                            >
+                                พร้อมส่ง
+                            </button>
+                        </div>
+                        <button
+                            onClick={clearFilters}
+                            className="mt-3 h-11 w-full rounded-xl border border-gray-200 text-sm font-bold text-gray-600"
+                        >
+                            ล้างตัวกรอง
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
 
-// 🏠 2. Export หน้าหลัก แล้วเอา <Suspense> มาครอบ Component ย่อย
 export default function ProductsPage() {
     return (
-        <main className="min-h-screen bg-white py-12">
-            <Suspense fallback={<div className="w-full text-center py-20 text-gray-500 font-medium tracking-widest">LOADING...</div>}>
+        <main className="min-h-screen bg-white py-10 md:py-12">
+            <Suspense fallback={<div className="w-full py-20 text-center font-medium tracking-widest text-gray-500">LOADING...</div>}>
                 <ProductsContent />
             </Suspense>
         </main>

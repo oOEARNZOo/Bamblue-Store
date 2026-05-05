@@ -267,23 +267,23 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="bg-white border-b border-gray-100 py-3 px-6 sticky top-0 z-50">
+    <nav className="bg-white border-b border-gray-100 px-3 py-2.5 sticky top-0 z-50 sm:px-5 sm:py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
 
-        <Link href="/" className="cursor-pointer flex items-center gap-2">
-          <img src="/Picture/icon.png" alt="Bamblue Logo" className="w-12 h-12 object-contain" />
-          <span className="text-xl font-bold tracking-tight whitespace-nowrap">Bamblue <span className="text-[#dc6fd6]">store</span></span>
+        <Link href="/" className="cursor-pointer flex min-w-0 items-center gap-2">
+          <img src="/Picture/icon.png" alt="Bamblue Logo" className="h-10 w-10 shrink-0 object-contain sm:h-12 sm:w-12" />
+          <span className="hidden whitespace-nowrap text-lg font-bold tracking-tight min-[420px]:inline sm:text-xl">Bamblue <span className="text-[#dc6fd6]">store</span></span>
         </Link>
 
         <div className="hidden lg:flex items-center space-x-6 text-sm font-medium text-gray-600">
-          <Link href="/" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>หน้าหลัก</Link>
-          <Link href="/products" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/products' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>สินค้าทั้งหมด</Link>
-          <Link href="/reviews" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/reviews' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>รีวิว</Link>
-          <Link href="/promotions" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/promotions' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>โปรโมชั่น</Link>
-          <Link href="/contact" className={`cursor-pointer px-3 py-2 rounded-lg transition-colors ${pathname === '/contact' ? 'bg-[#dc6fd6] text-white border-2 border-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}>ติดต่อเรา</Link>
+          <Link href="/" className={`cursor-pointer rounded-lg px-3 py-2 transition-colors ${pathname === '/' ? 'bg-pink-50 text-[#dc6fd6]' : 'hover:bg-gray-50 hover:text-[#dc6fd6]'}`}>หน้าหลัก</Link>
+          <Link href="/products" className={`cursor-pointer rounded-lg px-3 py-2 transition-colors ${pathname === '/products' ? 'bg-pink-50 text-[#dc6fd6]' : 'hover:bg-gray-50 hover:text-[#dc6fd6]'}`}>สินค้าทั้งหมด</Link>
+          <Link href="/reviews" className={`cursor-pointer rounded-lg px-3 py-2 transition-colors ${pathname === '/reviews' ? 'bg-pink-50 text-[#dc6fd6]' : 'hover:bg-gray-50 hover:text-[#dc6fd6]'}`}>รีวิว</Link>
+          <Link href="/promotions" className={`cursor-pointer rounded-lg px-3 py-2 transition-colors ${pathname === '/promotions' ? 'bg-pink-50 text-[#dc6fd6]' : 'hover:bg-gray-50 hover:text-[#dc6fd6]'}`}>โปรโมชั่น</Link>
+          <Link href="/contact" className={`cursor-pointer rounded-lg px-3 py-2 transition-colors ${pathname === '/contact' ? 'bg-pink-50 text-[#dc6fd6]' : 'hover:bg-gray-50 hover:text-[#dc6fd6]'}`}>ติดต่อเรา</Link>
         </div>
 
-        <div className="flex items-center space-x-6 text-gray-700">
+        <div className="flex shrink-0 items-center gap-1.5 text-gray-700 sm:gap-3 lg:gap-6">
           <button
             onClick={() => {
               setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -292,7 +292,7 @@ export default function Navbar() {
               setIsSearchOpen(false);
               setIsProfileOpen(false);
             }}
-            className="md:hidden cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2"
+            className="order-3 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-none bg-transparent transition-colors hover:bg-pink-50 hover:text-[#dc6fd6] lg:hidden"
           >
             {isMobileMenuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
           </button>
@@ -303,14 +303,15 @@ export default function Navbar() {
               setIsCartOpen(false);
               setIsWishlistOpen(false);
               setIsProfileOpen(false);
+              setIsMobileMenuOpen(false);
             }}
-            className={`cursor-pointer transition-colors border-none bg-transparent py-2 flex items-center gap-1.5 ${isSearchOpen ? 'text-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}
+            className={`order-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-none bg-transparent transition-colors lg:order-none ${isSearchOpen ? 'bg-pink-50 text-[#dc6fd6]' : 'hover:bg-pink-50 hover:text-[#dc6fd6]'}`}
           >
             <Search size={20} strokeWidth={1.5} />
           </button>
 
           {/* ปุ่ม Wishlist บน Navbar */}
-          <div className="relative" ref={wishlistRef}>
+          <div className="relative hidden sm:block" ref={wishlistRef}>
             <button
             onClick={() => {
               if (!user) {
@@ -323,8 +324,9 @@ export default function Navbar() {
               setIsCartOpen(false);
               setIsSearchOpen(false);
               setIsProfileOpen(false);
+              setIsMobileMenuOpen(false);
             }}
-            className={`cursor-pointer relative transition-colors border-none bg-transparent py-2 flex items-center gap-1.5 ${isWishlistOpen ? 'text-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}
+            className={`relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-none bg-transparent transition-colors ${isWishlistOpen ? 'bg-pink-50 text-[#dc6fd6]' : 'hover:bg-pink-50 hover:text-[#dc6fd6]'}`}
             title="รายการโปรด"
           >
             <Heart size={20} strokeWidth={1.5} />
@@ -444,15 +446,16 @@ export default function Navbar() {
           </div>
 
           {user ? (
-            <div className="relative" ref={profileRef}>
+            <div className="relative hidden sm:block" ref={profileRef}>
               <button
                 onClick={() => {
                   setIsProfileOpen(!isProfileOpen);
                   setIsCartOpen(false);
                   setIsWishlistOpen(false);
                   setIsSearchOpen(false);
+                  setIsMobileMenuOpen(false);
                 }}
-                className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-none bg-transparent transition-colors hover:bg-pink-50 hover:text-[#dc6fd6]"
               >
                 <User size={20} strokeWidth={1.5} className="text-[#dc6fd6]" />
               </button>
@@ -508,20 +511,21 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <Link href="/login" className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5">
+            <Link href="/login" className="hidden h-10 w-10 cursor-pointer items-center justify-center rounded-full border-none bg-transparent transition-colors hover:bg-pink-50 hover:text-[#dc6fd6] sm:flex">
               <User size={20} strokeWidth={1.5} />
             </Link>
           )}
 
-          <div className="relative" ref={cartRef}>
+          <div className="relative order-2 lg:order-none" ref={cartRef}>
             <button
               onClick={() => {
-                setIsCartOpen(!isCartOpen);
-                setIsWishlistOpen(false);
-                setIsSearchOpen(false);
-                setIsProfileOpen(false);
-              }}
-              className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors flex items-center gap-1.5 py-2 bg-transparent border-none"
+              setIsCartOpen(!isCartOpen);
+              setIsWishlistOpen(false);
+              setIsSearchOpen(false);
+              setIsProfileOpen(false);
+              setIsMobileMenuOpen(false);
+            }}
+              className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-none bg-transparent transition-colors hover:bg-pink-50 hover:text-[#dc6fd6]"
             >
               <ShoppingCart size={20} strokeWidth={1.5} />
               {mounted && cartItemCount > 0 && (
@@ -532,7 +536,7 @@ export default function Navbar() {
             </button>
 
             {isCartOpen && (
-              <div className="absolute top-full right-0 mt-3 w-80 bg-white shadow-xl border border-gray-100 rounded-lg p-4 z-50 cursor-default dropdown-animate">
+              <div className="fixed inset-x-3 top-[68px] z-50 max-h-[calc(100vh-88px)] overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-2xl cursor-default dropdown-animate md:absolute md:inset-auto md:right-0 md:top-full md:mt-3 md:w-80">
                 <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
                   <h3 className="text-sm font-bold text-gray-800">
                     ตะกร้าสินค้า ({totalQuantity} ชิ้น)
@@ -546,7 +550,7 @@ export default function Navbar() {
                   <p className="text-sm text-gray-500 text-center py-6">ไม่มีสินค้าในตะกร้า</p>
                 ) : (
                   <>
-                    <div className="max-h-[60vh] overflow-y-auto space-y-4 mb-4 pr-1">
+                    <div className="max-h-[50vh] overflow-y-auto space-y-4 mb-4 pr-1 md:max-h-[60vh]">
                       {cartItems.map(item => {
                         const stockLimit = getItemStockLimit(item);
                         const isAtStockLimit = stockLimit !== null && item.quantity >= stockLimit;
@@ -588,14 +592,90 @@ export default function Navbar() {
         </div>
       </div>
 
+      {(isMobileMenuOpen || isSearchOpen || isCartOpen || isWishlistOpen || isProfileOpen) && (
+        <button
+          type="button"
+          className="fixed inset-x-0 bottom-0 top-[61px] z-40 bg-black/10 backdrop-blur-[1px] lg:hidden"
+          aria-label="Close open navigation panel"
+          onClick={() => {
+            setIsMobileMenuOpen(false);
+            setIsSearchOpen(false);
+            setIsCartOpen(false);
+            setIsWishlistOpen(false);
+            setIsProfileOpen(false);
+            setConfirmWishlistRemove(null);
+          }}
+        />
+      )}
+
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 py-4 px-6 animate-in fade-in duration-200">
+        <div className="relative z-50 bg-white border-t border-gray-100 py-4 px-3 animate-in fade-in duration-200 sm:px-5 lg:hidden">
           <div className="space-y-2">
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>หน้าหลัก</Link>
             <Link href="/products" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/products' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>สินค้าทั้งหมด</Link>
             <Link href="/reviews" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/reviews' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>รีวิวจากลูกค้า</Link>
             <Link href="/promotions" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/promotions' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>ข่าวสารโปรโมชั่น</Link>
             <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/contact' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>ติดต่อเรา</Link>
+          </div>
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <p className="mb-2 px-4 text-xs font-bold uppercase tracking-widest text-gray-400">Account</p>
+            <div className="space-y-2">
+              <Link
+                href="/wishlist"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${pathname === '/wishlist' ? 'bg-pink-50 text-[#dc6fd6]' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                <span>Wishlist</span>
+                {mounted && wishlistCount > 0 && (
+                  <span className="rounded-full bg-[#dc6fd6] px-2 py-0.5 text-xs font-bold text-white">{wishlistCount}</span>
+                )}
+              </Link>
+
+              {user ? (
+                <>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block rounded-lg px-4 py-3 text-sm font-semibold text-purple-600 transition-colors hover:bg-purple-50"
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${pathname === '/profile' ? 'bg-pink-50 text-[#dc6fd6]' : 'text-gray-700 hover:bg-gray-100'}`}
+                  >
+                    โปรไฟล์ของฉัน
+                  </Link>
+                  <Link
+                    href="/orders"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${pathname === '/orders' ? 'bg-pink-50 text-[#dc6fd6]' : 'text-gray-700 hover:bg-gray-100'}`}
+                  >
+                    ประวัติการสั่งซื้อ
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-red-500 transition-colors hover:bg-red-50"
+                  >
+                    ออกจากระบบ
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${pathname === '/login' ? 'bg-pink-50 text-[#dc6fd6]' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  เข้าสู่ระบบ
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       )}

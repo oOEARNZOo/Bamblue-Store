@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { useCart } from './context/CartContext';
 import { useWishlist } from './context/WishlistContext';
-import { Heart } from 'lucide-react';
+import { Heart, MessageSquare, RefreshCcw, Ruler, ShieldCheck, Trash2, Truck, X } from 'lucide-react';
 
 // 🌟 1. นำเข้า Supabase
 import { supabase } from '@/lib/supabase';
@@ -18,8 +17,8 @@ const PRODUCT_CARD_COLUMNS = 'id, nameEN, nameTH, price, original_price, image, 
 const HOME_REVIEW_COLUMNS = 'id, reviewer_name, rating, title, comment, created_at, is_verified, product_name_en, product_name_th';
 
 export default function Home() {
-  const { addToCart } = useCart();
   const { wishlistItems, addToWishlist, removeFromWishlist } = useWishlist();
+  const [confirmRemove, setConfirmRemove] = useState(null);
 
   // ตรวจสอบว่าสินค้าอยู่ใน wishlist หรือไม่ (useCallback เพื่อ optimize)
   const isInWishlist = useCallback((productId) => {
@@ -29,11 +28,27 @@ export default function Home() {
   // Toggle wishlist (useCallback เพื่อ optimize)
   const toggleWishlist = useCallback((item) => {
     if (wishlistItems.some(i => i.id === item.id)) {
-      removeFromWishlist(item.id);
+      setConfirmRemove(item.id);
     } else {
       addToWishlist(item);
+      setConfirmRemove(null);
     }
-  }, [wishlistItems, addToWishlist, removeFromWishlist]);
+  }, [wishlistItems, addToWishlist]);
+
+  const cancelRemoveWishlist = useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setConfirmRemove(null);
+  }, []);
+
+  const confirmRemoveWishlist = useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (confirmRemove) {
+      removeFromWishlist(confirmRemove);
+      setConfirmRemove(null);
+    }
+  }, [confirmRemove, removeFromWishlist]);
 
   // 🌟 2. สร้าง State สำหรับรับข้อมูลสินค้าใหม่จาก Supabase
   const [newArrivals, setNewArrivals] = useState([]);
@@ -186,7 +201,7 @@ export default function Home() {
     <main className="min-h-screen flex flex-col">
 
       {/* 🌟 Section 1: Hero Banner Slider (แก้ไขความสูงตรงนี้) 🌟 */}
-      <section className="group relative isolate h-[560px] w-full overflow-hidden bg-[#fbf7fb] md:h-[650px]">
+      <section className="group relative isolate h-[520px] w-full overflow-hidden bg-[#fbf7fb] md:h-[600px]">
         {banners.map((banner, index) => (
           <div
             key={banner.id}
@@ -290,7 +305,28 @@ export default function Home() {
 
 
       {/* 🌟 Section 2: NEW ARRIVALS */}
-      <section className="py-20 bg-gradient-to-b from-white via-purple-50 to-pink-50">
+      <section className="border-b border-gray-100 bg-white">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { icon: Truck, title: 'จัดส่งฟรี', text: 'สำหรับทุกออเดอร์ในไทย' },
+            { icon: Ruler, title: 'เลือกไซส์ก่อนซื้อ', text: 'ผูกกับสต็อกตามไซส์จริง' },
+            { icon: RefreshCcw, title: 'คืนสินค้า 14 วัน', text: 'ตามเงื่อนไขของร้าน' },
+            { icon: ShieldCheck, title: 'ชำระเงินปลอดภัย', text: 'ตรวจสอบคำสั่งซื้อได้' }
+          ].map(({ icon: Icon, title, text }) => (
+            <div key={title} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#dc6fd6] shadow-sm">
+                <Icon size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-black text-gray-950">{title}</p>
+                <p className="mt-0.5 text-xs text-gray-500">{text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <h3 className="text-2xl tracking-widest text-[#dc6fd6] border-gray-200 border-b font-medium">NEW ARRIVALS</h3>
@@ -353,15 +389,44 @@ export default function Home() {
                   </div>
 
                   {/* ❤️ Wishlist Button */}
-                  <button
-                    onClick={(e) => { e.preventDefault(); toggleWishlist(item); }}
-                    className="absolute top-2 right-2 z-10 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 cursor-pointer"
-                  >
-                    <Heart 
-                      size={16} 
-                      className={isInWishlist(item.id) ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-400'} 
-                    />
-                  </button>
+                  <div className="absolute top-2 right-2 z-10">
+                    <div
+                      className="flex items-center overflow-hidden rounded-full bg-white/95 shadow-md backdrop-blur-sm transition-all duration-300 ease-out"
+                      style={{ width: confirmRemove === item.id ? '72px' : '32px' }}
+                    >
+                      {confirmRemove === item.id ? (
+                        <div className="flex w-full items-center gap-1 px-1 py-1">
+                          <button
+                            onClick={cancelRemoveWishlist}
+                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[0px] text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                            aria-label="Cancel remove from wishlist"
+                          >
+                            <X size={14} />
+                            ยกเลิก
+                          </button>
+                          <button
+                            onClick={confirmRemoveWishlist}
+                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-500 text-[0px] text-white transition-colors hover:bg-red-600"
+                            aria-label={`Confirm remove ${item.nameEN} from wishlist`}
+                          >
+                            <Trash2 size={14} />
+                            ลบ
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(item); }}
+                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all hover:scale-110 hover:bg-white"
+                          aria-label={isInWishlist(item.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                        >
+                          <Heart
+                            size={16}
+                            className={isInWishlist(item.id) ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-400'}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
                   <Link href={`/product/${item.id}`} className="block">
                     <div className={`w-full mb-4 rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all ${item.stock === 0 ? 'opacity-60' : ''}`}>
@@ -395,17 +460,17 @@ export default function Home() {
                     </div>
                   </Link>
                   
-                  {/* 🛒 ปุ่มเพิ่มลงตะกร้า */}
-                  <button
-                    onClick={() => addToCart(item)}
-                    disabled={item.stock === 0}
-                    className={`w-full py-2.5 text-xs font-semibold tracking-widest rounded-lg transition-all cursor-pointer ${
-                      item.stock === 0 
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                        : 'border border-gray-300 text-gray-600 hover:bg-[#dc6fd6] hover:text-white hover:border-[#dc6fd6]'
-                    }`}>
-                    {item.stock === 0 ? 'SOLD OUT' : 'QUICK ADD'}
-                  </button>
+                  {/* เลือกไซส์ก่อนซื้อเพื่อให้ตรงกับสต็อกตามไซส์ */}
+                  <Link
+                    href={`/product/${item.id}`}
+                    className={`flex h-10 w-full items-center justify-center rounded-lg text-xs font-semibold tracking-widest transition-all ${
+                      item.stock === 0
+                        ? 'bg-gray-200 text-gray-400'
+                        : 'border border-gray-300 text-gray-600 hover:border-[#dc6fd6] hover:bg-[#dc6fd6] hover:text-white'
+                    }`}
+                  >
+                    {item.stock === 0 ? 'ดูรายละเอียด' : 'เลือกไซส์'}
+                  </Link>
                 </div>
               ))}
               </div>
@@ -440,7 +505,7 @@ export default function Home() {
       </section>
 
       {/* 🌟 Section 4: BEST SELLERS */}
-      <section className="py-20 bg-gradient-to-b from-pink-50 via-white to-purple-50">
+      <section className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-sm text-[#dc6fd6] font-medium tracking-widest uppercase mb-2 block">สินค้ายอดนิยม</span>
@@ -471,15 +536,44 @@ export default function Home() {
                   </div>
 
                   {/* ❤️ Wishlist Button */}
-                  <button
-                    onClick={(e) => { e.preventDefault(); toggleWishlist(item); }}
-                    className="absolute top-2 right-2 z-10 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 cursor-pointer"
-                  >
-                    <Heart 
-                      size={16} 
-                      className={isInWishlist(item.id) ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-400'} 
-                    />
-                  </button>
+                  <div className="absolute top-2 right-2 z-10">
+                    <div
+                      className="flex items-center overflow-hidden rounded-full bg-white/95 shadow-md backdrop-blur-sm transition-all duration-300 ease-out"
+                      style={{ width: confirmRemove === item.id ? '72px' : '32px' }}
+                    >
+                      {confirmRemove === item.id ? (
+                        <div className="flex w-full items-center gap-1 px-1 py-1">
+                          <button
+                            onClick={cancelRemoveWishlist}
+                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[0px] text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                            aria-label="Cancel remove from wishlist"
+                          >
+                            <X size={14} />
+                            ยกเลิก
+                          </button>
+                          <button
+                            onClick={confirmRemoveWishlist}
+                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-500 text-[0px] text-white transition-colors hover:bg-red-600"
+                            aria-label={`Confirm remove ${item.nameEN} from wishlist`}
+                          >
+                            <Trash2 size={14} />
+                            ลบ
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(item); }}
+                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all hover:scale-110 hover:bg-white"
+                          aria-label={isInWishlist(item.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                        >
+                          <Heart
+                            size={16}
+                            className={isInWishlist(item.id) ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-400'}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
                   <Link href={`/product/${item.id}`} className="block">
                     <div className={`w-full mb-4 rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all ${item.stock === 0 ? 'opacity-60' : ''}`}>
@@ -513,17 +607,17 @@ export default function Home() {
                     </div>
                   </Link>
                   
-                  {/* 🛒 ปุ่มเพิ่มลงตะกร้า */}
-                  <button
-                    onClick={() => addToCart(item)}
-                    disabled={item.stock === 0}
-                    className={`w-full py-2.5 text-xs font-semibold tracking-widest rounded-lg transition-all cursor-pointer shadow-sm ${
-                      item.stock === 0 
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                  {/* เลือกไซส์ก่อนซื้อเพื่อให้ตรงกับสต็อกตามไซส์ */}
+                  <Link
+                    href={`/product/${item.id}`}
+                    className={`flex h-10 w-full items-center justify-center rounded-lg text-xs font-semibold tracking-widest transition-all shadow-sm ${
+                      item.stock === 0
+                        ? 'bg-gray-200 text-gray-400'
                         : 'bg-[#dc6fd6] text-white hover:bg-[#c55fc6]'
-                    }`}>
-                    ADD TO CART
-                  </button>
+                    }`}
+                  >
+                    {item.stock === 0 ? 'ดูรายละเอียด' : 'เลือกไซส์'}
+                  </Link>
                 </div>
               ))}
             </div>
@@ -544,7 +638,7 @@ export default function Home() {
       </section>
 
       {/* 🌟 Section 5: รีวิวจากลูกค้า */}
-      <section className="py-20 bg-gradient-to-b from-purple-50 to-pink-50">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-sm text-[#dc6fd6] font-medium tracking-widest uppercase mb-2 block">ลูกค้าพูดถึงเรา</span>
@@ -578,32 +672,12 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Placeholder reviews ถ้ายังไม่มีข้อมูลจาก database */}
-              {[
-                { name: 'คุณอริสา', comment: 'เสื้อสวยมากค่ะ ผ้านิ่มใส่สบาย จะกลับมาซื้ออีกแน่นอนค่ะ', rating: 5 },
-                { name: 'คุณปราง', comment: 'จัดส่งเร็วมาก แพ็คเกจดี สินค้าตรงปก ประทับใจมากๆ', rating: 5 },
-                { name: 'คุณนิชา', comment: 'ชอบสีสวยมาก ใส่แล้วดูดีมีสไตล์ แนะนำเลยค่ะ', rating: 5 },
-              ].map((review, index) => (
-                <div key={index} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#dc6fd6] to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {review.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-800">{review.name}</p>
-                      <div className="flex gap-0.5">
-                        {[...Array(5)].map((_, i) => (
-                          <svg key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 text-sm leading-relaxed">"{review.comment}"</p>
-                </div>
-              ))}
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center">
+              <MessageSquare size={42} className="mb-4 text-gray-300" />
+              <h4 className="text-lg font-black text-gray-950">ยังไม่มีรีวิวจริงในตอนนี้</h4>
+              <p className="mt-2 text-sm leading-6 text-gray-500">
+                เมื่อมีรีวิวที่อนุมัติจากระบบ รีวิวล่าสุดจะแสดงในส่วนนี้อัตโนมัติ
+              </p>
             </div>
           )}
 
