@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Star, CheckCircle, MessageSquare } from 'lucide-react';
 
+const PUBLIC_REVIEW_COLUMNS = 'id, rating, title, comment, reviewer_name, created_at, is_verified';
+
 // ⭐️ คอมโพเนนต์สำหรับแสดงดาว
 const StarRating = ({ rating }) => {
   return (
@@ -31,9 +33,10 @@ export default function ReviewsPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('reviews')
-        .select('*')
+        .select(PUBLIC_REVIEW_COLUMNS)
         .eq('is_approved', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(24);
 
       if (error) throw error;
       setReviews(data || []);

@@ -13,6 +13,8 @@ import {
 } from '../components/LoadingSkeletons';
 import { ProductImage } from '../components/OptimizedImage';
 
+const PRODUCT_LIST_COLUMNS = 'id, nameEN, nameTH, category, price, original_price, image, images, is_new, discount_percent, stock, size_stock';
+
 // 📦 1. แยกเนื้อหาที่ใช้ useSearchParams มาไว้ใน Component ย่อย
 function ProductsContent() {
     const { addToCart } = useCart();
@@ -65,7 +67,8 @@ function ProductsContent() {
             // ดึงข้อมูลจากตาราง products1 ของคุณ
             const { data, error } = await supabase
                 .from('products1')
-                .select('*');
+                .select(PRODUCT_LIST_COLUMNS)
+                .order('id', { ascending: true });
 
             if (error) {
                 console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);

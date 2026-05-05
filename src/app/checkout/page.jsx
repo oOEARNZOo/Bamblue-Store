@@ -552,16 +552,13 @@ export default function CheckoutPage() {
             router.push('/orders');
           }}
           onSuccess={async (paymentData) => {
-            console.log('💰 Payment Data:', paymentData);
             
             // อัปเดตสถานะ order เป็น paid (ชำระเงินแล้ว) สำหรับ Mock Mode
             // หรือ pending_payment_verification สำหรับ Real Mode
             const newStatus = paymentData?.mockMode ? 'paid' : 'pending_payment_verification';
             
-            console.log('📊 New Status:', newStatus);
-            console.log('🆔 Order ID:', currentOrderId);
             
-            const { data, error } = await supabase
+            const { error } = await supabase
               .from('orders')
               .update({ 
                 status: newStatus,
@@ -576,7 +573,6 @@ export default function CheckoutPage() {
               throw new Error('ไม่สามารถอัปเดตสถานะออเดอร์ได้: ' + error.message);
             }
             
-            console.log('✅ Order updated successfully:', data);
             
             setShowQRModal(false);
             router.push('/orders');

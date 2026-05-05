@@ -1,37 +1,29 @@
 import { supabase } from './supabase';
 
-const ADMIN_EMAILS = new Set([
-  'admin@bamblue.com',
-  'earn.hcg32@gmail.com'
-]);
-
-function normalizeEmail(email) {
-  return typeof email === 'string' ? email.trim().toLowerCase() : '';
-}
-
-export function isAllowedAdminEmail(email) {
-  return ADMIN_EMAILS.has(normalizeEmail(email));
-}
-
 export async function checkIsAdmin(user) {
   if (!user) return false;
 
   try {
-    if (isAllowedAdminEmail(user.email)) {
-      return true;
-    }
+    const appRole = user.app_metadata?.role;
+    const appRoles = Array.isArray(user.app_metadata?.roles) ? user.app_metadata.roles : [];
 
-    if (user.app_metadata?.role === 'admin' || user.user_metadata?.role === 'admin') {
+    if (appRole === 'admin' || appRoles.includes('admin')) {
       return true;
     }
 
     const { data: adminRecord, error } = await supabase
       .from('admin_users')
-      .select('id')
+      .select('id, is_admin, role')
       .eq('user_id', user.id)
-      .single();
+      .eq('is_admin', true)
+      .maybeSingle();
 
-    if (!error && adminRecord) {
+    if (error) {
+      console.error('Error checking admin record:', error);
+      return false;
+    }
+
+    if (adminRecord) {
       return true;
     }
 

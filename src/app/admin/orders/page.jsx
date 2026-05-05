@@ -234,7 +234,7 @@ export default function OrderManagementPage() {
           <p className="font-semibold text-gray-900">อนุมัติการชำระเงิน</p>
           <p className="text-sm text-gray-600 mt-1">
             ออเดอร์: {order.order_number}<br />
-            ยอดเงิน: ฿{order.total?.toLocaleString() || order.total_amount?.toLocaleString() || 0}<br />
+            ยอดเงิน: ฿{getOrderTotal(order).toLocaleString()}<br />
             ลูกค้ายืนยันเมื่อ: {order.payment_confirmed_at ? new Date(order.payment_confirmed_at).toLocaleString('th-TH') : 'ไม่ระบุ'}
           </p>
           <p className="text-xs text-orange-600 mt-2">⚠️ กรุณาตรวจสอบ Statement ธนาคารก่อนอนุมัติ</p>
@@ -356,6 +356,14 @@ export default function OrderManagementPage() {
     return getStatusConfig(status).label;
   };
 
+  const getOrderTotal = (order) => {
+    return Number(order?.total || 0);
+  };
+
+  const getOrderItemName = (item) => {
+    return item.product_name_en || item.product_name_th || item.product_name || '-';
+  };
+
   const viewOrderDetails = (order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
@@ -458,7 +466,7 @@ export default function OrderManagementPage() {
             </div>
             <div className="text-sm text-gray-500">
               รายได้รวม: <span className="font-bold text-gray-900">
-                ฿{filteredOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0).toLocaleString()}
+                ฿{filteredOrders.reduce((sum, order) => sum + getOrderTotal(order), 0).toLocaleString()}
               </span>
             </div>
           </div>
@@ -497,7 +505,7 @@ export default function OrderManagementPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-[#dc6fd6]">
-                          ฿{order.total_amount?.toLocaleString() || 0}
+                          ฿{getOrderTotal(order).toLocaleString()}
                         </p>
                         <p className="text-sm text-gray-500 mt-1">
                           {order.order_items?.length || 0} รายการ
@@ -583,8 +591,8 @@ export default function OrderManagementPage() {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3">ที่อยู่จัดส่ง</h3>
                 <div className="bg-gray-50 rounded-lg p-4 text-sm">
-                  <p>{selectedOrder.address}</p>
-                  <p>{selectedOrder.district}, {selectedOrder.province} {selectedOrder.postal_code}</p>
+                  <p>{selectedOrder.shipping_address || '-'}</p>
+                  <p>{selectedOrder.shipping_province || '-'} {selectedOrder.shipping_zipcode || ''}</p>
                 </div>
               </div>
 
@@ -596,11 +604,11 @@ export default function OrderManagementPage() {
                     <div key={index} className="flex items-center gap-4 bg-gray-50 rounded-lg p-4">
                       <div className="w-16 h-16 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                         {item.product_image && (
-                          <img src={item.product_image} alt={item.product_name} className="w-full h-full object-cover" />
+                          <img src={item.product_image} alt={getOrderItemName(item)} className="w-full h-full object-cover" />
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{item.product_name}</p>
+                        <p className="font-medium text-gray-900">{getOrderItemName(item)}</p>
                         <p className="text-sm text-gray-600">ขนาด: {item.size || 'ไม่ระบุ'}</p>
                       </div>
                       <div className="text-right">
@@ -622,7 +630,7 @@ export default function OrderManagementPage() {
                   </div>
                   <div className="flex justify-between pt-2 border-t">
                     <span className="font-semibold">ยอดรวมทั้งหมด:</span>
-                    <span className="font-bold text-lg text-[#dc6fd6]">฿{selectedOrder.total_amount?.toLocaleString() || 0}</span>
+                    <span className="font-bold text-lg text-[#dc6fd6]">฿{getOrderTotal(selectedOrder).toLocaleString()}</span>
                   </div>
                 </div>
               </div>

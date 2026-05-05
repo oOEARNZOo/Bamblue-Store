@@ -34,38 +34,39 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 -- Policy 1: ให้อ่านข้อมูล admin ได้ (สำหรับตรวจสอบ admin status)
 CREATE POLICY "Allow public to read admin status"
   ON admin_users FOR SELECT
-  USING (true);
+  TO authenticated
+  USING (
+    user_id = (SELECT auth.uid()) OR
+    auth.jwt() -> 'app_metadata' ->> 'role' = 'admin' OR
+    COALESCE(auth.jwt() -> 'app_metadata' -> 'roles', '[]'::jsonb) ? 'admin'
+  );
 
 -- Policy 2: ให้เฉพาะ authenticated users ที่เป็น admin แก้ไขได้
 CREATE POLICY "Allow admin to update admin_users"
   ON admin_users FOR UPDATE
   USING (
-    auth.uid() IN (
-      SELECT user_id FROM admin_users WHERE is_admin = true
-    )
+    auth.jwt() -> 'app_metadata' ->> 'role' = 'admin' OR
+    COALESCE(auth.jwt() -> 'app_metadata' -> 'roles', '[]'::jsonb) ? 'admin'
   )
   WITH CHECK (
-    auth.uid() IN (
-      SELECT user_id FROM admin_users WHERE is_admin = true
-    )
+    auth.jwt() -> 'app_metadata' ->> 'role' = 'admin' OR
+    COALESCE(auth.jwt() -> 'app_metadata' -> 'roles', '[]'::jsonb) ? 'admin'
   );
 
 -- Policy 3: ให้เฉพาะ admin เพิ่มข้อมูลได้
 CREATE POLICY "Allow admin to insert admin_users"
   ON admin_users FOR INSERT
   WITH CHECK (
-    auth.uid() IN (
-      SELECT user_id FROM admin_users WHERE is_admin = true
-    )
+    auth.jwt() -> 'app_metadata' ->> 'role' = 'admin' OR
+    COALESCE(auth.jwt() -> 'app_metadata' -> 'roles', '[]'::jsonb) ? 'admin'
   );
 
 -- Policy 4: ให้เฉพาะ admin ลบข้อมูลได้
 CREATE POLICY "Allow admin to delete admin_users"
   ON admin_users FOR DELETE
   USING (
-    auth.uid() IN (
-      SELECT user_id FROM admin_users WHERE is_admin = true
-    )
+    auth.jwt() -> 'app_metadata' ->> 'role' = 'admin' OR
+    COALESCE(auth.jwt() -> 'app_metadata' -> 'roles', '[]'::jsonb) ? 'admin'
   );
 
 -- ============================================

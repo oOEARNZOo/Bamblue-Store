@@ -104,7 +104,6 @@ export default function PromptPayQR({
   const handleConfirmPayment = async () => {
     if (isProcessing || isExpired) return;
     
-    console.log('🎭 Mock Mode Status:', mockMode);
     
     setIsProcessing(true);
     setIsVerifying(true);
@@ -112,7 +111,6 @@ export default function PromptPayQR({
     
     try {
       if (mockMode) {
-        console.log('✅ Using Mock Mode - Auto verification');
         // 🎭 Mock Mode - จำลองการตรวจสอบแบบ real-time
         
         // Step 1: เชื่อมต่อระบบ (0-30%)
@@ -148,14 +146,12 @@ export default function PromptPayQR({
           mockMode: true
         };
         
-        console.log('📤 Sending payment data:', paymentData);
         
         if (onSuccess) {
           await onSuccess(paymentData);
         }
         
       } else {
-        console.log('🔍 Using Real Mode - Manual verification required');
         // 🔍 Real Mode - ใช้ Payment Gateway API (Omise, 2C2P, etc.)
         // TODO: เพิ่มการเชื่อมต่อกับ Payment Gateway จริงตรงนี้
         if (onSuccess) {

@@ -4,6 +4,9 @@ import { supabase } from '../../lib/supabase';
 import { Star, ThumbsUp, User, Calendar, MessageSquare, Plus, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const PRODUCT_REVIEW_PRODUCT_COLUMNS = 'id, nameEN, nameTH, image';
+const PRODUCT_REVIEW_COLUMNS = 'id, rating, title, comment, reviewer_name, created_at, is_verified, helpful_count';
+
 export default function ProductReviews({ productId }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +36,7 @@ export default function ProductReviews({ productId }) {
     try {
       const { data, error } = await supabase
         .from('products1')
-        .select('*')
+        .select(PRODUCT_REVIEW_PRODUCT_COLUMNS)
         .eq('id', productId)
         .single();
 
@@ -49,7 +52,7 @@ export default function ProductReviews({ productId }) {
       setLoading(true);
       const { data, error } = await supabase
         .from('reviews')
-        .select('*')
+        .select(PRODUCT_REVIEW_COLUMNS)
         .eq('product_id', productId)
         .eq('is_approved', true)
         .order('created_at', { ascending: false });

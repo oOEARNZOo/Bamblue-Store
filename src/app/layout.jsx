@@ -1,6 +1,7 @@
 import "./globals.css";
 import Navbar from './components/Navbar'; 
 import Footer from './components/Footer';
+import PageTransition from './components/PageTransition';
 import { CartProvider } from './context/CartContext'; 
 import { WishlistProvider } from './context/WishlistContext';
 // 🌟 1. นำเข้า Toaster จาก react-hot-toast
@@ -83,7 +84,9 @@ export default function RootLayout({ children }) {
         <CartProvider>
         <WishlistProvider>
           <Navbar />
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
           <Footer />
           
           {/* 🌟 2. เพิ่ม Toaster ไว้ล่างสุด และตั้งค่าสีให้เข้ากับธีมเว็บเรา */}

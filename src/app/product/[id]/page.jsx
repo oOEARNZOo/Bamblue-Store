@@ -11,6 +11,7 @@ import { supabase } from '../../../lib/supabase';
 
 const PRODUCT_SIZES = ['S', 'M', 'L', 'XL'];
 const DEFAULT_SIZE_STOCK = { S: 0, M: 0, L: 0, XL: 0 };
+const PRODUCT_DETAIL_COLUMNS = 'id, nameEN, nameTH, price, original_price, image, images, category, discount_percent, stock, size_stock';
 
 const normalizeSizeStock = (sizeStock) => ({
   ...DEFAULT_SIZE_STOCK,
@@ -51,7 +52,7 @@ export default function ProductDetailPage() {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('products1')
-          .select('*')
+          .select(PRODUCT_DETAIL_COLUMNS)
           .eq('id', productId)
           .single();
 
@@ -84,7 +85,6 @@ export default function ProductDetailPage() {
             filter: `id=eq.${productId}`
           },
           (payload) => {
-            console.log('สต็อกอัพเดต real-time:', payload.new);
             setProduct(payload.new);
           }
         )

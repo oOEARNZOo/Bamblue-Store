@@ -12,6 +12,10 @@ import { supabase } from '../../lib/supabase';
 import { CartSkeleton } from './LoadingSkeletons';
 import { checkIsAdminCached } from '../../lib/adminCheck';
 
+const NAVBAR_PRODUCTS_CACHE_KEY = 'navbar_products_cache_v2';
+const NAVBAR_PRODUCTS_CACHE_TIME_KEY = 'navbar_products_cache_time_v2';
+const NAVBAR_PRODUCT_COLUMNS = 'id, nameEN, nameTH, category, image, price, discount_percent';
+
 export default function Navbar() {
   const { cartItems, updateQuantity, removeFromCart, getItemStockLimit } = useCart();
   const { wishlistItems } = useWishlist();
@@ -85,8 +89,8 @@ export default function Navbar() {
     async function fetchProducts() {
       try {
         // ✅ ตรวจสอบ localStorage cache ก่อน (cache 1 ชั่วโมง)
-        const cachedProducts = localStorage.getItem('navbar_products_cache');
-        const cacheTimestamp = localStorage.getItem('navbar_products_cache_time');
+        const cachedProducts = localStorage.getItem(NAVBAR_PRODUCTS_CACHE_KEY);
+        const cacheTimestamp = localStorage.getItem(NAVBAR_PRODUCTS_CACHE_TIME_KEY);
         const now = Date.now();
         const CACHE_DURATION = 60 * 60 * 1000; // 1 ชั่วโมง
 
@@ -102,13 +106,14 @@ export default function Navbar() {
         // ✅ ถ้า cache หมดอายุหรือไม่มี ให้ดึงใหม่
         const { data, error } = await supabase
           .from('products1')
-          .select('*');
+          .select(NAVBAR_PRODUCT_COLUMNS)
+          .order('id', { ascending: false });
 
         if (!error && data) {
           setProductsData(data);
           // ✅ บันทึก cache ใหม่
-          localStorage.setItem('navbar_products_cache', JSON.stringify(data));
-          localStorage.setItem('navbar_products_cache_time', now.toString());
+          localStorage.setItem(NAVBAR_PRODUCTS_CACHE_KEY, JSON.stringify(data));
+          localStorage.setItem(NAVBAR_PRODUCTS_CACHE_TIME_KEY, now.toString());
         }
       } catch (err) {
         console.error('Error fetching products:', err);
@@ -163,8 +168,8 @@ export default function Navbar() {
     if (value.trim().length > 0) {
       const q = value.toLowerCase();
       const filtered = productsData.filter(p =>
-        p.nameEN.toLowerCase().includes(q) ||
-        p.nameTH.toLowerCase().includes(q)
+        (p.nameEN || '').toLowerCase().includes(q) ||
+        (p.nameTH || '').toLowerCase().includes(q)
       ).slice(0, 5);
 
       setSuggestions(filtered);

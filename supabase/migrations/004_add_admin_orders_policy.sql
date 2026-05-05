@@ -6,16 +6,14 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 -- Policy สำหรับ Admin: สามารถอ่านและอัปเดตทุกออเดอร์ได้
 CREATE POLICY "Admin can view all orders" ON orders
   FOR SELECT USING (
-    auth.jwt() ->> 'email' IN ('admin@bamblue.com', 'earn.hcg32@gmail.com') OR
-    auth.jwt() ->> 'role' = 'admin' OR
-    auth.jwt() ->> 'email' LIKE '%admin%'
+    auth.jwt() -> 'app_metadata' ->> 'role' = 'admin' OR
+    COALESCE(auth.jwt() -> 'app_metadata' -> 'roles', '[]'::jsonb) ? 'admin'
   );
 
 CREATE POLICY "Admin can update all orders" ON orders
   FOR UPDATE USING (
-    auth.jwt() ->> 'email' IN ('admin@bamblue.com', 'earn.hcg32@gmail.com') OR
-    auth.jwt() ->> 'role' = 'admin' OR
-    auth.jwt() ->> 'email' LIKE '%admin%'
+    auth.jwt() -> 'app_metadata' ->> 'role' = 'admin' OR
+    COALESCE(auth.jwt() -> 'app_metadata' -> 'roles', '[]'::jsonb) ? 'admin'
   );
 
 -- Policy สำหรับ User: สามารถอ่านออเดอร์ของตัวเองได้
@@ -28,9 +26,8 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 -- Policy สำหรับ Admin: สามารถอ่าน order_items ทั้งหมดได้
 CREATE POLICY "Admin can view all order items" ON order_items
   FOR SELECT USING (
-    auth.jwt() ->> 'email' IN ('admin@bamblue.com', 'earn.hcg32@gmail.com') OR
-    auth.jwt() ->> 'role' = 'admin' OR
-    auth.jwt() ->> 'email' LIKE '%admin%'
+    auth.jwt() -> 'app_metadata' ->> 'role' = 'admin' OR
+    COALESCE(auth.jwt() -> 'app_metadata' -> 'roles', '[]'::jsonb) ? 'admin'
   );
 
 -- Policy สำหรับ User: สามารถอ่าน order_items ของตัวเองได้ (ผ่าน orders)

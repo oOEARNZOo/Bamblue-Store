@@ -76,6 +76,7 @@ export default function UserManagementPage() {
           first_name,
           last_name,
           phone,
+          total,
           created_at
         `)
         .order('created_at', { ascending: false });
@@ -100,18 +101,10 @@ export default function UserManagementPage() {
         }
         const user = userMap.get(userId);
         user.orderCount += 1;
+        user.totalSpent += Number(order.total || 0);
       });
 
       // คำนวณยอดรวมที่ใช้
-      for (const [userId, user] of userMap) {
-        const { data: userOrders } = await supabase
-          .from('orders')
-          .select('total_amount')
-          .eq('user_id', userId);
-
-        user.totalSpent = userOrders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
-      }
-
       setUsers(Array.from(userMap.values()));
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -132,7 +125,7 @@ export default function UserManagementPage() {
       setLoadingOrders(true);
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select('*, order_items(*)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -158,6 +151,10 @@ export default function UserManagementPage() {
     if (totalSpent >= 5000 || orderCount >= 5) return { tier: 'Gold', color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200' };
     if (orderCount >= 1) return { tier: 'Silver', color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200' };
     return { tier: 'New', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' };
+  };
+
+  const getOrderTotal = (order) => {
+    return Number(order?.total || 0);
   };
 
   // 📅 ฟังก์ชันคำนวณวันที่ซื้อครั้งล่าสุด
@@ -477,7 +474,7 @@ export default function UserManagementPage() {
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-[#dc6fd6]">฿{order.total_amount?.toLocaleString() || 0}</p>
+                              <p className="font-bold text-[#dc6fd6]">฿{getOrderTotal(order).toLocaleString()}</p>
                               <span className={`text-xs px-2 py-1 rounded-full ${statusConfig.bg} ${statusConfig.color} ${statusConfig.border} border`}>
                                 {statusConfig.label}
                               </span>

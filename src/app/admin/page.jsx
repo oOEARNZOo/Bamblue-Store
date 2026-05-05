@@ -3,26 +3,19 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import {
-  BarChart3,
   Package,
   ShoppingCart,
-  Users,
   Star,
-  TrendingUp,
   DollarSign,
-  ArrowUp,
-  ArrowDown,
-  Eye,
-  Edit,
-  Trash2,
   Search,
-  Bell,
-  ShoppingBag,
   AlertTriangle,
-  CheckCircle,
-  TrendingDown
+  CheckCircle
 } from 'lucide-react';
 import { AdminDashboardSkeleton } from '../components/LoadingSkeletons';
+
+const ADMIN_DASHBOARD_ORDER_COLUMNS = 'id, order_number, first_name, last_name, status, total, user_id, created_at';
+const ADMIN_DASHBOARD_REVIEW_COLUMNS = 'id, reviewer_name, rating, comment, is_approved, created_at';
+const ADMIN_DASHBOARD_PRODUCT_COLUMNS = 'id, nameEN, nameTH, category, price, image, stock, size_stock';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -32,18 +25,162 @@ export default function AdminDashboard() {
     totalOrders: 0,
     totalUsers: 0,
     totalRevenue: 0,
+    lowStockCount: 0,
+    soldOutCount: 0,
+    pendingPaymentCount: 0,
+    pendingReviewCount: 0,
+    unitsSold: 0,
     recentOrders: [],
     topProducts: [],
     recentReviews: []
   });
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('All types');
+  const [filterType, setFilterType] = useState('low_stock');
 
   useEffect(() => {
     fetchDashboardStats();
   }, []);
 
+  const getProductStock = (product) => {
+    const sizeStock = product?.size_stock;
+    if (sizeStock && typeof sizeStock === 'object') {
+      return Object.values(sizeStock).reduce((sum, value) => sum + Number(value || 0), 0);
+    }
+
+    return Number(product?.stock || 0);
+  };
+
+  const getStockBySizeText = (product) => {
+    const sizeStock = product?.size_stock;
+    if (!sizeStock || typeof sizeStock !== 'object') return '-';
+
+    return Object.entries(sizeStock)
+      .filter(([, value]) => Number(value || 0) > 0)
+      .map(([size, value]) => `${size}: ${value}`)
+      .join(' / ') || '-';
+  };
+
+  const isLowStock = (product) => {
+    const sizeStock = product?.size_stock;
+    if (sizeStock && typeof sizeStock === 'object') {
+      return Object.values(sizeStock).some(value => {
+        const stock = Number(value || 0);
+        return stock > 0 && stock <= 5;
+      });
+    }
+
+    const stock = getProductStock(product);
+    return stock > 0 && stock <= 5;
+  };
+
+  const getProductType = (product) => {
+    if (product?.discount_percent > 0) return 'Sale';
+    if (product?.is_new) return 'New';
+    return 'Regular';
+  };
+
+  const getOrderTotal = (order) => {
+    return Number(order?.total || 0);
+  };
+
+  const stockFilters = [
+    { value: 'all', label: 'All' },
+    { value: 'in_stock', label: 'In stock' },
+    { value: 'low_stock', label: 'Low stock' },
+    { value: 'sold_out', label: 'Sold out' }
+  ];
+
+  const getOrderStatusStyle = (status) => {
+    const styles = {
+      pending: 'bg-yellow-100 text-yellow-700',
+      pending_payment_verification: 'bg-orange-100 text-orange-700',
+      paid: 'bg-emerald-100 text-emerald-700',
+      processing: 'bg-blue-100 text-blue-700',
+      shipped: 'bg-purple-100 text-purple-700',
+      delivered: 'bg-green-100 text-green-700',
+      cancelled: 'bg-red-100 text-red-700'
+    };
+
+    return styles[status] || 'bg-gray-100 text-gray-700';
+  };
+
+  const getOrderStatusLabel = (status) => {
+    const labels = {
+      pending: 'รอดำเนินการ',
+      pending_payment_verification: 'รอตรวจชำระเงิน',
+      paid: 'ชำระแล้ว',
+      processing: 'เตรียมสินค้า',
+      shipped: 'จัดส่งแล้ว',
+      delivered: 'สำเร็จ',
+      cancelled: 'ยกเลิก'
+    };
+
+    return labels[status] || status;
+  };
+
+  const matchesStockFilter = (product) => {
+    const stock = getProductStock(product);
+
+    if (filterType === 'in_stock') return stock > 0;
+    if (filterType === 'low_stock') return isLowStock(product);
+    if (filterType === 'sold_out') return stock <= 0;
+
+    return true;
+  };
+
+  const filteredProducts = products.filter(product => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query ||
+      product.nameEN?.toLowerCase().includes(query) ||
+      product.nameTH?.toLowerCase().includes(query) ||
+      product.category?.toLowerCase().includes(query);
+
+    return matchesSearch && matchesStockFilter(product);
+  });
+
+  const stockAlertProducts = products
+    .filter(product => isLowStock(product) || getProductStock(product) <= 0)
+    .slice(0, 5);
+
+  const quickActions = [
+    {
+      label: 'รอตรวจชำระเงิน',
+      value: stats.pendingPaymentCount,
+      helper: 'ออเดอร์ที่ลูกค้าแนบหลักฐานแล้ว',
+      icon: DollarSign,
+      color: 'text-orange-600',
+      bg: 'bg-orange-50',
+      path: '/admin/orders'
+    },
+    {
+      label: 'สินค้าใกล้หมด',
+      value: stats.lowStockCount,
+      helper: 'ไซส์ใดไซส์หนึ่งเหลือ 1-5 ตัว',
+      icon: AlertTriangle,
+      color: 'text-red-600',
+      bg: 'bg-red-50',
+      path: '/admin/products'
+    },
+    {
+      label: 'สินค้าหมดสต็อก',
+      value: stats.soldOutCount,
+      helper: 'ควรเติมสต็อกหรือซ่อนสินค้า',
+      icon: Package,
+      color: 'text-gray-700',
+      bg: 'bg-gray-100',
+      path: '/admin/products'
+    },
+    {
+      label: 'รีวิวรอจัดการ',
+      value: stats.pendingReviewCount,
+      helper: 'รีวิวที่ยังไม่ได้อนุมัติ',
+      icon: Star,
+      color: 'text-yellow-600',
+      bg: 'bg-yellow-50',
+      path: '/admin/reviews'
+    }
+  ];
 
   const fetchDashboardStats = async () => {
     try {
@@ -54,45 +191,52 @@ export default function AdminDashboard() {
         productsResult,
         ordersResult,
         reviewsResult,
+        orderItemsResult,
         allProductsResult
       ] = await Promise.all([
         // นับจำนวนสินค้า
         supabase.from('products1').select('id', { count: 'exact' }).then(res => res || { count: 0, data: null, error: null }),
 
         // ดึงข้อมูลออเดอร์ (ใช้ result เดียว)
-        supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5).then(res => res || { data: [], error: null }),
+        supabase.from('orders').select(ADMIN_DASHBOARD_ORDER_COLUMNS).order('created_at', { ascending: false }).then(res => res || { data: [], error: null }),
 
         // ดึงรีวิวล่าสุด
-        supabase.from('reviews').select('*').order('created_at', { ascending: false }).limit(5).then(res => res || { data: [], error: null }),
+        supabase.from('reviews').select(ADMIN_DASHBOARD_REVIEW_COLUMNS).order('created_at', { ascending: false }).then(res => res || { data: [], error: null }),
+
+        supabase.from('order_items').select('quantity').then(res => res || { data: [], error: null }),
 
         // ดึงสินค้าทั้งหมดสำหรับแสดงในตาราง
-        supabase.from('products1').select('*').order('id', { ascending: true }).limit(10).then(res => res || { data: [], error: null })
+        supabase.from('products1').select(ADMIN_DASHBOARD_PRODUCT_COLUMNS).order('id', { ascending: true }).then(res => res || { data: [], error: null })
       ]);
 
       // พยายามดึงจำนวนผู้ใช้ (อาจไม่ได้ใน Production ถ้าไม่มี Service Role)
-      let totalUsers = 0;
-      try {
-        const { data: usersData } = await supabase.auth.admin.listUsers();
-        totalUsers = usersData?.users?.length || 0;
-      } catch (userError) {
-        console.warn('Could not fetch user count (requires admin rights):', userError);
-        totalUsers = 0;
-      }
+      const orders = ordersResult?.data || [];
+      const allProducts = allProductsResult?.data || [];
+      const reviews = reviewsResult?.data || [];
+      const totalUsers = new Set(orders.map(order => order.user_id).filter(Boolean)).size;
+      const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+      const unitsSold = (orderItemsResult?.data || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+      const lowStockCount = allProducts.filter(product => isLowStock(product)).length;
+      const soldOutCount = allProducts.filter(product => getProductStock(product) <= 0).length;
+      const pendingPaymentCount = orders.filter(order => order.status === 'pending_payment_verification').length;
+      const pendingReviewCount = reviews.filter(review => review.is_approved !== true).length;
 
       // คำนวณรายได้รวม
-      const { data: orders } = ordersResult;
-      const totalRevenue = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
-
       setStats({
         totalProducts: productsResult?.count || 0,
         totalOrders: ordersResult?.data?.length || 0,
         totalUsers: totalUsers,
         totalRevenue: totalRevenue,
-        recentOrders: ordersResult?.data || [],
+        lowStockCount,
+        soldOutCount,
+        pendingPaymentCount,
+        pendingReviewCount,
+        unitsSold,
+        recentOrders: orders.slice(0, 5),
         topProducts: [],
-        recentReviews: reviewsResult?.data || []
+        recentReviews: reviews.slice(0, 5)
       });
-      setProducts(allProductsResult?.data || []);
+      setProducts(allProducts);
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       // ตั้งค่า default กรณีเกิด error
@@ -101,6 +245,11 @@ export default function AdminDashboard() {
         totalOrders: 0,
         totalUsers: 0,
         totalRevenue: 0,
+        lowStockCount: 0,
+        soldOutCount: 0,
+        pendingPaymentCount: 0,
+        pendingReviewCount: 0,
+        unitsSold: 0,
         recentOrders: [],
         topProducts: [],
         recentReviews: []
@@ -122,86 +271,107 @@ export default function AdminDashboard() {
     <>
       {/* Header */}
       <header className="bg-white shadow-sm border-b sticky top-0 z-30">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 max-w-2xl">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Search products, orders, users..."
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dc6fd6] focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-4 ml-6">
-                <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Bell size={22} />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#dc6fd6] to-[#c05ca8] text-white rounded-lg hover:shadow-lg transition-all">
-                  <ShoppingBag size={18} />
-                  <span className="font-medium">Stock</span>
-                </button>
-              </div>
+        <div className="px-6 py-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-medium text-[#dc6fd6]">Admin Dashboard</p>
+              <h1 className="text-2xl font-bold text-gray-900">ภาพรวมร้าน Bamblue</h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => router.push('/admin/orders')}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                <ShoppingCart size={18} />
+                <span>จัดการออเดอร์</span>
+              </button>
+              <button
+                onClick={() => router.push('/admin/products')}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#dc6fd6] to-[#c05ca8] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+              >
+                <Package size={18} />
+                <span>จัดการสินค้า</span>
+              </button>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
         <div className="p-6">
           {/* Page Title */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
-            <p className="text-sm text-gray-500 mt-1">PhoneShop System / Mobiles</p>
+            <h2 className="text-xl font-bold text-gray-900">งานที่ควรจัดการก่อน</h2>
+            <p className="text-sm text-gray-500 mt-1">รวมสถานะที่ต้องตรวจทุกวันไว้ในหน้าเดียว</p>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-sm p-6 border hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                  <Package className="text-purple-600" size={24} />
+            {quickActions.map((action) => {
+              const ActionIcon = action.icon;
+
+              return (
+                <button
+                  key={action.label}
+                  onClick={() => router.push(action.path)}
+                  className="bg-white rounded-xl shadow-sm p-6 border hover:shadow-md transition-shadow text-left"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className={`w-12 h-12 ${action.bg} rounded-lg flex items-center justify-center`}>
+                      <ActionIcon className={action.color} size={24} />
+                    </div>
+                    <span className="text-xs font-medium text-gray-400">ดูรายละเอียด</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-1">{action.label}</p>
+                  <p className="text-3xl font-bold text-gray-900">{action.value}</p>
+                  <p className="text-xs text-gray-500 mt-2">{action.helper}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+                  <DollarSign className="text-green-600" size={20} />
                 </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Total Products</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.totalProducts}</p>
+                <div>
+                  <p className="text-xs text-gray-500">รายได้รวม</p>
+                  <p className="text-lg font-bold text-gray-900">฿{stats.totalRevenue.toLocaleString()}</p>
+                </div>
               </div>
             </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6 border hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="text-green-600" size={24} />
+            <div className="bg-white rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <ShoppingCart className="text-blue-600" size={20} />
                 </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Active</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.totalOrders}</p>
+                <div>
+                  <p className="text-xs text-gray-500">ออเดอร์ทั้งหมด</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.totalOrders}</p>
+                </div>
               </div>
             </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6 border hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-                  <Star className="text-yellow-600" size={24} />
+            <div className="bg-white rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                  <Package className="text-purple-600" size={20} />
                 </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Best Sellers</p>
-                <p className="text-3xl font-bold text-gray-900">1</p>
+                <div>
+                  <p className="text-xs text-gray-500">สินค้าทั้งหมด</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.totalProducts}</p>
+                </div>
               </div>
             </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6 border hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="text-red-600" size={24} />
+            <div className="bg-white rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center">
+                  <CheckCircle className="text-yellow-600" size={20} />
                 </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Low Stock</p>
-                <p className="text-3xl font-bold text-gray-900">1</p>
+                <div>
+                  <p className="text-xs text-gray-500">ยอดขายสินค้า</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.unitsSold}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -209,33 +379,37 @@ export default function AdminDashboard() {
         {/* Product Table */}
         <div className="bg-white rounded-xl shadow-sm border mb-8">
           <div className="p-6 border-b">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1">
-                <div className="relative max-w-md">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="max-w-lg">
+                <h2 className="text-lg font-semibold text-gray-900">Stock Monitor</h2>
+                <p className="text-sm text-gray-500 mt-1">เริ่มต้นที่สินค้าใกล้หมดเพื่อให้เติมสต็อกได้ทัน ({stockAlertProducts.length} รายการที่ควรตรวจ)</p>
+              </div>
+              <div className="flex w-full flex-col gap-3 xl:w-auto xl:flex-row xl:items-start">
+                <div className="relative w-full xl:w-72">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   <input
                     type="text"
-                    placeholder="Search products..."
+                    placeholder="ค้นหาสินค้า..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dc6fd6] focus:border-transparent text-sm"
                   />
                 </div>
-              </div>
-              <div className="flex items-center gap-3 ml-4">
-                <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
-                  <button className="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-[#dc6fd6] to-[#c05ca8] rounded-md">All types</button>
-                  <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900">Best Seller</button>
-                  <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900">Premium</button>
-                  <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900">Top Rated</button>
+                <div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-50 p-1 sm:flex sm:items-center">
+                  {stockFilters.map((filter) => (
+                    <button
+                      key={filter.value}
+                      type="button"
+                      onClick={() => setFilterType(filter.value)}
+                      className={`min-w-[92px] rounded-md px-3 py-2 text-sm font-semibold transition-colors ${filterType === filter.value
+                        ? 'bg-gradient-to-r from-[#dc6fd6] to-[#c05ca8] text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-white hover:text-gray-900'
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
                 </div>
-                <button 
-                  onClick={() => router.push('/admin/products')}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#dc6fd6] to-[#c05ca8] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                >
-                  <Package size={18} />
-                  <span>Create Product</span>
-                </button>
               </div>
             </div>
           </div>
@@ -246,8 +420,8 @@ export default function AdminDashboard() {
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Brand</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Color</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stock by Size</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Units</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
@@ -256,17 +430,14 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {products.length === 0 ? (
+                {filteredProducts.length === 0 ? (
                   <tr>
                     <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                       ไม่มีสินค้าในระบบ
                     </td>
                   </tr>
                 ) : (
-                  products.filter(product => 
-                    product.nameEN?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    product.nameTH?.toLowerCase().includes(searchQuery.toLowerCase())
-                  ).map((product) => (
+                  filteredProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -294,23 +465,22 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-gray-900 rounded-full border-2 border-gray-300"></div>
-                          <span className="text-sm text-gray-600">–</span>
+                          <span className="text-sm text-gray-600">{getStockBySizeText(product)}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm font-semibold text-gray-900">฿{product.price?.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-900">{product.stock || 0}</span>
+                        <span className="text-sm text-gray-900">{getProductStock(product)}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-purple-600 font-medium">Trending</span>
+                        <span className="text-sm text-purple-600 font-medium">{getProductType(product)}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                          <span className="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
-                          Active
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${getProductStock(product) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${getProductStock(product) > 0 ? 'bg-green-600' : 'bg-red-600'}`}></span>
+                          {getProductStock(product) > 0 ? 'Active' : 'Sold out'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -319,10 +489,7 @@ export default function AdminDashboard() {
                             onClick={() => router.push(`/admin/products`)}
                             className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium"
                           >
-                            Edit
-                          </button>
-                          <button className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs font-medium">
-                            Delete
+                            จัดการ
                           </button>
                         </div>
                       </td>
@@ -353,14 +520,9 @@ export default function AdminDashboard() {
                         <p className="text-sm text-gray-500">{order.first_name} {order.last_name}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium text-gray-900">฿{order.total_amount?.toLocaleString() || 0}</p>
-                        <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                            order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                              order.status === 'shipped' ? 'bg-purple-100 text-purple-700' :
-                                order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                  'bg-red-100 text-red-700'
-                          }`}>
-                          {order.status}
+                        <p className="font-medium text-gray-900">฿{getOrderTotal(order).toLocaleString()}</p>
+                        <span className={`text-xs px-2 py-1 rounded-full ${getOrderStatusStyle(order.status)}`}>
+                          {getOrderStatusLabel(order.status)}
                         </span>
                       </div>
                     </div>
@@ -406,7 +568,10 @@ export default function AdminDashboard() {
                           }`}>
                           {review.is_approved ? 'อนุมัติ' : 'รออนุมัติ'}
                         </span>
-                        <button className="text-xs text-[#dc6fd6] hover:text-[#c05ca8]">
+                        <button
+                          onClick={() => router.push('/admin/reviews')}
+                          className="text-xs text-[#dc6fd6] hover:text-[#c05ca8]"
+                        >
                           จัดการ
                         </button>
                       </div>

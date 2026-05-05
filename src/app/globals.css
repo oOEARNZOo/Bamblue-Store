@@ -84,6 +84,19 @@
   }
 }
 
+@keyframes pageRouteEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
 @keyframes heroCopyReveal {
   from {
     opacity: 0;
@@ -135,6 +148,11 @@
   /* Page Enter Animation */
   .animate-page-enter {
     animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  .page-transition {
+    animation: pageRouteEnter 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: transform, opacity, filter;
   }
 
   /* Fade Animations */
@@ -231,6 +249,13 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .page-transition {
+      animation: none;
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+
     .animate-product-card-reveal {
       animation: none;
       opacity: 1;

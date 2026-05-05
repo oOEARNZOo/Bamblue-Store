@@ -14,6 +14,9 @@ import {
 } from './components/LoadingSkeletons';
 import { ProductImage } from './components/OptimizedImage';
 
+const PRODUCT_CARD_COLUMNS = 'id, nameEN, nameTH, price, original_price, image, images, is_new, discount_percent, stock, size_stock, category';
+const HOME_REVIEW_COLUMNS = 'id, reviewer_name, rating, title, comment, created_at, is_verified, product_name_en, product_name_th';
+
 export default function Home() {
   const { addToCart } = useCart();
   const { wishlistItems, addToWishlist, removeFromWishlist } = useWishlist();
@@ -51,8 +54,8 @@ export default function Home() {
       description: "คอลเลกชันโทนพาสเทล ใส่ง่าย ถ่ายรูปขึ้น และแต่งได้ทุกวัน",
       btnText: "SHOP THE DROP",
       link: "/products",
-      accent: "from-[#f78bdc] to-[#b987ff]",
-      bg: "from-[#281329] via-[#6d416d] to-[#f7ccd9]",
+      accent: "from-[#f779c9] to-[#c18cff]",
+      bg: "from-[#4b2451] via-[#c86bb2] to-[#ffe4f2]",
       showcase: [
         "/Picture/product 2/Candy Floss Ruffle Dress/product 1.1.png",
         "/Picture/product 2/White Marshmallow Layered Dress/product 1.1.png",
@@ -68,8 +71,8 @@ export default function Home() {
       description: "เดรสและเสื้อครอปดีเทลหวาน พร้อมโปรเปิดตัวสำหรับลุคใหม่ของคุณ",
       btnText: "EXPLORE NOW",
       link: "/products?category=dress",
-      accent: "from-[#ff8ab8] to-[#ffbd7a]",
-      bg: "from-[#3a1b26] via-[#b76f86] to-[#ffe1bf]",
+      accent: "from-[#ff7fbd] to-[#ffc27e]",
+      bg: "from-[#55304e] via-[#df7fb1] to-[#fff1df]",
       showcase: [
         "/Picture/product 2/Pearl Kiss Ribbon Camisole/product 9.1.jpg",
         "/Picture/product 2/Butterfly Lemonade Ruched Top/product 1.1.png",
@@ -153,21 +156,21 @@ export default function Home() {
         // 🚀 ดึงข้อมูลทั้งหมดพร้อมกัน (Parallel Fetching)
         const [newArrivalsRes, bestSellersRes, reviewsRes] = await Promise.all([
           // ดึง New Arrivals (4 ชิ้นแรก)
-          supabase.from('products1').select('*').eq('is_new', true).order('id', { ascending: true }),
+          supabase.from('products1').select(PRODUCT_CARD_COLUMNS).eq('is_new', true).order('id', { ascending: true }).limit(12),
           // ดึง Best Sellers (4 ชิ้นสุ่ม)
-          supabase.from('products1').select('*').order('id', { ascending: false }).limit(4),
+          supabase.from('products1').select(PRODUCT_CARD_COLUMNS).order('id', { ascending: false }).limit(4),
           // ดึงรีวิวล่าสุด (3 รีวิว)
-          supabase.from('reviews').select('*').order('created_at', { ascending: false }).limit(3)
+          supabase.from('reviews').select(HOME_REVIEW_COLUMNS).eq('is_approved', true).order('created_at', { ascending: false }).limit(3)
         ]);
 
         // Set ข้อมูลสินค้า
-        console.log('🔍 DEBUG - Product images from Supabase:');
-        newArrivalsRes.data?.forEach(p => {
-          console.log(`  Product ${p.id}: ${p.image}`);
-        });
         setNewArrivals(newArrivalsRes.data || []);
         setBestSellers(bestSellersRes.data || []);
-        setReviews(reviewsRes.data || []);
+        setReviews((reviewsRes.data || []).map((review) => ({
+          ...review,
+          name: review.reviewer_name,
+          product_name: review.product_name_th || review.product_name_en
+        })));
 
       } catch (err) {
         console.error("System Error:", err);
@@ -192,7 +195,7 @@ export default function Home() {
           >
             {/* 🖼️ ใช้ BannerImage แทน background-image */}
             <div className={`absolute inset-0 bg-gradient-to-br ${banner.bg}`} />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_26%,rgba(255,255,255,0.34),transparent_24%),radial-gradient(circle_at_45%_86%,rgba(220,111,214,0.34),transparent_30%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_26%,rgba(255,255,255,0.42),transparent_25%),radial-gradient(circle_at_48%_86%,rgba(255,196,226,0.42),transparent_32%),radial-gradient(circle_at_18%_78%,rgba(193,140,255,0.24),transparent_30%)]" />
             <div className="absolute inset-y-0 right-0 hidden w-[64%] lg:block">
               <div className="absolute right-[7%] top-[9%] h-[460px] w-[460px] rounded-full bg-white/18 blur-3xl" />
               <div className="absolute right-[18%] top-[16%] h-[360px] w-[360px] rounded-full bg-[#ffd8ec]/30 blur-2xl" />
@@ -217,9 +220,9 @@ export default function Home() {
             </div>
             
             {/* 🌟 Gradient Overlay เพื่อให้อ่านข้อความง่ายขึ้น */}
-            <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#17101f]/82 via-[#4f4057]/34 to-transparent" />
-            <div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_18%_28%,rgba(220,111,214,0.38),transparent_28%),radial-gradient(circle_at_74%_18%,rgba(255,255,255,0.22),transparent_24%)]" />
-            <div className="hero-noise absolute inset-0 z-10 opacity-[0.16]" />
+            <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#2d1633]/72 via-[#7a3b6c]/24 to-transparent" />
+            <div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_18%_28%,rgba(247,121,201,0.32),transparent_28%),radial-gradient(circle_at_78%_18%,rgba(255,255,255,0.28),transparent_25%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0))]" />
+            <div className="hero-noise absolute inset-0 z-10 opacity-[0.12]" />
             
             <div className="absolute inset-0 z-20 flex items-center px-6 sm:px-10 lg:px-24">
               <div className={`mt-8 max-w-[620px] text-left md:mt-0 ${index === currentSlide ? 'animate-hero-copy' : ''}`}>
@@ -554,7 +557,7 @@ export default function Home() {
                 <div key={review.id || index} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-[#dc6fd6] to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {review.name ? review.name.charAt(0).toUpperCase() : 'U'}
+                      {(review.reviewer_name || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <p className="font-semibold text-gray-800">{review.name || 'ลูกค้า'}</p>
