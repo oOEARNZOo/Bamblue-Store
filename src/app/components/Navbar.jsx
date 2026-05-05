@@ -18,7 +18,7 @@ const NAVBAR_PRODUCT_COLUMNS = 'id, nameEN, nameTH, category, image, price, disc
 
 export default function Navbar() {
   const { cartItems, updateQuantity, removeFromCart, getItemStockLimit } = useCart();
-  const { wishlistItems } = useWishlist();
+  const { wishlistItems, removeFromWishlist } = useWishlist();
   const pathname = usePathname();
   const router = useRouter();
   const [searchInput, setSearchInput] = useState('');
@@ -29,6 +29,8 @@ export default function Navbar() {
 
   const [mounted, setMounted] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [confirmWishlistRemove, setConfirmWishlistRemove] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -222,6 +224,7 @@ export default function Navbar() {
   };
 
   const cartRef = useRef(null);
+  const wishlistRef = useRef(null);
   const searchRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -229,6 +232,7 @@ export default function Navbar() {
   const cartItemCount = cartItems ? cartItems.length : 0;
   // นับจำนวนชิ้นทั้งหมด (สำหรับแสดงในหัวข้อ)
   const totalQuantity = cartItems ? cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
+  const wishlistCount = wishlistItems ? wishlistItems.length : 0;
 
   const calculateTotal = () => {
     if (!cartItems) return 0;
@@ -237,10 +241,19 @@ export default function Navbar() {
     }, 0);
   };
 
+  const formatWishlistPrice = (price) => {
+    const numericPrice = Number(String(price || 0).replace(/[^0-9.]/g, ''));
+    return numericPrice ? `฿${numericPrice.toLocaleString()}` : '฿0';
+  };
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (cartRef.current && !cartRef.current.contains(event.target)) {
         setIsCartOpen(false);
+      }
+      if (wishlistRef.current && !wishlistRef.current.contains(event.target)) {
+        setIsWishlistOpen(false);
+        setConfirmWishlistRemove(null);
       }
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setIsSearchOpen(false);
@@ -275,6 +288,7 @@ export default function Navbar() {
             onClick={() => {
               setIsMobileMenuOpen(!isMobileMenuOpen);
               setIsCartOpen(false);
+              setIsWishlistOpen(false);
               setIsSearchOpen(false);
               setIsProfileOpen(false);
             }}
@@ -287,6 +301,7 @@ export default function Navbar() {
             onClick={() => {
               setIsSearchOpen(!isSearchOpen);
               setIsCartOpen(false);
+              setIsWishlistOpen(false);
               setIsProfileOpen(false);
             }}
             className={`cursor-pointer transition-colors border-none bg-transparent py-2 flex items-center gap-1.5 ${isSearchOpen ? 'text-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}
@@ -295,18 +310,138 @@ export default function Navbar() {
           </button>
 
           {/* ปุ่ม Wishlist บน Navbar */}
-          <Link
-            href={user ? "/wishlist" : "/login"}
-            className="cursor-pointer relative hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5"
+          <div className="relative" ref={wishlistRef}>
+            <button
+            onClick={() => {
+              if (!user) {
+                router.push('/login');
+                return;
+              }
+
+              setIsWishlistOpen(!isWishlistOpen);
+              setConfirmWishlistRemove(null);
+              setIsCartOpen(false);
+              setIsSearchOpen(false);
+              setIsProfileOpen(false);
+            }}
+            className={`cursor-pointer relative transition-colors border-none bg-transparent py-2 flex items-center gap-1.5 ${isWishlistOpen ? 'text-[#dc6fd6]' : 'hover:text-[#dc6fd6]'}`}
             title="รายการโปรด"
           >
             <Heart size={20} strokeWidth={1.5} />
-            {mounted && wishlistItems.length > 0 && (
+            {mounted && wishlistCount > 0 && (
               <span className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                {wishlistItems.length}
+                {wishlistCount}
               </span>
             )}
-          </Link>
+            </button>
+
+            {isWishlistOpen && (
+              <div className="fixed inset-x-3 top-[76px] z-50 max-h-[calc(100vh-96px)] overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-2xl cursor-default dropdown-animate md:absolute md:inset-auto md:right-0 md:top-full md:mt-3 md:w-96">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-800">Wishlist</h3>
+                    <p className="text-xs text-gray-500">{wishlistCount} saved items</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsWishlistOpen(false);
+                      setConfirmWishlistRemove(null);
+                    }}
+                    className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#dc6fd6]"
+                    aria-label="Close wishlist"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {wishlistCount === 0 ? (
+                  <div className="py-8 text-center">
+                    <Heart size={36} className="mx-auto mb-3 text-gray-300" />
+                    <p className="text-sm font-medium text-gray-600">No saved products yet</p>
+                    <p className="mt-1 text-xs text-gray-400">Tap a heart on a product to save it here.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="max-h-[56vh] space-y-3 overflow-y-auto py-4 pr-1 md:max-h-[420px]">
+                      {wishlistItems.slice(0, 6).map((item) => (
+                        <div key={item.id} className="flex gap-3 rounded-lg border border-gray-100 p-2">
+                          <Link
+                            href={`/product/${item.id}`}
+                            onClick={() => setIsWishlistOpen(false)}
+                            className="h-20 w-16 shrink-0 overflow-hidden rounded-md bg-gray-50"
+                          >
+                            <img src={item.image} alt={item.nameEN} className="h-full w-full object-cover" />
+                          </Link>
+                          <div className="min-w-0 flex-1">
+                            <Link href={`/product/${item.id}`} onClick={() => setIsWishlistOpen(false)}>
+                              <p className="line-clamp-1 text-sm font-semibold text-gray-800 transition-colors hover:text-[#dc6fd6]">{item.nameEN}</p>
+                            </Link>
+                            <p className="line-clamp-1 text-xs text-gray-500">{item.nameTH}</p>
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              <span className="text-sm font-bold text-[#dc6fd6]">{formatWishlistPrice(item.price)}</span>
+                              <div
+                                className="flex h-8 items-center overflow-hidden rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                                style={{ width: confirmWishlistRemove === item.id ? '72px' : '32px' }}
+                              >
+                                {confirmWishlistRemove === item.id ? (
+                                  <div className="flex w-full items-center gap-1 px-1">
+                                    <button
+                                      onClick={() => setConfirmWishlistRemove(null)}
+                                      className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                                      aria-label="Cancel remove"
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        removeFromWishlist(item.id);
+                                        setConfirmWishlistRemove(null);
+                                      }}
+                                      className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white transition-colors hover:bg-red-600"
+                                      aria-label={`Confirm remove ${item.nameEN} from wishlist`}
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => setConfirmWishlistRemove(item.id)}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                                    aria-label={`Remove ${item.nameEN} from wishlist`}
+                                  >
+                                    <Trash2 size={15} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {wishlistCount > 6 && (
+                      <p className="mb-3 text-center text-xs text-gray-500">
+                        {wishlistCount - 6} more items in Wishlist
+                      </p>
+                    )}
+                  </>
+                )}
+
+                <div className="border-t border-gray-100 pt-3">
+                  <Link
+                    href="/wishlist"
+                    onClick={() => {
+                      setIsWishlistOpen(false);
+                      setConfirmWishlistRemove(null);
+                    }}
+                    className="block w-full rounded-lg bg-zinc-900 px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-zinc-800"
+                  >
+                    View all Wishlist
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
 
           {user ? (
             <div className="relative" ref={profileRef}>
@@ -314,6 +449,7 @@ export default function Navbar() {
                 onClick={() => {
                   setIsProfileOpen(!isProfileOpen);
                   setIsCartOpen(false);
+                  setIsWishlistOpen(false);
                   setIsSearchOpen(false);
                 }}
                 className="cursor-pointer hover:text-[#dc6fd6] transition-colors border-none bg-transparent py-2 flex items-center gap-1.5"
@@ -381,6 +517,7 @@ export default function Navbar() {
             <button
               onClick={() => {
                 setIsCartOpen(!isCartOpen);
+                setIsWishlistOpen(false);
                 setIsSearchOpen(false);
                 setIsProfileOpen(false);
               }}
@@ -464,16 +601,16 @@ export default function Navbar() {
       )}
 
       {isSearchOpen && (
-        <div ref={searchRef} className="absolute top-full left-0 w-full bg-white shadow-xl border-t border-gray-100 py-8 px-6 z-40 cursor-default animate-fade-in-down">
-          <div className="max-w-4xl mx-auto">
+        <div ref={searchRef} className="fixed inset-x-3 top-[76px] z-50 max-h-[calc(100vh-96px)] overflow-y-auto rounded-xl border border-gray-100 bg-white p-4 shadow-2xl cursor-default dropdown-animate md:absolute md:left-auto md:right-6 md:top-full md:mt-3 md:w-[28rem] md:max-h-[calc(100vh-120px)]">
+          <div className="w-full">
             {/* 🔍 ช่องค้นหาพร้อมไอคอน */}
-            <div className="relative w-full mb-8">
+            <div className="relative w-full mb-5">
               <div className="relative">
                 <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="ค้นหาสินค้า เช่น เสื้อ, Butterfly, Dress..."
-                  className="w-full pl-8 bg-transparent border-b-2 border-gray-200 focus:border-[#dc6fd6] py-3 focus:outline-none text-gray-800 text-lg transition-colors"
+                  className="w-full pl-8 pr-8 bg-transparent border-b-2 border-gray-200 focus:border-[#dc6fd6] py-2.5 focus:outline-none text-gray-800 text-sm transition-colors"
                   autoFocus
                   value={searchInput}
                   onChange={handleInputChange}
@@ -498,7 +635,7 @@ export default function Navbar() {
               
               {/* 🎯 Suggestions Dropdown */}
               {searchInput.trim().length > 0 && (
-                <div className="absolute top-full left-0 w-full mt-3 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden z-50">
+                <div className="mt-3 w-full bg-white border border-gray-100 shadow-lg rounded-xl overflow-hidden">
                   {suggestions.length > 0 ? (
                     <>
                       <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
@@ -534,9 +671,9 @@ export default function Navbar() {
                       ))}
                     </>
                   ) : (
-                    <div className="px-6 py-8 text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                        <Search className="w-8 h-8 text-gray-400" />
+                    <div className="px-5 py-6 text-center">
+                      <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Search className="w-6 h-6 text-gray-400" />
                       </div>
                       <p className="text-gray-600 font-medium mb-1">ไม่พบสินค้าที่ค้นหา</p>
                       <p className="text-sm text-gray-400">ลองค้นหาด้วยคำอื่น เช่น "เสื้อ" หรือ "Dress"</p>
@@ -546,15 +683,15 @@ export default function Navbar() {
               )}
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-5">
               <div>
                 <h4 className="text-sm font-bold text-gray-500 mb-4">คำค้นหายอดนิยม</h4>
-                <div className="flex flex-wrap gap-2 md:gap-3">
+                <div className="flex flex-wrap gap-2">
                   {popularSearches.map((term, index) => (
                     <button
                       key={index}
                       onClick={() => handleSearch(term)}
-                      className="cursor-pointer px-4 py-1.5 md:px-5 md:py-2 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:border-[#dc6fd6] hover:text-[#dc6fd6] transition-colors bg-white"
+                      className="cursor-pointer px-3.5 py-1.5 border border-gray-200 rounded-full text-xs font-medium text-gray-600 hover:border-[#dc6fd6] hover:text-[#dc6fd6] transition-colors bg-white"
                     >
                       {term}
                     </button>
@@ -564,7 +701,7 @@ export default function Navbar() {
 
               {recentSearches.length > 0 && (
                 <div>
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="flex justify-between items-center mb-3">
                     <h4 className="text-sm font-bold text-gray-500">สินค้าที่เพิ่งค้นหา</h4>
                     <button
                       onClick={clearRecentSearches}
@@ -573,12 +710,12 @@ export default function Navbar() {
                       ล้างประวัติ
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2 md:gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {recentSearches.map((term, index) => (
                       <button
                         key={index}
                         onClick={() => handleSearch(term)}
-                        className="cursor-pointer px-4 py-1.5 md:px-5 md:py-2 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:border-[#dc6fd6] hover:text-[#dc6fd6] transition-colors bg-white"
+                        className="cursor-pointer px-3.5 py-1.5 border border-gray-200 rounded-full text-xs font-medium text-gray-600 hover:border-[#dc6fd6] hover:text-[#dc6fd6] transition-colors bg-white"
                       >
                         {term}
                       </button>

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
 import { QrCode, Copy, Check, X, CheckCircle, Clock, AlertCircle, Download } from 'lucide-react';
+import limitedToast from '../../lib/toast';
 
 /**
  * 🏦 PromptPay QR Code Generator Component (Professional Version)
@@ -165,7 +166,10 @@ export default function PromptPayQR({
       setConfirmed(true);
     } catch (error) {
       console.error('Error confirming payment:', error);
-      alert('⚠️ ' + error.message);
+      limitedToast.error(error.message || 'ไม่สามารถยืนยันการชำระเงินได้', {
+        id: 'payment-confirm-error',
+        duration: 3000
+      });
       setIsProcessing(false);
       setIsVerifying(false);
       setVerificationProgress(0);

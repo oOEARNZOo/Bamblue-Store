@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { supabase } from '../../lib/supabase';
 import { useSearchParams } from 'next/navigation';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { Heart, ShoppingCart, Trash2, X } from 'lucide-react';
 import {
     ProductGridSkeleton,
     CategoryFilterSkeleton,
@@ -227,25 +227,29 @@ function ProductsContent() {
                                                 <div
                                                     className="flex items-center bg-white/95 backdrop-blur-sm rounded-full shadow-lg overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
                                                     style={{
-                                                        width: confirmRemove === product.id ? '120px' : '34px',
+                                                        width: confirmRemove === product.id ? '72px' : '34px',
                                                     }}
                                                 >
                                                     {confirmRemove === product.id ? (
-                                                        <div className="flex items-center gap-1 px-1.5 py-1 w-full animate-in fade-in duration-200">
+                                                        <div className="flex items-center gap-1 px-1 py-1 w-full animate-in fade-in duration-200">
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     e.preventDefault();
                                                                     setConfirmRemove(null);
                                                                 }}
-                                                                className="px-2 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer whitespace-nowrap"
+                                                                className="flex h-7 w-7 items-center justify-center rounded-full text-[0px] text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors cursor-pointer"
+                                                                aria-label="Cancel remove"
                                                             >
+                                                                <X size={14} />
                                                                 ยกเลิก
                                                             </button>
                                                             <button
                                                                 onClick={confirmRemoveWishlist}
-                                                                className="px-2.5 py-1 bg-red-500 text-white text-xs font-medium rounded-full hover:bg-red-600 transition-colors cursor-pointer whitespace-nowrap"
+                                                                className="flex h-7 w-7 items-center justify-center bg-red-500 text-[0px] text-white rounded-full hover:bg-red-600 transition-colors cursor-pointer"
+                                                                aria-label={`Confirm remove ${product.nameEN} from wishlist`}
                                                             >
+                                                                <Trash2 size={14} />
                                                                 ลบ
                                                             </button>
                                                         </div>

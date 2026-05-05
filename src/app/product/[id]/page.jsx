@@ -5,9 +5,9 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { Heart, Share2, Truck, RefreshCcw, Minus, Plus, X } from 'lucide-react'; // เพิ่ม X ไอคอน
 import Link from 'next/link';
-import Image from 'next/image';
 import ProductReviews from '../../components/ProductReviews';
 import { supabase } from '../../../lib/supabase';
+import { shopToast } from '../../../lib/toast';
 
 const PRODUCT_SIZES = ['S', 'M', 'L', 'XL'];
 const DEFAULT_SIZE_STOCK = { S: 0, M: 0, L: 0, XL: 0 };
@@ -22,6 +22,8 @@ const getStockForSize = (sizeStock, size) => {
   const stock = Number(sizeStock?.[size] ?? 0);
   return Number.isFinite(stock) ? Math.max(0, stock) : 0;
 };
+
+const formatPrice = (price) => Number(price || 0).toLocaleString('th-TH');
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -173,6 +175,18 @@ export default function ProductDetailPage() {
   const isLowStock = selectedSizeStock > 0 && selectedSizeStock <= 5;
   const canDecreaseQuantity = quantity > 1;
   const canIncreaseQuantity = !isOutOfStock && quantity < selectedSizeStock;
+  const discountPercent = Number(product.discount_percent || 0);
+  const basePrice = Number(product.price || 0);
+  const salePrice = discountPercent > 0 ? Math.round(basePrice * (1 - discountPercent / 100)) : basePrice;
+  const compareAtPrice = Number(product.original_price || 0) > salePrice
+    ? Number(product.original_price)
+    : discountPercent > 0 ? basePrice : 0;
+  const selectedStockText = isOutOfStock
+    ? `ไซส์ ${selectedSize} หมดแล้ว`
+    : isLowStock
+      ? `ไซส์ ${selectedSize} เหลือน้อย ${selectedSizeStock} ตัว`
+      : `ไซส์ ${selectedSize} พร้อมส่ง ${selectedSizeStock} ตัว`;
+  const wishlistActive = isInWishlist(product.id);
 
   const handleSizeSelect = (size) => {
     const stock = getStockForSize(sizeStock, size);
@@ -183,17 +197,19 @@ export default function ProductDetailPage() {
   const handleAddToCart = () => {
     // ตรวจสอบสต็อกก่อนเพิ่มลงตะกร้า
     if (isOutOfStock) {
-      alert(`ไซส์ ${selectedSize} หมดสต็อกแล้ว กรุณาเลือกไซส์อื่น`);
+      shopToast.stockOut(selectedSize);
       return;
     }
 
     if (quantity > selectedSizeStock) {
-      alert(`สต็อกไซส์ ${selectedSize} เหลือเพียง ${selectedSizeStock} ตัว`);
+      shopToast.stockLimit(selectedSize, selectedSizeStock);
       return;
     }
 
     addToCart({
       ...product,
+      price: salePrice,
+      original_price: compareAtPrice || product.original_price,
       image: mainImage,
       size: selectedSize,
       size_stock: sizeStock,
@@ -211,7 +227,7 @@ export default function ProductDetailPage() {
 
   return (
     <>
-      <main className="min-h-screen bg-white pb-20 pt-10">
+      <main className="min-h-screen bg-white pb-32 pt-10 md:pb-20">
         <div className="max-w-7xl mx-auto px-6">
 
           <div className="text-xs text-gray-500 mb-8 tracking-wide">
@@ -224,13 +240,13 @@ export default function ProductDetailPage() {
             {/* ฝั่งซ้าย: รูปภาพสินค้า */}
             <div className="lg:col-span-6 flex flex-col-reverse md:flex-row gap-4">
               {/* Thumbnail รูปภาพ */}
-              <div className="flex md:flex-col gap-3 overflow-x-auto md:w-24 shrink-0">
+              <div className="flex md:flex-col gap-3 overflow-x-auto pb-1 md:w-24 md:pb-0 shrink-0">
                 {/* แสดงรูปจาก images array หรือ fallback เป็น image เดี่ยว */}
                 {(product.images && product.images.length > 0 ? product.images : [product.image]).map((img, index) => (
                   <button
                     key={index}
                     onClick={() => setMainImage(img)}
-                    className={`cursor-pointer w-20 h-28 md:w-full md:h-28 border-2 overflow-hidden rounded-lg transition-all ${mainImage === img ? 'border-[#dc6fd6] shadow-md' : 'border-gray-200 hover:border-gray-400'
+                    className={`cursor-pointer w-20 h-28 md:w-full md:h-28 border-2 overflow-hidden rounded-xl bg-gray-50 transition-all ${mainImage === img ? 'border-[#dc6fd6] shadow-md ring-2 ring-[#dc6fd6]/15' : 'border-gray-200 opacity-80 hover:border-gray-400 hover:opacity-100'
                       }`}
                   >
                     <img src={img} className="w-full h-full object-cover" alt={`${product.nameEN} ${index + 1}`} />
@@ -265,16 +281,27 @@ export default function ProductDetailPage() {
               <h1 className="text-3xl font-bold text-zinc-900 mb-2 tracking-wide">{product.nameEN}</h1>
               <p className="text-xs text-gray-400 mb-6">SKU: {skuCode}</p>
 
-              <div className="flex items-center space-x-3 mb-8">
-                <span className="text-2xl font-bold text-[#dc6fd6]">
-                  ฿{product.price ? product.price.toLocaleString() : 0}
+              <div className="mb-7 flex flex-wrap items-center gap-3">
+                <span className="text-3xl font-black text-[#dc6fd6]">
+                  ฿{formatPrice(salePrice)}
                 </span>
+                {compareAtPrice > salePrice && (
+                  <span className="text-sm font-medium text-gray-400 line-through">
+                    ฿{formatPrice(compareAtPrice)}
+                  </span>
+                )}
+                {discountPercent > 0 && (
+                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-500">
+                    -{discountPercent}%
+                  </span>
+                )}
               </div>
 
-              <hr className="border-gray-100 mb-8" />
+              <hr className="border-gray-100 mb-6" />
 
+              <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:p-5">
               {/* ส่วนเลือกไซส์ */}
-              <div className="mb-8">
+              <div className="mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm font-semibold tracking-wide">ไซส์</span>
                   <button
@@ -313,19 +340,16 @@ export default function ProductDetailPage() {
                   })}
                 </div>
 
-                {/* แสดงคำเตือนสต็อกใกล้หมด */}
-                {isLowStock && (
-                  <div className="mt-3 flex items-center gap-2 text-orange-600 text-sm">
+                <div className={`mt-3 flex items-center gap-2 text-sm ${isOutOfStock ? 'text-red-500' : isLowStock ? 'text-orange-600' : 'text-emerald-600'}`}>
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    <span>สินค้าใกล้หมด! เหลือเพียง {selectedSizeStock} ตัวเท่านั้น</span>
+                    <span>{selectedStockText}</span>
                   </div>
-                )}
               </div>
 
               {/* ส่วนเลือกจำนวน */}
-              <div className="mb-10">
+              <div className="mb-6">
                 <span className="text-sm font-semibold tracking-wide block mb-3">จำนวน</span>
                 <div className="flex items-center">
                   {/* ปุ่ม +/- */}
@@ -356,12 +380,13 @@ export default function ProductDetailPage() {
               </div>
 
               {/* ปุ่ม Wishlist และ Add to cart */}
-              <div className="flex space-x-4 mb-10">
+              <div className="flex space-x-4 mb-5">
                 <button
                   onClick={handleAddWishlist}
-                  className={`cursor-pointer w-14 h-14 border rounded flex items-center justify-center transition-colors shrink-0 ${isInWishlist(product.id) ? 'border-[#dc6fd6] text-[#dc6fd6] bg-pink-50' : 'border-gray-300 text-gray-600 hover:border-[#dc6fd6] hover:text-[#dc6fd6]'}`}
+                  className={`cursor-pointer w-14 h-14 border rounded-xl flex items-center justify-center transition-colors shrink-0 ${wishlistActive ? 'border-[#dc6fd6] text-[#dc6fd6] bg-pink-50' : 'border-gray-300 text-gray-600 hover:border-[#dc6fd6] hover:text-[#dc6fd6]'}`}
+                  title={wishlistActive ? 'ลบออกจาก Wishlist' : 'เพิ่มลง Wishlist'}
                 >
-                  <Heart size={24} strokeWidth={1.5} className={isInWishlist(product.id) ? 'fill-[#dc6fd6]' : ''} />
+                  <Heart size={24} strokeWidth={1.5} className={wishlistActive ? 'fill-[#dc6fd6]' : ''} />
                 </button>
 
                 <button
@@ -375,12 +400,7 @@ export default function ProductDetailPage() {
                 </button>
               </div>
 
-              <div className="flex items-center space-x-4 mb-8">
-                <span className="text-sm text-gray-500">แชร์สินค้า:</span>
-                <button className="cursor-pointer text-gray-400 hover:text-[#dc6fd6]"><Share2 size={18} /></button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="bg-[#fff9ea] p-4 rounded text-sm flex items-start space-x-3">
                   <Truck className="text-gray-700 shrink-0" size={20} />
                   <div>
@@ -396,6 +416,12 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
               </div>
+              </div>
+
+              <div className="flex items-center space-x-4 mt-6 mb-8">
+                <span className="text-sm text-gray-500">แชร์สินค้า:</span>
+                <a href={`https://bamblue-store.demo/product/${productId}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer text-gray-400 hover:text-[#dc6fd6]"><Share2 size={18} /></a>
+              </div>
 
             </div>
           </div>
@@ -406,6 +432,24 @@ export default function ProductDetailPage() {
           <ProductReviews productId={productId} />
         </section>
       </main>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white/95 px-4 py-3 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-lg items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-gray-500">ไซส์ {selectedSize} · {quantity} ชิ้น</p>
+            <p className="text-base font-black text-[#dc6fd6]">฿{formatPrice(salePrice * quantity)}</p>
+          </div>
+          <button
+            onClick={handleAddToCart}
+            disabled={isOutOfStock}
+            className={`h-12 min-w-40 rounded-xl px-5 text-sm font-bold text-white transition-colors ${
+              isOutOfStock ? 'cursor-not-allowed bg-gray-300' : 'bg-zinc-900 hover:bg-zinc-800'
+            }`}
+          >
+            {isOutOfStock ? 'สินค้าหมด' : 'ใส่ตะกร้า'}
+          </button>
+        </div>
+      </div>
 
       {/* 🌟 Pop-up Modal แจ้งเตือนให้เข้าสู่ระบบ (สวยงาม) */}
       {showLoginModal && (

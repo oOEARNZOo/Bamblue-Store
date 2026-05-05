@@ -43,4 +43,53 @@ export const limitedToast = {
   }
 };
 
+export const shopToast = {
+  cartAdded: ({ name, size, quantity = 1 } = {}) => {
+    const itemName = name ? `${name} ` : '';
+    const quantityText = quantity > 1 ? ` x${quantity}` : '';
+    return limitedToast.success(`${itemName}เพิ่มลงตะกร้าแล้ว${quantityText}`, {
+      id: `cart-added-${name || 'item'}-${size || 'default'}`,
+      duration: 2200
+    });
+  },
+
+  cartRemoved: () => limitedToast.default('ลบออกจากตะกร้าแล้ว', {
+    id: 'cart-removed',
+    duration: 1800
+  }),
+
+  wishlistAdded: ({ name } = {}) => {
+    const itemName = name ? `${name} ` : '';
+    return limitedToast.success(`${itemName}เพิ่มลง Wishlist แล้ว`, {
+      id: `wishlist-added-${name || 'item'}`,
+      duration: 2200
+    });
+  },
+
+  wishlistExists: () => limitedToast.default('อยู่ใน Wishlist แล้ว', {
+    id: 'wishlist-exists',
+    duration: 1800
+  }),
+
+  wishlistRemoved: () => limitedToast.default('ลบออกจาก Wishlist แล้ว', {
+    id: 'wishlist-removed',
+    duration: 1800
+  }),
+
+  stockOut: (size) => limitedToast.error(`ไซส์ ${size} หมดแล้ว`, {
+    id: `stock-out-${size}`,
+    duration: 2600
+  }),
+
+  stockLimit: (size, stockLimit) => limitedToast.error(`ไซส์ ${size} เหลือ ${stockLimit} ตัว`, {
+    id: `stock-limit-${size}`,
+    duration: 2600
+  }),
+
+  loginRequired: () => limitedToast.error('กรุณาเข้าสู่ระบบก่อน', {
+    id: 'login-required',
+    duration: 2400
+  })
+};
+
 export default limitedToast;

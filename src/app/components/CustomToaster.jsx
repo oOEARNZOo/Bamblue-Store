@@ -95,7 +95,7 @@ export default function CustomToaster() {
             )}
             
             {/* Message */}
-            <span className="flex-1">{t.message?.toString()}</span>
+            <span className="flex-1">{t.message}</span>
             
             {/* Close button */}
             <button 

@@ -1,17 +1,16 @@
 "use client";
 
-import { createContext, useState, useContext, useEffect } from "react";
-import limitedToast from '../../lib/toast';
+import { createContext, useContext, useEffect, useState } from "react";
+import { shopToast } from "../../lib/toast";
 
 const WishlistContext = createContext();
 
-const WISHLIST_STORAGE_KEY = 'bamblue_wishlist';
+const WISHLIST_STORAGE_KEY = "bamblue_wishlist";
 
 export function WishlistProvider({ children }) {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // โหลดข้อมูล wishlist จาก localStorage เมื่อเริ่มต้น
   useEffect(() => {
     try {
       const savedWishlist = localStorage.getItem(WISHLIST_STORAGE_KEY);
@@ -19,52 +18,40 @@ export function WishlistProvider({ children }) {
         setWishlistItems(JSON.parse(savedWishlist));
       }
     } catch (error) {
-      console.error('Error loading wishlist from localStorage:', error);
+      console.error("Error loading wishlist from localStorage:", error);
     }
     setIsInitialized(true);
   }, []);
 
-  // บันทึกข้อมูล wishlist ลง localStorage ทุกครั้งที่มีการเปลี่ยนแปลง
   useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistItems));
-      } catch (error) {
-        console.error('Error saving wishlist to localStorage:', error);
-      }
+    if (!isInitialized) return;
+
+    try {
+      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistItems));
+    } catch (error) {
+      console.error("Error saving wishlist to localStorage:", error);
     }
   }, [wishlistItems, isInitialized]);
 
-  // เพิ่มสินค้าลง Wishlist
   const addToWishlist = (product) => {
     setWishlistItems((prevItems) => {
-      const isExist = prevItems.find((item) => item.id === product.id);
+      const isExist = prevItems.some((item) => item.id === product.id);
+
       if (isExist) {
-        limitedToast.default('สินค้านี้อยู่ในรายการโปรดแล้ว', {
-          id: `wishlist-exist-${product.id}`,
-          icon: '💖',
-          style: { border: '1px solid #f472b6' }
-        });
+        shopToast.wishlistExists();
         return prevItems;
       }
-      limitedToast.success(`เพิ่ม ${product.nameEN} ลงรายการโปรดแล้ว!`, {
-        id: `wishlist-add-${product.id}`
-      });
+
+      shopToast.wishlistAdded({ name: product.nameTH || product.nameEN });
       return [...prevItems, product];
     });
   };
 
-  // ลบสินค้าออกจาก Wishlist
   const removeFromWishlist = (productId) => {
     setWishlistItems((prevItems) => prevItems.filter((item) => item.id !== productId));
-    limitedToast.default('ลบสินค้าออกจากรายการโปรดแล้ว', {
-      id: `wishlist-remove-${productId}`,
-      icon: '🗑️',
-      style: { border: '1px solid #e4e4e7' }
-    });
+    shopToast.wishlistRemoved();
   };
 
-  // เช็คว่าสินค้าอยู่ใน Wishlist หรือไม่
   const isInWishlist = (productId) => {
     return wishlistItems.some((item) => item.id === productId);
   };
@@ -79,7 +66,7 @@ export function WishlistProvider({ children }) {
 export function useWishlist() {
   const context = useContext(WishlistContext);
   if (context === undefined) {
-    throw new Error("useWishlist ต้องถูกใช้งานอยู่ภายใต้ <WishlistProvider> เท่านั้นครับ!");
+    throw new Error("useWishlist must be used within <WishlistProvider>");
   }
   return context;
 }
