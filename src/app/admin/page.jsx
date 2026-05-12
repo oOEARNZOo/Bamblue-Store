@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/frontend/services/supabaseClient';
 import {
   Package,
   ShoppingCart,
@@ -11,7 +11,7 @@ import {
   AlertTriangle,
   CheckCircle
 } from 'lucide-react';
-import { AdminDashboardSkeleton } from '../components/LoadingSkeletons';
+import { AdminDashboardSkeleton } from '@/frontend/components/LoadingSkeletons';
 
 const ADMIN_DASHBOARD_ORDER_COLUMNS = 'id, order_number, first_name, last_name, status, total, user_id, created_at';
 const ADMIN_DASHBOARD_REVIEW_COLUMNS = 'id, reviewer_name, rating, comment, is_approved, created_at';

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
 import { QrCode, Copy, Check, X, CheckCircle, Clock, AlertCircle, Download } from 'lucide-react';
-import limitedToast from '../../lib/toast';
+import limitedToast from '@/frontend/utils/toast';
 
 /**
  * 🏦 PromptPay QR Code Generator Component (Professional Version)

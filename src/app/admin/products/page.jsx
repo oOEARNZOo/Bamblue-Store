@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@/frontend/services/supabaseClient';
 import { 
   Package, 
   Plus, 
@@ -12,7 +12,7 @@ import {
   Upload,
   ArrowLeft
 } from 'lucide-react';
-import { ProductGridSkeleton } from '../../components/LoadingSkeletons';
+import { ProductGridSkeleton } from '@/frontend/components/LoadingSkeletons';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 

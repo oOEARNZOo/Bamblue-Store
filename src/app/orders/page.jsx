@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/frontend/services/supabaseClient';
 import Link from 'next/link';
 import { Package, Clock, Truck, CheckCircle, XCircle, ChevronRight, ShoppingBag, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { OrderListSkeleton, LoadingSpinner } from '../components/LoadingSkeletons';
+import { OrderListSkeleton, LoadingSpinner } from '@/frontend/components/LoadingSkeletons';
 
 export default function OrderHistoryPage() {
   const router = useRouter();

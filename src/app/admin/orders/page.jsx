@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../../lib/supabase';
-import { checkIsAdminCached } from '../../../lib/adminCheck';
+import { supabase } from '@/frontend/services/supabaseClient';
+import { checkIsAdminCached } from '@/frontend/auth/adminCheck';
 import {
   ShoppingCart,
   Search,
@@ -17,7 +17,7 @@ import {
   CreditCard,
   Image as ImageIcon
 } from 'lucide-react';
-import { OrderListSkeleton } from '../../components/LoadingSkeletons';
+import { OrderListSkeleton } from '@/frontend/components/LoadingSkeletons';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 

@@ -1,15 +1,15 @@
 "use client";
 import { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { useWishlist } from '../context/WishlistContext';
-import { supabasePublic } from '../../lib/supabase';
+import { useWishlist } from '@/frontend/context/WishlistContext';
+import { supabasePublic } from '@/frontend/services/supabaseClient';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, Heart, Search, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import {
     ProductGridSkeleton,
     CategoryFilterSkeleton
-} from '../components/LoadingSkeletons';
-import { ProductImage } from '../components/OptimizedImage';
+} from '@/frontend/components/LoadingSkeletons';
+import { ProductImage } from '@/frontend/components/OptimizedImage';
 
 const PRODUCT_LIST_COLUMNS = 'id, nameEN, nameTH, category, price, original_price, image, images, is_new, discount_percent, stock, size_stock';
 const ITEMS_PER_PAGE = 12;

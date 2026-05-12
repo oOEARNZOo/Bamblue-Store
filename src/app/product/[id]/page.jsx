@@ -1,13 +1,13 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useCart } from '../../context/CartContext';
-import { useWishlist } from '../../context/WishlistContext';
+import { useCart } from '@/frontend/context/CartContext';
+import { useWishlist } from '@/frontend/context/WishlistContext';
 import { Heart, Share2, Truck, RefreshCcw, Minus, Plus, X } from 'lucide-react'; // เพิ่ม X ไอคอน
 import Link from 'next/link';
-import ProductReviews from '../../components/ProductReviews';
-import { supabase, supabasePublic } from '../../../lib/supabase';
-import { limitedToast, shopToast } from '../../../lib/toast';
+import ProductReviews from '@/frontend/components/ProductReviews';
+import { supabase, supabasePublic } from '@/frontend/services/supabaseClient';
+import { limitedToast, shopToast } from '@/frontend/utils/toast';
 
 const PRODUCT_SIZES = ['S', 'M', 'L', 'XL'];
 const DEFAULT_SIZE_STOCK = { S: 0, M: 0, L: 0, XL: 0 };

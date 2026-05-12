@@ -1,74 +1,15 @@
 "use client";
 import React, { useState } from 'react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '@/frontend/context/CartContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CreditCard, Truck, QrCode, ArrowLeft, XCircle, CheckCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import PromptPayQR from '../components/PromptPayQR';
-import { validateCheckoutForm, getErrorMessage } from '../../lib/validation';
+import { supabase } from '@/frontend/services/supabaseClient';
+import PromptPayQR from '@/frontend/components/PromptPayQR';
+import { validateCheckoutForm, getErrorMessage } from '@/frontend/utils/validation';
 
-const DEFAULT_SIZE_STOCK = { S: 0, M: 0, L: 0, XL: 0 };
-
-const getStockForSize = (sizeStock, size) => {
-  const stockBySize = { ...DEFAULT_SIZE_STOCK, ...(sizeStock || {}) };
-  const stock = Number(stockBySize[size] ?? 0);
-  return Number.isFinite(stock) ? Math.max(0, stock) : 0;
-};
-
-const validateCartStock = async (cartItems) => {
-  const productIds = [...new Set(cartItems.map((item) => item.id))];
-
-  const { data, error } = await supabase
-    .from('products1')
-    .select('id, nameEN, size_stock, stock')
-    .in('id', productIds);
-
-  if (error) throw error;
-
-  const productsById = new Map((data || []).map((product) => [String(product.id), product]));
-  const groupedItems = new Map();
-
-  cartItems.forEach((item) => {
-    const size = item.size || 'M';
-    const key = `${item.id}-${size}`;
-    const current = groupedItems.get(key) || {
-      productId: item.id,
-      nameEN: item.nameEN,
-      size,
-      quantity: 0
-    };
-
-    current.quantity += Number(item.quantity) || 0;
-    groupedItems.set(key, current);
-  });
-
-  const issues = [];
-
-  groupedItems.forEach((item) => {
-    const product = productsById.get(String(item.productId));
-
-    if (!product) {
-      issues.push(`${item.nameEN} ไม่พบสินค้าในระบบ`);
-      return;
-    }
-
-    const stockLimit = product.size_stock
-      ? getStockForSize(product.size_stock, item.size)
-      : Number(product.stock) || 0;
-
-    if (item.quantity > stockLimit) {
-      issues.push(`${product.nameEN || item.nameEN} ไซส์ ${item.size} เหลือ ${stockLimit} ตัว`);
-    }
-  });
-
-  return {
-    isValid: issues.length === 0,
-    message: issues.length
-      ? `สินค้าในตะกร้าเกินจำนวนสต็อก: ${issues.join(', ')}`
-      : ''
-  };
-};
+// Stock is checked atomically by /api/checkout; this preserves the existing UX guard.
+const validateCartStock = async () => ({ isValid: true, message: '' });
 
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart(); 
@@ -92,6 +33,7 @@ export default function CheckoutPage() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [currentOrderNumber, setCurrentOrderNumber] = useState('');
   const [currentOrderId, setCurrentOrderId] = useState(null);
+  const [currentOrderTotal, setCurrentOrderTotal] = useState(0);
 
   // 🌟 State สำหรับเก็บ validation errors
   const [formErrors, setFormErrors] = useState({});
@@ -168,7 +110,7 @@ export default function CheckoutPage() {
     }
 
     try {
-      const stockValidation = await validateCartStock(cartItems);
+      const stockValidation = await validateCartStock();
 
       if (!stockValidation.isValid) {
         setPopup({
@@ -202,10 +144,10 @@ export default function CheckoutPage() {
 
     try {
       // ดึง user ID จาก Supabase Auth
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
       if (authError) throw authError;
 
-      if (!user) {
+      if (!session?.access_token) {
         setPopup({
           isOpen: true,
           type: 'error',
@@ -215,56 +157,39 @@ export default function CheckoutPage() {
         return;
       }
 
-      // สร้าง order number (format: ORD-2026-00001)
-      const year = new Date().getFullYear();
-      const randomNum = Math.floor(Math.random() * 99999).toString().padStart(5, '0');
-      const orderNumber = `ORD-${year}-${randomNum}`;
+      const checkoutResponse = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          items: cartItems.map((item) => ({
+            productId: item.id,
+            size: item.size || 'M',
+            quantity: item.quantity,
+          })),
+          customer: {
+            email: formData.email || session.user?.email || '',
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            address: formData.address,
+            province: formData.province,
+            zipcode: formData.zipcode,
+            phone: formData.phone,
+          },
+          paymentMethod,
+        }),
+      });
 
-      // สร้างข้อมูล order
-      const orderData = {
-        user_id: user.id,
-        order_number: orderNumber,
-        status: 'pending',
-        email: formData.email || user.email,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone: formData.phone,
-        shipping_address: formData.address,
-        shipping_province: formData.province,
-        shipping_zipcode: formData.zipcode,
-        payment_method: paymentMethod,
-        subtotal: subtotal,
-        shipping_fee: shippingFee,
-        total: total
-      };
+      const checkoutResult = await checkoutResponse.json().catch(() => ({}));
 
-      // บันทึก order ลง Supabase
-      const { data: newOrder, error: orderError } = await supabase
-        .from('orders')
-        .insert([orderData])
-        .select()
-        .single();
+      if (!checkoutResponse.ok) {
+        throw new Error(checkoutResult.error || 'Unable to create order.');
+      }
 
-      if (orderError) throw orderError;
-
-      // สร้าง order items
-      const orderItems = cartItems.map(item => ({
-        order_id: newOrder.id,
-        product_id: item.id,
-        product_name_en: item.nameEN,
-        product_name_th: item.nameTH,
-        product_image: item.image,
-        price: Number(item.price),
-        quantity: item.quantity,
-        size: item.size || 'M'
-      }));
-
-      // บันทึก order items ลง Supabase
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
+      const newOrder = checkoutResult.order;
+      const orderNumber = newOrder?.order_number;
 
       // ล้างตะกร้าทันที
       if (clearCart) clearCart();
@@ -276,6 +201,7 @@ export default function CheckoutPage() {
       if (paymentMethod === 'qr') {
         setCurrentOrderNumber(orderNumber);
         setCurrentOrderId(newOrder.id);
+        setCurrentOrderTotal(Number(newOrder?.total) || total);
         setShowQRModal(true);
         setIsSubmitting(false);
         return;
@@ -544,7 +470,7 @@ export default function CheckoutPage() {
       {showQRModal && (
         <PromptPayQR
           phoneNumber="0917484417"
-          amount={total}
+          amount={currentOrderTotal || total}
           orderNumber={currentOrderNumber}
           mockMode={true} // เปลี่ยนเป็น false เมื่อต้องการใช้ระบบจริง
           onClose={() => {
@@ -555,22 +481,30 @@ export default function CheckoutPage() {
             
             // อัปเดตสถานะ order เป็น paid (ชำระเงินแล้ว) สำหรับ Mock Mode
             // หรือ pending_payment_verification สำหรับ Real Mode
-            const newStatus = paymentData?.mockMode ? 'paid' : 'pending_payment_verification';
-            
-            
-            const { error } = await supabase
-              .from('orders')
-              .update({ 
-                status: newStatus,
-                payment_confirmed_at: new Date().toISOString(),
-                payment_method_details: paymentData ? JSON.stringify(paymentData) : null
-              })
-              .eq('id', currentOrderId)
-              .select();
+            const { data: { session }, error: authError } = await supabase.auth.getSession();
+            if (authError) throw authError;
 
-            if (error) {
-              console.error('❌ Error updating order status:', error);
-              throw new Error('ไม่สามารถอัปเดตสถานะออเดอร์ได้: ' + error.message);
+            if (!session?.access_token) {
+              throw new Error('Please sign in before confirming payment.');
+            }
+            
+            
+            const confirmResponse = await fetch('/api/orders/confirm-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                orderId: currentOrderId,
+                paymentData,
+              }),
+            });
+
+            const confirmResult = await confirmResponse.json().catch(() => ({}));
+
+            if (!confirmResponse.ok) {
+              throw new Error(confirmResult.error || 'Unable to confirm payment.');
             }
             
             

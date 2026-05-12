@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/frontend/services/supabaseClient';
 import { Shield, ArrowLeft, Mail, Smartphone, RefreshCw } from 'lucide-react';
 
 export default function VerifyOTPPage() {

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
-import { useWishlist } from '../context/WishlistContext';
-import { useCart } from '../context/CartContext';
+import { useWishlist } from '@/frontend/context/WishlistContext';
+import { useCart } from '@/frontend/context/CartContext';
 import Link from 'next/link';
 import { Heart, ShoppingCart, Trash2, X } from 'lucide-react';
 

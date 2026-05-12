@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase, supabasePublic } from '../../lib/supabase';
+import { supabase, supabasePublic } from '@/frontend/services/supabaseClient';
 import { Star, ThumbsUp, User, Calendar, MessageSquare, Plus, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 

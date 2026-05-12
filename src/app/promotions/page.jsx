@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Sun, Tag } from 'lucide-react';
-import { supabasePublic } from '../../lib/supabase';
+import { supabasePublic } from '@/frontend/services/supabaseClient';
 
 const formatPrice = (price) => {
   return Number(price || 0).toLocaleString('th-TH');

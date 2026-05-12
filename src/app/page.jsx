@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { useWishlist } from './context/WishlistContext';
+import { useWishlist } from '@/frontend/context/WishlistContext';
 import { Heart, MessageSquare, RefreshCcw, Ruler, ShieldCheck, Trash2, Truck, X } from 'lucide-react';
 
 // 🌟 1. นำเข้า Supabase
-import { supabasePublic } from '@/lib/supabase';
+import { supabasePublic } from '@/frontend/services/supabaseClient';
 import { 
   HeroBannerSkeleton, 
   ProductGridSkeleton 
-} from './components/LoadingSkeletons';
-import { ProductImage } from './components/OptimizedImage';
+} from '@/frontend/components/LoadingSkeletons';
+import { ProductImage } from '@/frontend/components/OptimizedImage';
 
 const PRODUCT_CARD_COLUMNS = 'id, nameEN, nameTH, price, original_price, image, images, is_new, discount_percent, stock, size_stock, category';
 const HOME_REVIEW_COLUMNS = 'id, reviewer_name, rating, title, comment, created_at, is_verified, product_name_en, product_name_th';

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/frontend/services/supabaseClient';
 import { KeyRound, ArrowLeft, Mail } from 'lucide-react';
 
 export default function ForgotPasswordPage() {

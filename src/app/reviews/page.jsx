@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { supabasePublic } from '../../lib/supabase';
+import { supabasePublic } from '@/frontend/services/supabaseClient';
 import { CheckCircle, MessageSquare, ShoppingBag, SlidersHorizontal, Star } from 'lucide-react';
 
 const PUBLIC_REVIEW_COLUMNS = 'id, rating, title, comment, reviewer_name, created_at, is_verified';

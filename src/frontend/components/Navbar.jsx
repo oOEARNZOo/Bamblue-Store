@@ -5,12 +5,12 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 // นำเข้าไอคอน Heart มาเพิ่ม
 import { Search, User, ShoppingCart, Minus, Plus, Trash2, Menu, X, Heart } from 'lucide-react';
-import { useCart } from '../context/CartContext';
-import { useWishlist } from '../context/WishlistContext';
+import { useCart } from '@/frontend/context/CartContext';
+import { useWishlist } from '@/frontend/context/WishlistContext';
 import { useRouter } from 'next/navigation';
-import { supabase, supabasePublic } from '../../lib/supabase';
+import { supabase, supabasePublic } from '@/frontend/services/supabaseClient';
 import { CartSkeleton } from './LoadingSkeletons';
-import { checkIsAdminCached } from '../../lib/adminCheck';
+import { checkIsAdminCached } from '@/frontend/auth/adminCheck';
 
 const NAVBAR_PRODUCTS_CACHE_KEY = 'navbar_products_cache_v2';
 const NAVBAR_PRODUCTS_CACHE_TIME_KEY = 'navbar_products_cache_time_v2';

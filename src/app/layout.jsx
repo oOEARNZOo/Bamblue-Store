@@ -1,9 +1,8 @@
 import "./globals.css";
-import Navbar from './components/Navbar'; 
-import Footer from './components/Footer';
-import PageTransition from './components/PageTransition';
-import { CartProvider } from './context/CartContext'; 
-import { WishlistProvider } from './context/WishlistContext';
+import Navbar from '@/frontend/components/Navbar';
+import Footer from '@/frontend/components/Footer';
+import PageTransition from '@/frontend/components/PageTransition';
+import Providers from './providers';
 // 🌟 1. นำเข้า Toaster จาก react-hot-toast
 import { Toaster } from 'react-hot-toast'; 
 import { Prompt } from 'next/font/google';
@@ -81,8 +80,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="th">
       <body className={prompt.className}>
-        <CartProvider>
-        <WishlistProvider>
+        <Providers>
           <Navbar />
           <PageTransition>
             {children}
@@ -113,8 +111,7 @@ export default function RootLayout({ children }) {
               },
             }}
           />
-        </WishlistProvider>
-        </CartProvider>
+        </Providers>
       </body>
     </html>
   )

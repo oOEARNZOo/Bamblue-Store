@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
-import { checkIsAdminCached } from '../../lib/adminCheck';
-import AdminSidebar from '../components/AdminSidebar';
+import { supabase } from '@/frontend/services/supabaseClient';
+import { checkIsAdminCached } from '@/frontend/auth/adminCheck';
+import AdminSidebar from '@/frontend/components/AdminSidebar';
 
 export default function AdminLayout({ children }) {
   const router = useRouter();

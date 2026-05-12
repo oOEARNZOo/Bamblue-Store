@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { shopToast } from "../../lib/toast";
+import { shopToast } from "@/frontend/utils/toast";
 
 const CartContext = createContext();
 

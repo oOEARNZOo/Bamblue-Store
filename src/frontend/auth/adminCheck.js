@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from '@/frontend/services/supabaseClient';
 
 export async function checkIsAdmin(user) {
   if (!user) return false;

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/frontend/services/supabaseClient';
 
 export default async function sitemap() {
   const baseUrl = 'https://bamblue.store';

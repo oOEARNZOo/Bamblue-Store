@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@/frontend/services/supabaseClient';
 
 function getSafeNextPath(value) {
   if (!value || !value.startsWith('/') || value.startsWith('//')) {

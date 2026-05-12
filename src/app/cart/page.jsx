@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '@/frontend/context/CartContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Minus, Plus, X } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/frontend/services/supabaseClient';
 import toast from 'react-hot-toast';
 
 export default function CartPage() {
