@@ -4,23 +4,23 @@ import React from 'react';
 // 🎯 Product Card Skeleton
 export function ProductCardSkeleton() {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 animate-pulse">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-100">
       {/* Product Image Skeleton */}
       <div className="relative">
-        <div className="w-full h-64 bg-gray-200 rounded-t-lg"></div>
-        <div className="absolute top-2 right-2 w-8 h-8 bg-gray-200 rounded-full"></div>
+        <div className="w-full h-64 bg-gray-200 skeleton-shimmer rounded-t-lg"></div>
+        <div className="absolute top-2 right-2 w-8 h-8 bg-gray-200 skeleton-shimmer rounded-full"></div>
       </div>
       
       {/* Product Info Skeleton */}
       <div className="p-4 space-y-3">
-        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-        <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-4 bg-gray-200 skeleton-shimmer rounded w-3/4"></div>
+        <div className="h-3 bg-gray-200 skeleton-shimmer rounded w-1/2"></div>
+        <div className="h-5 bg-gray-200 skeleton-shimmer rounded w-1/3"></div>
       </div>
       
       {/* Button Skeleton */}
       <div className="px-4 pb-4">
-        <div className="h-10 bg-gray-200 rounded-lg"></div>
+        <div className="h-10 bg-gray-200 skeleton-shimmer rounded-lg"></div>
       </div>
     </div>
   );
@@ -167,13 +167,13 @@ export function ReviewListSkeleton({ count = 3 }) {
 // 🎯 Admin Stats Card Skeleton
 export function AdminStatsCardSkeleton() {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 border animate-pulse">
+    <div className="bg-white rounded-xl shadow-sm p-6 border">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <div className="h-4 bg-gray-200 rounded w-20"></div>
-          <div className="h-8 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 skeleton-shimmer rounded w-20"></div>
+          <div className="h-8 bg-gray-200 skeleton-shimmer rounded w-16"></div>
         </div>
-        <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+        <div className="w-12 h-12 bg-gray-200 skeleton-shimmer rounded-lg"></div>
       </div>
     </div>
   );

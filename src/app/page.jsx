@@ -12,6 +12,7 @@ import {
   ProductGridSkeleton 
 } from '@/frontend/components/LoadingSkeletons';
 import { ProductImage } from '@/frontend/components/OptimizedImage';
+import { MotionCard, Reveal, Stagger } from '@/frontend/components/motion/MotionPrimitives';
 
 const PRODUCT_CARD_COLUMNS = 'id, nameEN, nameTH, price, original_price, image, images, is_new, discount_percent, stock, size_stock, category';
 const HOME_REVIEW_COLUMNS = 'id, reviewer_name, rating, title, comment, created_at, is_verified, product_name_en, product_name_th';
@@ -305,15 +306,15 @@ export default function Home() {
 
 
       {/* 🌟 Section 2: NEW ARRIVALS */}
-      <section className="border-b border-gray-100 bg-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
+      <Reveal as="section" className="border-b border-gray-100 bg-white">
+        <Stagger className="mx-auto grid max-w-6xl grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { icon: Truck, title: 'จัดส่งฟรี', text: 'สำหรับทุกออเดอร์ในไทย' },
             { icon: Ruler, title: 'เลือกไซส์ก่อนซื้อ', text: 'ผูกกับสต็อกตามไซส์จริง' },
             { icon: RefreshCcw, title: 'คืนสินค้า 14 วัน', text: 'ตามเงื่อนไขของร้าน' },
             { icon: ShieldCheck, title: 'ชำระเงินปลอดภัย', text: 'ตรวจสอบคำสั่งซื้อได้' }
           ].map(({ icon: Icon, title, text }) => (
-            <div key={title} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+            <MotionCard key={title} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3" hover={false}>
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#dc6fd6] shadow-sm">
                 <Icon size={20} />
               </div>
@@ -321,12 +322,12 @@ export default function Home() {
                 <p className="text-sm font-black text-gray-950">{title}</p>
                 <p className="mt-0.5 text-xs text-gray-500">{text}</p>
               </div>
-            </div>
+            </MotionCard>
           ))}
-        </div>
-      </section>
+        </Stagger>
+      </Reveal>
 
-      <section className="py-16 bg-white">
+      <Reveal as="section" className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <h3 className="text-2xl tracking-widest text-[#dc6fd6] border-gray-200 border-b font-medium">NEW ARRIVALS</h3>
@@ -368,7 +369,7 @@ export default function Home() {
                 className="flex snap-x snap-mandatory gap-6 overflow-hidden scroll-smooth"
               >
               {newArrivals.map((item) => (
-                <div key={item.id} data-new-arrival-card="true" className="group relative flex shrink-0 snap-start flex-col text-center transition-transform duration-500 ease-out basis-full sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]">
+                <MotionCard key={item.id} data-new-arrival-card="true" className="group relative flex shrink-0 snap-start flex-col text-center transition-transform duration-500 ease-out basis-full sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]">
                   {/* 🌟 Badges */}
                   <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                     {item.is_new && (
@@ -471,7 +472,7 @@ export default function Home() {
                   >
                     {item.stock === 0 ? 'ดูรายละเอียด' : 'เลือกไซส์'}
                   </Link>
-                </div>
+                </MotionCard>
               ))}
               </div>
 
@@ -502,10 +503,10 @@ export default function Home() {
             </div>
           )}
         </div>
-      </section>
+      </Reveal>
 
       {/* 🌟 Section 4: BEST SELLERS */}
-      <section className="py-16 bg-gray-50">
+      <Reveal as="section" className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-sm text-[#dc6fd6] font-medium tracking-widest uppercase mb-2 block">สินค้ายอดนิยม</span>
@@ -515,9 +516,9 @@ export default function Home() {
           {isLoading ? (
             <ProductGridSkeleton count={4} />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {bestSellers.map((item) => (
-                <div key={item.id} className="group flex flex-col text-center relative">
+                <MotionCard key={item.id} className="group flex flex-col text-center relative">
                   {/* 🌟 Badges */}
                   <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                     <span className="bg-[#dc6fd6] text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
@@ -618,9 +619,9 @@ export default function Home() {
                   >
                     {item.stock === 0 ? 'ดูรายละเอียด' : 'เลือกไซส์'}
                   </Link>
-                </div>
+                </MotionCard>
               ))}
-            </div>
+            </Stagger>
           )}
 
           <div className="text-center mt-10">
@@ -635,10 +636,10 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* 🌟 Section 5: รีวิวจากลูกค้า */}
-      <section className="py-16 bg-white">
+      <Reveal as="section" className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-sm text-[#dc6fd6] font-medium tracking-widest uppercase mb-2 block">ลูกค้าพูดถึงเรา</span>
@@ -646,9 +647,9 @@ export default function Home() {
           </div>
 
           {reviews.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {reviews.map((review, index) => (
-                <div key={review.id || index} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow">
+                <MotionCard key={review.id || index} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-[#dc6fd6] to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
                       {(review.reviewer_name || 'U').charAt(0).toUpperCase()}
@@ -668,9 +669,9 @@ export default function Home() {
                   {review.product_name && (
                     <p className="text-xs text-[#dc6fd6] mt-3 font-medium">ซื้อ: {review.product_name}</p>
                   )}
-                </div>
+                </MotionCard>
               ))}
-            </div>
+            </Stagger>
           ) : (
             <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center">
               <MessageSquare size={42} className="mb-4 text-gray-300" />
@@ -693,7 +694,7 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </Reveal>
     </main>
   );
 }

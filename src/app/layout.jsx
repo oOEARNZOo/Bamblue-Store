@@ -1,7 +1,5 @@
 import "./globals.css";
-import Navbar from '@/frontend/components/Navbar';
-import Footer from '@/frontend/components/Footer';
-import PageTransition from '@/frontend/components/PageTransition';
+import SiteChrome from '@/frontend/components/SiteChrome';
 import Providers from './providers';
 // 🌟 1. นำเข้า Toaster จาก react-hot-toast
 import { Toaster } from 'react-hot-toast'; 
@@ -81,27 +79,32 @@ export default function RootLayout({ children }) {
     <html lang="th">
       <body className={prompt.className}>
         <Providers>
-          <Navbar />
-          <PageTransition>
+          <SiteChrome>
             {children}
-          </PageTransition>
-          <Footer />
+          </SiteChrome>
           
           {/* 🌟 2. เพิ่ม Toaster ไว้ล่างสุด และตั้งค่าสีให้เข้ากับธีมเว็บเรา */}
           <Toaster 
-            position="bottom-left" /* ให้เด้งออกมาจากมุมซ้ายล่าง */
+            position="top-center" /* แสดงกลางเว็บใต้ navbar */
+            gutter={8}
+            containerStyle={{
+              top: 'clamp(76px, 9vw, 92px)',
+              left: 16,
+              right: 16,
+            }}
             toastOptions={{
               duration: 3000, /* โชว์ 3 วินาทีแล้วหายไปเอง */
               style: {
                 background: '#ffffff',
                 color: '#27272a', /* สีตัวอักษรเทาเข้ม */
-                border: '1px solid #f472b6', /* ขอบสีชมพู Bamblue */
-                padding: '10px 16px', /* padding เล็กลง */
+                border: '1px solid rgba(220, 111, 214, 0.32)', /* ขอบสีชมพู Bamblue */
+                padding: '11px 16px', /* padding เล็กลง */
                 fontSize: '13px', /* ฟอนต์เล็กลง */
-                fontWeight: '500',
-                borderRadius: '9999px', /* วงรี (pill shape) */
-                boxShadow: '0 4px 12px -2px rgba(0, 0, 0, 0.15)',
-                maxWidth: '320px', /* จำกัดความกว้าง */
+                fontWeight: '600',
+                lineHeight: '1.45',
+                borderRadius: '16px', /* วงรี (pill shape) */
+                boxShadow: '0 18px 45px -24px rgba(15, 23, 42, 0.45), 0 10px 22px -18px rgba(220, 111, 214, 0.45)',
+                maxWidth: 'min(420px, calc(100vw - 32px))', /* จำกัดความกว้าง */
               },
               success: {
                 iconTheme: {

@@ -12,6 +12,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { AdminDashboardSkeleton } from '@/frontend/components/LoadingSkeletons';
+import { MotionCard, PageMotion, Stagger } from '@/frontend/components/motion/MotionPrimitives';
 
 const ADMIN_DASHBOARD_ORDER_COLUMNS = 'id, order_number, first_name, last_name, status, total, user_id, created_at';
 const ADMIN_DASHBOARD_REVIEW_COLUMNS = 'id, reviewer_name, rating, comment, is_approved, created_at';
@@ -261,17 +262,17 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="mx-auto w-full max-w-[1400px] p-4 sm:p-6">
         <AdminDashboardSkeleton />
       </div>
     );
   }
 
   return (
-    <>
+    <PageMotion className="min-w-0 overflow-x-hidden bg-[#fbf8fb]">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-30">
-        <div className="px-6 py-4">
+      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/90 shadow-sm backdrop-blur">
+        <div className="mx-auto w-full max-w-[1400px] px-4 py-4 sm:px-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-medium text-[#dc6fd6]">Admin Dashboard</p>
@@ -297,40 +298,41 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-        <div className="p-6">
+        <div className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6">
           {/* Page Title */}
-          <div className="mb-6">
+          <div className="mb-5">
             <h2 className="text-xl font-bold text-gray-900">งานที่ควรจัดการก่อน</h2>
             <p className="text-sm text-gray-500 mt-1">รวมสถานะที่ต้องตรวจทุกวันไว้ในหน้าเดียว</p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Stagger className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(min(240px,100%),1fr))] gap-5">
             {quickActions.map((action) => {
               const ActionIcon = action.icon;
 
               return (
-                <button
+                <MotionCard
+                  as="button"
                   key={action.label}
                   onClick={() => router.push(action.path)}
-                  className="bg-white rounded-xl shadow-sm p-6 border hover:shadow-md transition-shadow text-left"
+                  className="min-h-[118px] rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 ${action.bg} rounded-lg flex items-center justify-center`}>
-                      <ActionIcon className={action.color} size={24} />
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${action.bg}`}>
+                      <ActionIcon className={action.color} size={22} />
                     </div>
                     <span className="text-xs font-medium text-gray-400">ดูรายละเอียด</span>
                   </div>
                   <p className="text-sm text-gray-500 mb-1">{action.label}</p>
-                  <p className="text-3xl font-bold text-gray-900">{action.value}</p>
+                  <p className="text-2xl font-bold text-gray-900">{action.value}</p>
                   <p className="text-xs text-gray-500 mt-2">{action.helper}</p>
-                </button>
+                </MotionCard>
               );
             })}
-          </div>
+          </Stagger>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white rounded-lg border p-4">
+          <Stagger className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(min(220px,100%),1fr))] gap-4">
+            <MotionCard className="min-h-[92px] rounded-2xl border border-slate-200 bg-white p-4" hover={false}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
                   <DollarSign className="text-green-600" size={20} />
@@ -340,8 +342,8 @@ export default function AdminDashboard() {
                   <p className="text-lg font-bold text-gray-900">฿{stats.totalRevenue.toLocaleString()}</p>
                 </div>
               </div>
-            </div>
-            <div className="bg-white rounded-lg border p-4">
+            </MotionCard>
+            <MotionCard className="min-h-[92px] rounded-2xl border border-slate-200 bg-white p-4" hover={false}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
                   <ShoppingCart className="text-blue-600" size={20} />
@@ -351,8 +353,8 @@ export default function AdminDashboard() {
                   <p className="text-lg font-bold text-gray-900">{stats.totalOrders}</p>
                 </div>
               </div>
-            </div>
-            <div className="bg-white rounded-lg border p-4">
+            </MotionCard>
+            <MotionCard className="min-h-[92px] rounded-2xl border border-slate-200 bg-white p-4" hover={false}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
                   <Package className="text-purple-600" size={20} />
@@ -362,8 +364,8 @@ export default function AdminDashboard() {
                   <p className="text-lg font-bold text-gray-900">{stats.totalProducts}</p>
                 </div>
               </div>
-            </div>
-            <div className="bg-white rounded-lg border p-4">
+            </MotionCard>
+            <MotionCard className="min-h-[92px] rounded-2xl border border-slate-200 bg-white p-4" hover={false}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center">
                   <CheckCircle className="text-yellow-600" size={20} />
@@ -373,18 +375,18 @@ export default function AdminDashboard() {
                   <p className="text-lg font-bold text-gray-900">{stats.unitsSold}</p>
                 </div>
               </div>
-            </div>
-          </div>
+            </MotionCard>
+          </Stagger>
 
         {/* Product Table */}
-        <div className="bg-white rounded-xl shadow-sm border mb-8">
-          <div className="p-6 border-b">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-              <div className="max-w-lg">
+        <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 p-5">
+            <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0 max-w-lg">
                 <h2 className="text-lg font-semibold text-gray-900">Stock Monitor</h2>
                 <p className="text-sm text-gray-500 mt-1">เริ่มต้นที่สินค้าใกล้หมดเพื่อให้เติมสต็อกได้ทัน ({stockAlertProducts.length} รายการที่ควรตรวจ)</p>
               </div>
-              <div className="flex w-full flex-col gap-3 xl:w-auto xl:flex-row xl:items-start">
+              <div className="flex w-full min-w-0 flex-col gap-3 xl:w-auto xl:flex-row xl:items-start">
                 <div className="relative w-full xl:w-72">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   <input
@@ -395,13 +397,13 @@ export default function AdminDashboard() {
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dc6fd6] focus:border-transparent text-sm"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-50 p-1 sm:flex sm:items-center">
+                <div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-50 p-1 sm:flex sm:items-center">
                   {stockFilters.map((filter) => (
                     <button
                       key={filter.value}
                       type="button"
                       onClick={() => setFilterType(filter.value)}
-                      className={`min-w-[92px] rounded-md px-3 py-2 text-sm font-semibold transition-colors ${filterType === filter.value
+                      className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${filterType === filter.value
                         ? 'bg-gradient-to-r from-[#dc6fd6] to-[#c05ca8] text-white shadow-sm'
                         : 'text-gray-600 hover:bg-white hover:text-gray-900'
                       }`}
@@ -415,8 +417,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="max-w-full overflow-x-auto">
+            <table className="min-w-[980px] w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product</th>
@@ -502,13 +504,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <Stagger className="mb-8 grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-5">
           {/* Recent Orders */}
-          <div className="bg-white rounded-xl shadow-sm border">
-            <div className="p-6 border-b">
+          <MotionCard className="rounded-2xl border border-slate-200 bg-white shadow-sm" hover={false}>
+            <div className="border-b border-slate-200 p-5">
               <h2 className="text-lg font-semibold text-gray-900">ออเดอร์ล่าสุด</h2>
             </div>
-            <div className="p-6">
+            <div className="p-5">
               {stats.recentOrders.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">ยังไม่มีออเดอร์</p>
               ) : (
@@ -536,14 +538,14 @@ export default function AdminDashboard() {
                 ดูออเดอร์ทั้งหมด →
               </button>
             </div>
-          </div>
+          </MotionCard>
 
           {/* Recent Reviews */}
-          <div className="bg-white rounded-xl shadow-sm border">
-            <div className="p-6 border-b">
+          <MotionCard className="rounded-2xl border border-slate-200 bg-white shadow-sm" hover={false}>
+            <div className="border-b border-slate-200 p-5">
               <h2 className="text-lg font-semibold text-gray-900">รีวิวล่าสุด</h2>
             </div>
-            <div className="p-6">
+            <div className="p-5">
               {stats.recentReviews.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">ยังไม่มีรีวิว</p>
               ) : (
@@ -586,9 +588,9 @@ export default function AdminDashboard() {
                 จัดการรีวิวทั้งหมด →
               </button>
             </div>
-          </div>
-        </div>
+          </MotionCard>
+        </Stagger>
       </div>
-    </>
+    </PageMotion>
   );
 }

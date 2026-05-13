@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
 // นำเข้าไอคอน Heart มาเพิ่ม
 import { Search, User, ShoppingCart, Minus, Plus, Trash2, Menu, X, Heart } from 'lucide-react';
 import { useCart } from '@/frontend/context/CartContext';
@@ -233,6 +234,9 @@ export default function Navbar() {
   // นับจำนวนชิ้นทั้งหมด (สำหรับแสดงในหัวข้อ)
   const totalQuantity = cartItems ? cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
   const wishlistCount = wishlistItems ? wishlistItems.length : 0;
+  const { scrollY } = useScroll();
+  const navBackground = useTransform(scrollY, [0, 90], ['rgba(255,255,255,0.96)', 'rgba(255,255,255,0.84)']);
+  const navShadow = useTransform(scrollY, [0, 90], ['0 0 0 rgba(15,23,42,0)', '0 14px 40px rgba(15,23,42,0.08)']);
 
   const calculateTotal = () => {
     if (!cartItems) return 0;
@@ -267,7 +271,10 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="bg-white border-b border-gray-100 px-3 py-2.5 sticky top-0 z-50 sm:px-5 sm:py-3">
+    <motion.nav
+      className="sticky top-0 z-50 border-b border-gray-100 px-3 py-2.5 backdrop-blur-xl sm:px-5 sm:py-3"
+      style={{ backgroundColor: navBackground, boxShadow: navShadow }}
+    >
       <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
 
         <Link href="/" className="cursor-pointer flex min-w-0 items-center gap-2">
@@ -331,9 +338,14 @@ export default function Navbar() {
           >
             <Heart size={20} strokeWidth={1.5} />
             {mounted && wishlistCount > 0 && (
-              <span className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+              <motion.span
+                key={wishlistCount}
+                initial={{ scale: 0.7, y: 2 }}
+                animate={{ scale: 1, y: 0 }}
+                className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm"
+              >
                 {wishlistCount}
-              </span>
+              </motion.span>
             )}
             </button>
 
@@ -529,9 +541,14 @@ export default function Navbar() {
             >
               <ShoppingCart size={20} strokeWidth={1.5} />
               {mounted && cartItemCount > 0 && (
-                <span className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                <motion.span
+                  key={cartItemCount}
+                  initial={{ scale: 0.7, y: 2 }}
+                  animate={{ scale: 1, y: 0 }}
+                  className="absolute -top-1 right-0 bg-[#dc6fd6] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm"
+                >
                   {cartItemCount}
-                </span>
+                </motion.span>
               )}
             </button>
 
@@ -608,8 +625,15 @@ export default function Navbar() {
         />
       )}
 
+      <AnimatePresence>
       {isMobileMenuOpen && (
-        <div className="relative z-50 bg-white border-t border-gray-100 py-4 px-3 animate-in fade-in duration-200 sm:px-5 lg:hidden">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-50 bg-white border-t border-gray-100 py-4 px-3 sm:px-5 lg:hidden"
+        >
           <div className="space-y-2">
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>หน้าหลัก</Link>
             <Link href="/products" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/products' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>สินค้าทั้งหมด</Link>
@@ -677,8 +701,9 @@ export default function Navbar() {
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {isSearchOpen && (
         <div ref={searchRef} className="fixed inset-x-3 top-[76px] z-50 max-h-[calc(100vh-96px)] overflow-y-auto rounded-xl border border-gray-100 bg-white p-4 shadow-2xl cursor-default dropdown-animate md:absolute md:left-auto md:right-6 md:top-full md:mt-3 md:w-[28rem] md:max-h-[calc(100vh-120px)]">
@@ -807,6 +832,6 @@ export default function Navbar() {
           </div>
         </div>
       )}
-    </nav>
+    </motion.nav>
   );
 }

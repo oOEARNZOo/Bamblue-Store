@@ -26,8 +26,10 @@ export default function WishlistPage() {
       ...item,
       price: item.price.replace(/[^0-9]/g, ''),
     };
-    addToCart(cartProduct);
-    removeFromWishlist(item.id);
+    const added = addToCart(cartProduct);
+    if (added) {
+      removeFromWishlist(item.id);
+    }
   };
 
   return (

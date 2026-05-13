@@ -8,6 +8,7 @@ import Link from 'next/link';
 import ProductReviews from '@/frontend/components/ProductReviews';
 import { supabase, supabasePublic } from '@/frontend/services/supabaseClient';
 import { limitedToast, shopToast } from '@/frontend/utils/toast';
+import { MotionButton, Reveal } from '@/frontend/components/motion/MotionPrimitives';
 
 const PRODUCT_SIZES = ['S', 'M', 'L', 'XL'];
 const DEFAULT_SIZE_STOCK = { S: 0, M: 0, L: 0, XL: 0 };
@@ -293,7 +294,7 @@ export default function ProductDetailPage() {
             <span className="text-gray-900">{product.nameEN}</span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <Reveal className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* ฝั่งซ้าย: รูปภาพสินค้า */}
             <div className="lg:col-span-6 flex flex-col-reverse md:flex-row gap-4">
               {/* Thumbnail รูปภาพ */}
@@ -438,15 +439,15 @@ export default function ProductDetailPage() {
 
               {/* ปุ่ม Wishlist และ Add to cart */}
               <div className="flex space-x-4 mb-5">
-                <button
+                <MotionButton
                   onClick={handleAddWishlist}
                   className={`cursor-pointer w-14 h-14 border rounded-xl flex items-center justify-center transition-colors shrink-0 ${wishlistActive ? 'border-[#dc6fd6] text-[#dc6fd6] bg-pink-50' : 'border-gray-300 text-gray-600 hover:border-[#dc6fd6] hover:text-[#dc6fd6]'}`}
                   title={wishlistActive ? 'ลบออกจาก Wishlist' : 'เพิ่มลง Wishlist'}
                 >
                   <Heart size={24} strokeWidth={1.5} className={wishlistActive ? 'fill-[#dc6fd6]' : ''} />
-                </button>
+                </MotionButton>
 
-                <button
+                <MotionButton
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
                   className={`grow text-white rounded text-sm tracking-widest font-semibold transition-colors flex items-center justify-center h-14 ${
@@ -454,7 +455,7 @@ export default function ProductDetailPage() {
                   }`}
                 >
                   {isOutOfStock ? 'สินค้าหมด' : 'ใส่ตะกร้า'}
-                </button>
+                </MotionButton>
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -477,7 +478,7 @@ export default function ProductDetailPage() {
 
               <div className="flex items-center space-x-4 mt-6 mb-8">
                 <span className="text-sm text-gray-500">แชร์สินค้า:</span>
-                <button
+                <MotionButton
                   type="button"
                   onClick={handleShareProduct}
                   className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500 transition-colors hover:border-[#dc6fd6] hover:text-[#dc6fd6]"
@@ -485,11 +486,11 @@ export default function ProductDetailPage() {
                 >
                   <Share2 size={16} />
                   <span>แชร์ลิงก์</span>
-                </button>
+                </MotionButton>
               </div>
 
             </div>
-          </div>
+          </Reveal>
         </div>
 
         {/* 🌟 ส่วนรีวิวสินค้า */}
@@ -504,7 +505,7 @@ export default function ProductDetailPage() {
             <p className="truncate text-xs font-medium text-gray-500">ไซส์ {selectedSize} · {quantity} ชิ้น</p>
             <p className="text-base font-black text-[#dc6fd6]">฿{formatPrice(salePrice * quantity)}</p>
           </div>
-          <button
+        <MotionButton
             onClick={handleAddToCart}
             disabled={isOutOfStock}
             className={`h-12 min-w-40 rounded-xl px-5 text-sm font-bold text-white transition-colors ${
@@ -512,7 +513,7 @@ export default function ProductDetailPage() {
             }`}
           >
             {isOutOfStock ? 'สินค้าหมด' : 'ใส่ตะกร้า'}
-          </button>
+          </MotionButton>
         </div>
       </div>
 

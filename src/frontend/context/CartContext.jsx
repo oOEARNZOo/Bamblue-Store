@@ -99,7 +99,9 @@ export function CartProvider({ children }) {
     shopToast.cartAdded({
       name: product.nameTH || product.nameEN,
       size,
-      quantity: quantityToAdd
+      quantity: quantityToAdd,
+      totalQuantity: nextQuantity,
+      wasInCart: existingQuantity > 0
     });
     return true;
   };
@@ -127,8 +129,9 @@ export function CartProvider({ children }) {
   };
 
   const removeFromCart = (cartKey) => {
+    const removedItem = cartItems.find((item) => item.cartKey === cartKey);
     setCartItems((prevItems) => prevItems.filter((item) => item.cartKey !== cartKey));
-    shopToast.cartRemoved();
+    shopToast.cartRemoved({ name: removedItem?.nameTH || removedItem?.nameEN });
   };
 
   const clearCart = () => {

@@ -48,8 +48,9 @@ export function WishlistProvider({ children }) {
   };
 
   const removeFromWishlist = (productId) => {
+    const removedItem = wishlistItems.find((item) => item.id === productId);
     setWishlistItems((prevItems) => prevItems.filter((item) => item.id !== productId));
-    shopToast.wishlistRemoved();
+    shopToast.wishlistRemoved({ name: removedItem?.nameTH || removedItem?.nameEN });
   };
 
   const isInWishlist = (productId) => {

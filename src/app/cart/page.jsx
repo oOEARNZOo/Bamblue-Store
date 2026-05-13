@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Minus, Plus, X } from 'lucide-react';
 import { supabase } from '@/frontend/services/supabaseClient';
 import toast from 'react-hot-toast';
+import { MotionButton, MotionCard, Reveal, Stagger } from '@/frontend/components/motion/MotionPrimitives';
 
 export default function CartPage() {
   // 🌟 ดึง updateQuantity มาใช้งาน
@@ -47,7 +48,7 @@ export default function CartPage() {
 
   return (
     <main className="min-h-screen bg-white py-20">
-      <div className="max-w-4xl mx-auto px-6">
+      <Reveal className="max-w-4xl mx-auto px-6">
         <h1 className="text-3xl font-bold tracking-widest text-zinc-900 mb-10 text-center">
           YOUR CART
         </h1>
@@ -61,13 +62,13 @@ export default function CartPage() {
           </div>
         ) : (
           <div>
-            <div className="space-y-6">
+            <Stagger className="space-y-6">
               {cartItems.map((item) => {
                 const stockLimit = getItemStockLimit(item);
                 const isAtStockLimit = stockLimit !== null && item.quantity >= stockLimit;
 
                 return (
-                <div key={item.cartKey || item.id} className="flex items-center justify-between border-b border-gray-200 pb-6">
+                <MotionCard key={item.cartKey || item.id} className="flex items-center justify-between border-b border-gray-200 pb-6" hover={false}>
                   <div className="flex items-center space-x-6">
                     <div className="w-24 h-32 bg-gray-100 overflow-hidden rounded shrink-0">
                       <img src={item.image} alt={item.nameEN} className="w-full h-full object-cover" />
@@ -116,12 +117,12 @@ export default function CartPage() {
                   >
                     REMOVE
                   </button>
-                </div>
+                </MotionCard>
                 );
               })}
-            </div>
+            </Stagger>
 
-            <div className="mt-12 bg-gray-50 p-8 rounded-md text-right">
+            <MotionCard className="mt-12 bg-gray-50 p-8 rounded-md text-right" hover={false}>
               <div className="flex justify-between items-center mb-6 max-w-sm ml-auto">
                 <span className="text-gray-600 tracking-wider">SUBTOTAL</span>
                 <span className="text-2xl font-bold text-zinc-900">
@@ -131,16 +132,16 @@ export default function CartPage() {
               <p className="text-xs text-gray-500 mb-6 tracking-wide">ภาษีและค่าจัดส่งจะถูกคำนวณในขั้นตอนชำระเงิน</p>
 
               {/* ✅ เปลี่ยนเป็น button เพื่อตรวจสอบ Login ก่อน */}
-              <button
+              <MotionButton
                 onClick={handleCheckout}
                 className="cursor-pointer w-full md:w-auto bg-[#dc6fd6] hover:bg-[#c05ca8] text-white px-12 py-4 rounded text-sm tracking-widest font-bold shadow-md transition-colors text-center"
               >
                 CHECKOUT
-              </button>
-            </div>
+              </MotionButton>
+            </MotionCard>
           </div>
         )}
-      </div>
+      </Reveal>
 
       {/* 🔐 Modal แจ้งเตือนให้ Login */}
       {showLoginModal && (

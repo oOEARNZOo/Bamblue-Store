@@ -10,6 +10,7 @@ import {
     CategoryFilterSkeleton
 } from '@/frontend/components/LoadingSkeletons';
 import { ProductImage } from '@/frontend/components/OptimizedImage';
+import { MotionCard, Reveal, Stagger } from '@/frontend/components/motion/MotionPrimitives';
 
 const PRODUCT_LIST_COLUMNS = 'id, nameEN, nameTH, category, price, original_price, image, images, is_new, discount_percent, stock, size_stock';
 const ITEMS_PER_PAGE = 12;
@@ -51,7 +52,7 @@ function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, 
     const wishlistActive = isInWishlist(product.id);
 
     return (
-        <article className="group relative animate-product-card-reveal" style={style}>
+        <MotionCard as="article" className="group relative" style={style}>
             <Link href={`/product/${product.id}`} className="block">
                 <div className={`relative mb-4 overflow-hidden rounded-2xl bg-gray-100 transition-transform duration-300 group-hover:-translate-y-1 ${isSoldOut ? 'opacity-65' : ''}`}>
                     <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
@@ -157,7 +158,7 @@ function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, 
                     {isSoldOut ? 'ดูรายละเอียด' : 'เลือกไซส์'}
                 </Link>
             </div>
-        </article>
+        </MotionCard>
     );
 }
 
@@ -336,7 +337,7 @@ function ProductsContent() {
 
     return (
         <>
-            <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 md:flex-row md:gap-12">
+            <Reveal className="mx-auto flex max-w-7xl flex-col gap-8 px-6 md:flex-row md:gap-12">
                 <aside className="hidden w-60 shrink-0 md:block">
                     <div className="sticky top-28">
                         <div className="mb-5 flex items-center justify-between border-b border-gray-100 pb-4">
@@ -426,7 +427,7 @@ function ProductsContent() {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            <Stagger className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {paginatedProducts.map((product, index) => (
                                     <ProductCard
                                         key={product.id}
@@ -439,7 +440,7 @@ function ProductsContent() {
                                         style={{ animationDelay: `${Math.min(index * 85, 680)}ms` }}
                                     />
                                 ))}
-                            </div>
+                            </Stagger>
 
                             {totalPages > 1 && (
                                 <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
@@ -475,7 +476,7 @@ function ProductsContent() {
                         </>
                     )}
                 </section>
-            </div>
+            </Reveal>
 
             {isFilterOpen && (
                 <div className="fixed inset-0 z-50 md:hidden">
