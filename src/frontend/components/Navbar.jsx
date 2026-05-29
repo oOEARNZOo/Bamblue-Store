@@ -17,9 +17,22 @@ const NAVBAR_PRODUCTS_CACHE_KEY = 'navbar_products_cache_v2';
 const NAVBAR_PRODUCTS_CACHE_TIME_KEY = 'navbar_products_cache_time_v2';
 const NAVBAR_PRODUCT_COLUMNS = 'id, nameEN, nameTH, category, image, price, discount_percent';
 
+const readJsonArrayFromStorage = (key) => {
+  try {
+    const value = localStorage.getItem(key);
+    if (!value) return [];
+
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    localStorage.removeItem(key);
+    return [];
+  }
+};
+
 export default function Navbar() {
-  const { cartItems, updateQuantity, removeFromCart, getItemStockLimit } = useCart();
-  const { wishlistItems, removeFromWishlist } = useWishlist();
+  const { cartItems, updateQuantity, removeFromCart, getItemStockLimit, clearCart } = useCart();
+  const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlist();
   const pathname = usePathname();
   const router = useRouter();
   const [searchInput, setSearchInput] = useState('');
@@ -76,6 +89,8 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    clearCart();
+    clearWishlist();
     setUser(null);
     setIsProfileOpen(false);
     router.push('/logout');
@@ -83,7 +98,7 @@ export default function Navbar() {
 
   useEffect(() => {
     setMounted(true);
-    const savedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
+    const savedSearches = readJsonArrayFromStorage('recentSearches');
     setRecentSearches(savedSearches);
   }, []);
 
@@ -101,8 +116,11 @@ export default function Navbar() {
           const isExpired = now - parseInt(cacheTimestamp) > CACHE_DURATION;
           if (!isExpired) {
             // ✅ ใช้ cache ที่ยังไม่หมดอายุ
-            setProductsData(JSON.parse(cachedProducts));
-            return;
+            const parsedProducts = readJsonArrayFromStorage(NAVBAR_PRODUCTS_CACHE_KEY);
+            if (parsedProducts.length > 0) {
+              setProductsData(parsedProducts);
+              return;
+            }
           }
         }
 

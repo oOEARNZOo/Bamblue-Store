@@ -136,7 +136,6 @@ export default function OrderManagementPage() {
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
-    console.log('Updating order status:', orderId, 'to:', newStatus);
     setUpdatingOrderId(orderId);
 
     try {
@@ -146,8 +145,6 @@ export default function OrderManagementPage() {
         .select('id, status')
         .eq('id', orderId)
         .single();
-
-      console.log('Existing order:', existingOrder);
 
       if (fetchError) {
         console.error('Error fetching existing order:', fetchError);
@@ -165,8 +162,6 @@ export default function OrderManagementPage() {
         .update({ status: newStatus })
         .eq('id', orderId)
         .select();
-
-      console.log('Update result:', { data, error });
 
       if (error) {
         console.error('Supabase update error:', error);
@@ -211,7 +206,6 @@ export default function OrderManagementPage() {
       // Force re-render
       setForceUpdate(prev => prev + 1);
 
-      console.log('Order status updated successfully');
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('เกิดข้อผิดพลาด: ' + error.message, {
@@ -356,12 +350,58 @@ export default function OrderManagementPage() {
     return getStatusConfig(status).label;
   };
 
+  const updateOrderTracking = async (order) => {
+    if (!order?.id) return;
+
+    setUpdatingOrderId(order.id);
+
+    try {
+      const payload = {
+        shipping_carrier: order.shipping_carrier || null,
+        tracking_number: order.tracking_number || null,
+        shipped_at: order.tracking_number ? (order.shipped_at || new Date().toISOString()) : order.shipped_at || null,
+      };
+
+      const { error } = await supabase
+        .from('orders')
+        .update(payload)
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      toast.success('บันทึกเลขพัสดุแล้ว', {
+        duration: 2500,
+        style: { background: '#10b981', color: '#fff' },
+      });
+
+      setOrders((prev) => prev.map((item) => item.id === order.id ? { ...item, ...payload } : item));
+      setSelectedOrder((current) => current?.id === order.id ? { ...current, ...payload } : current);
+    } catch (error) {
+      console.error('Error updating tracking:', error);
+      toast.error('บันทึกเลขพัสดุไม่สำเร็จ: ' + error.message);
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const updateSelectedOrderDraft = (field, value) => {
+    setSelectedOrder((current) => current ? { ...current, [field]: value } : current);
+  };
+
+
   const getOrderTotal = (order) => {
     return Number(order?.total || 0);
   };
 
   const getOrderItemName = (item) => {
     return item.product_name_en || item.product_name_th || item.product_name || '-';
+  };
+
+  const getPaymentMethodLabel = (method) => {
+    if (method === 'credit') return 'บัตรเครดิต/เดบิต';
+    if (method === 'qr') return 'PromptPay / QR Code';
+    if (method === 'cod') return 'เก็บเงินปลายทาง';
+    return method || '-';
   };
 
   const viewOrderDetails = (order) => {
@@ -527,7 +567,6 @@ export default function OrderManagementPage() {
                           key={`${order.id}-${order.status}-${forceUpdate}`}
                           value={order.status}
                           onChange={(e) => {
-                            console.log('Dropdown changed:', order.id, 'to:', e.target.value);
                             handleStatusChange(order.id, e.target.value);
                           }}
                           disabled={updatingOrderId === order.id}
@@ -596,6 +635,38 @@ export default function OrderManagementPage() {
                 </div>
               </div>
 
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">เลขพัสดุ</h3>
+                <div className="grid gap-3 rounded-lg bg-gray-50 p-4 sm:grid-cols-2">
+                  <label className="text-sm">
+                    <span className="mb-1 block font-medium text-gray-700">ขนส่ง</span>
+                    <input
+                      value={selectedOrder.shipping_carrier || ''}
+                      onChange={(event) => updateSelectedOrderDraft('shipping_carrier', event.target.value)}
+                      placeholder="เช่น Flash, Kerry, Thailand Post"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#dc6fd6] focus:ring-2 focus:ring-[#dc6fd6]/20"
+                    />
+                  </label>
+                  <label className="text-sm">
+                    <span className="mb-1 block font-medium text-gray-700">Tracking number</span>
+                    <input
+                      value={selectedOrder.tracking_number || ''}
+                      onChange={(event) => updateSelectedOrderDraft('tracking_number', event.target.value)}
+                      placeholder="เลขพัสดุ"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#dc6fd6] focus:ring-2 focus:ring-[#dc6fd6]/20"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => updateOrderTracking(selectedOrder)}
+                    disabled={updatingOrderId === selectedOrder.id}
+                    className="rounded-lg bg-[#dc6fd6] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#c05ca8] disabled:bg-gray-300 sm:col-span-2"
+                  >
+                    {updatingOrderId === selectedOrder.id ? 'กำลังบันทึก...' : 'บันทึกเลขพัสดุ'}
+                  </button>
+                </div>
+              </div>
+
               {/* Order Items */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3">รายการสินค้า</h3>
@@ -626,7 +697,7 @@ export default function OrderManagementPage() {
                 <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>วิธีชำระเงิน:</span>
-                    <span className="font-medium">{selectedOrder.payment_method === 'cod' ? 'เก็บเงินปลายทาง' : 'โอนเงิน'}</span>
+                    <span className="font-medium">{getPaymentMethodLabel(selectedOrder.payment_method)}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t">
                     <span className="font-semibold">ยอดรวมทั้งหมด:</span>
@@ -643,7 +714,6 @@ export default function OrderManagementPage() {
                     key={`${selectedOrder.id}-${selectedOrder.status}-${forceUpdate}`}
                     value={selectedOrder.status}
                     onChange={(e) => {
-                      console.log('Modal dropdown changed:', selectedOrder.id, 'to:', e.target.value);
                       handleStatusChange(selectedOrder.id, e.target.value);
                     }}
                     disabled={updatingOrderId === selectedOrder.id}

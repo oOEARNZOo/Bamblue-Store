@@ -10,7 +10,7 @@ import {
     CategoryFilterSkeleton
 } from '@/frontend/components/LoadingSkeletons';
 import { ProductImage } from '@/frontend/components/OptimizedImage';
-import { MotionCard, Reveal, Stagger } from '@/frontend/components/motion/MotionPrimitives';
+import { MotionCard, Reveal } from '@/frontend/components/motion/MotionPrimitives';
 
 const PRODUCT_LIST_COLUMNS = 'id, nameEN, nameTH, category, price, original_price, image, images, is_new, discount_percent, stock, size_stock';
 const ITEMS_PER_PAGE = 12;
@@ -44,7 +44,7 @@ const getTotalStock = (product) => {
     return stockFromSizes > 0 ? stockFromSizes : Math.max(0, Number(product.stock || 0));
 };
 
-function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, onConfirmRemove, isInWishlist, style }) {
+function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, onConfirmRemove, isInWishlist, delay = 0 }) {
     const salePrice = getSalePrice(product);
     const originalPrice = Number(product.original_price || product.price || 0);
     const totalStock = getTotalStock(product);
@@ -52,7 +52,13 @@ function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, 
     const wishlistActive = isInWishlist(product.id);
 
     return (
-        <MotionCard as="article" className="group relative" style={style}>
+        <MotionCard
+            as="article"
+            className="group relative"
+            initial={{ opacity: 0, y: 18, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
+        >
             <Link href={`/product/${product.id}`} className="block">
                 <div className={`relative mb-4 overflow-hidden rounded-2xl bg-gray-100 transition-transform duration-300 group-hover:-translate-y-1 ${isSoldOut ? 'opacity-65' : ''}`}>
                     <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
@@ -168,6 +174,7 @@ function ProductsContent() {
     const [confirmRemove, setConfirmRemove] = useState(null);
     const [productsData, setProductsData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [fetchError, setFetchError] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('featured');
@@ -191,8 +198,10 @@ function ProductsContent() {
         setSearchTerm(urlSearchQuery || '');
     }, [urlSearchQuery]);
 
-    useEffect(() => {
-        async function fetchProducts() {
+    const fetchProducts = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            setFetchError('');
             const { data, error } = await supabasePublic
                 .from('products1')
                 .select(PRODUCT_LIST_COLUMNS)
@@ -200,14 +209,23 @@ function ProductsContent() {
 
             if (error) {
                 console.error('Error fetching products:', error);
+                setProductsData([]);
+                setFetchError('ไม่สามารถโหลดสินค้าได้ในตอนนี้ กรุณาลองใหม่อีกครั้ง');
             } else {
                 setProductsData(data || []);
             }
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            setProductsData([]);
+            setFetchError('ไม่สามารถโหลดสินค้าได้ในตอนนี้ กรุณาลองใหม่อีกครั้ง');
+        } finally {
             setIsLoading(false);
         }
-
-        fetchProducts();
     }, []);
+
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
 
     const categoryCounts = useMemo(() => {
         return CATEGORIES.reduce((counts, category) => {
@@ -335,6 +353,23 @@ function ProductsContent() {
         );
     }
 
+    if (fetchError) {
+        return (
+            <div className="mx-auto flex min-h-[420px] max-w-3xl flex-col items-center justify-center px-6 text-center">
+                <div className="rounded-3xl border border-red-100 bg-red-50 px-8 py-10">
+                    <p className="text-lg font-black text-gray-950">โหลดสินค้าไม่สำเร็จ</p>
+                    <p className="mt-2 text-sm text-gray-600">{fetchError}</p>
+                    <button
+                        onClick={fetchProducts}
+                        className="mt-6 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-zinc-800"
+                    >
+                        ลองโหลดใหม่
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
             <Reveal className="mx-auto flex max-w-7xl flex-col gap-8 px-6 md:flex-row md:gap-12">
@@ -427,7 +462,7 @@ function ProductsContent() {
                         </div>
                     ) : (
                         <>
-                            <Stagger className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {paginatedProducts.map((product, index) => (
                                     <ProductCard
                                         key={product.id}
@@ -437,10 +472,10 @@ function ProductsContent() {
                                         onCancelRemove={cancelRemoveWishlist}
                                         onConfirmRemove={confirmRemoveWishlist}
                                         isInWishlist={isInWishlist}
-                                        style={{ animationDelay: `${Math.min(index * 85, 680)}ms` }}
+                                        delay={Math.min(index * 0.085, 0.68)}
                                     />
                                 ))}
-                            </Stagger>
+                            </div>
 
                             {totalPages > 1 && (
                                 <div className="mt-12 flex flex-wrap items-center justify-center gap-2">

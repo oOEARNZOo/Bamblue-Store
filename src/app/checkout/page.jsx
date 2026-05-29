@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useCart } from '@/frontend/context/CartContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,11 +11,65 @@ import { validateCheckoutForm, getErrorMessage } from '@/frontend/utils/validati
 // Stock is checked atomically by /api/checkout; this preserves the existing UX guard.
 const validateCartStock = async () => ({ isValid: true, message: '' });
 
+const CHECKOUT_IDEMPOTENCY_STORAGE_KEY = 'bamblue_checkout_idempotency';
+
+const createCheckoutSignature = ({ cartItems, formData, paymentMethod }) => JSON.stringify({
+  paymentMethod,
+  customer: {
+    email: formData.email,
+    firstName: formData.firstName,
+    lastName: formData.lastName,
+    address: formData.address,
+    province: formData.province,
+    zipcode: formData.zipcode,
+    phone: formData.phone,
+  },
+  items: cartItems.map((item) => ({
+    id: item.id,
+    size: item.size || 'M',
+    quantity: item.quantity,
+  })).sort((a, b) => `${a.id}-${a.size}`.localeCompare(`${b.id}-${b.size}`)),
+});
+
+const createClientKey = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  return `checkout-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
+const getCheckoutIdempotencyKey = (signature) => {
+  if (typeof sessionStorage === 'undefined') return createClientKey();
+
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(CHECKOUT_IDEMPOTENCY_STORAGE_KEY) || '{}');
+    if (saved.signature === signature && saved.key) return saved.key;
+
+    const key = createClientKey();
+    sessionStorage.setItem(CHECKOUT_IDEMPOTENCY_STORAGE_KEY, JSON.stringify({ signature, key }));
+    return key;
+  } catch {
+    return createClientKey();
+  }
+};
+
+const clearCheckoutIdempotencyKey = () => {
+  if (typeof sessionStorage === 'undefined') return;
+
+  try {
+    sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_STORAGE_KEY);
+  } catch {
+    // Storage cleanup is best-effort; server idempotency still protects duplicate submits.
+  }
+};
+
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart(); 
   const router = useRouter();
+  const submittingRef = useRef(false);
   
-  const [paymentMethod, setPaymentMethod] = useState('credit'); 
+  const [paymentMethod, setPaymentMethod] = useState('qr');
 
   const [formData, setFormData] = useState({
     email: '',
@@ -86,10 +140,14 @@ export default function CheckoutPage() {
 
   // ฟังก์ชันยืนยันสั่งซื้อ
   const handleConfirmOrder = async () => {
+    if (isSubmitting || submittingRef.current) return;
+    submittingRef.current = true;
+
     // ✅ ตรวจสอบ validation ก่อน
     const validation = validateCheckoutForm(formData);
 
     if (!validation.isValid) {
+      submittingRef.current = false;
       setFormErrors(validation.errors);
       setPopup({
         isOpen: true,
@@ -101,6 +159,7 @@ export default function CheckoutPage() {
 
     // ✅ ตรวจสอบว่าตะกร้าไม่ว่าง
     if (!cartItems || cartItems.length === 0) {
+      submittingRef.current = false;
       setPopup({
         isOpen: true,
         type: 'error',
@@ -113,6 +172,7 @@ export default function CheckoutPage() {
       const stockValidation = await validateCartStock();
 
       if (!stockValidation.isValid) {
+        submittingRef.current = false;
         setPopup({
           isOpen: true,
           type: 'error',
@@ -127,11 +187,13 @@ export default function CheckoutPage() {
         type: 'error',
         message: 'ไม่สามารถตรวจสอบสต็อกสินค้าล่าสุดได้ กรุณาลองใหม่อีกครั้ง'
       });
+      submittingRef.current = false;
       return;
     }
 
     // ✅ ตรวจสอบราคารวม
     if (total <= 0) {
+      submittingRef.current = false;
       setPopup({
         isOpen: true,
         type: 'error',
@@ -154,8 +216,12 @@ export default function CheckoutPage() {
           message: 'กรุณาเข้าสู่ระบบก่อนสั่งซื้อ'
         });
         setIsSubmitting(false);
+        submittingRef.current = false;
         return;
       }
+
+      const checkoutSignature = createCheckoutSignature({ cartItems, formData, paymentMethod });
+      const idempotencyKey = getCheckoutIdempotencyKey(checkoutSignature);
 
       const checkoutResponse = await fetch('/api/checkout', {
         method: 'POST',
@@ -179,6 +245,7 @@ export default function CheckoutPage() {
             phone: formData.phone,
           },
           paymentMethod,
+          idempotencyKey,
         }),
       });
 
@@ -190,9 +257,6 @@ export default function CheckoutPage() {
 
       const newOrder = checkoutResult.order;
       const orderNumber = newOrder?.order_number;
-
-      // ล้างตะกร้าทันที
-      if (clearCart) clearCart();
       
       // ล้าง validation errors
       setFormErrors({});
@@ -204,9 +268,13 @@ export default function CheckoutPage() {
         setCurrentOrderTotal(Number(newOrder?.total) || total);
         setShowQRModal(true);
         setIsSubmitting(false);
+        submittingRef.current = false;
         return;
       }
       
+      if (clearCart) clearCart();
+      clearCheckoutIdempotencyKey();
+
       // สั่งซื้อสำเร็จ (สำหรับวิธีอื่น)
       setPopup({
         isOpen: true,
@@ -225,6 +293,7 @@ export default function CheckoutPage() {
         message: 'เกิดข้อผิดพลาดในการสั่งซื้อ: ' + err.message
       });
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -373,6 +442,12 @@ export default function CheckoutPage() {
                   <Truck className="mx-4 text-gray-500" size={24} />
                   <span className="font-medium text-gray-900">เก็บเงินปลายทาง (COD)</span>
                 </label>
+
+                <label className="flex items-center p-4 border rounded-xl border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed">
+                  <input type="radio" name="payment" value="credit" checked={paymentMethod === 'credit'} disabled className="text-[#dc6fd6] focus:ring-[#dc6fd6]" />
+                  <CreditCard className="mx-4 text-gray-500" size={24} />
+                  <span className="font-medium text-gray-500">บัตรเครดิต / เดบิต (เร็ว ๆ นี้)</span>
+                </label>
               </div>
             </div>
 
@@ -475,7 +550,11 @@ export default function CheckoutPage() {
           mockMode={true} // เปลี่ยนเป็น false เมื่อต้องการใช้ระบบจริง
           onClose={() => {
             setShowQRModal(false);
-            router.push('/orders');
+            setPopup({
+              isOpen: true,
+              type: 'error',
+              message: 'ออเดอร์ยังไม่ถูกยืนยันการชำระเงิน ตะกร้ายังอยู่ให้กลับมาชำระได้'
+            });
           }}
           onSuccess={async (paymentData) => {
             
@@ -509,6 +588,8 @@ export default function CheckoutPage() {
             
             
             setShowQRModal(false);
+            if (clearCart) clearCart();
+            clearCheckoutIdempotencyKey();
             router.push('/orders');
           }}
         />

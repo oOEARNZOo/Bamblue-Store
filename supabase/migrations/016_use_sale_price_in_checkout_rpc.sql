@@ -1,18 +1,10 @@
--- Create checkout orders through a single database transaction.
--- The client sends product IDs, sizes, quantities, shipping info, and payment method.
--- The database reads trusted product prices, checks stock, creates the order/items,
--- and decrements stock atomically.
-
-ALTER TABLE products1
-ADD COLUMN IF NOT EXISTS size_stock JSONB DEFAULT '{"S": 0, "M": 0, "L": 0, "XL": 0}'::jsonb;
-
-ALTER TABLE orders
-ADD COLUMN IF NOT EXISTS payment_method_details TEXT;
+-- Keep checkout totals aligned with product cards/details by using the same sale-price formula.
 
 CREATE OR REPLACE FUNCTION create_checkout_order(
   p_items JSONB,
   p_customer JSONB,
-  p_payment_method TEXT
+  p_payment_method TEXT,
+  p_idempotency_key TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -26,8 +18,10 @@ DECLARE
   v_subtotal NUMERIC(10, 2) := 0;
   v_shipping_fee NUMERIC(10, 2) := 0;
   v_total NUMERIC(10, 2) := 0;
+  v_unit_price NUMERIC(10, 2) := 0;
   v_item RECORD;
   v_product RECORD;
+  v_existing_order RECORD;
   v_available_stock INTEGER;
   v_new_size_stock JSONB;
   v_uses_size_stock BOOLEAN;
@@ -36,11 +30,37 @@ BEGIN
     RAISE EXCEPTION 'Authentication required';
   END IF;
 
+  IF p_idempotency_key IS NULL OR p_idempotency_key !~ '^[a-zA-Z0-9_-]{8,120}$' THEN
+    RAISE EXCEPTION 'Invalid checkout request';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext(v_user_id::TEXT), hashtext(p_idempotency_key));
+
+  SELECT id, order_number, subtotal, shipping_fee, total, payment_method, status
+  INTO v_existing_order
+  FROM orders
+  WHERE user_id = v_user_id
+    AND idempotency_key = p_idempotency_key
+  LIMIT 1;
+
+  IF FOUND THEN
+    RETURN jsonb_build_object(
+      'id', v_existing_order.id,
+      'order_number', v_existing_order.order_number,
+      'subtotal', v_existing_order.subtotal,
+      'shipping_fee', v_existing_order.shipping_fee,
+      'total', v_existing_order.total,
+      'payment_method', v_existing_order.payment_method,
+      'status', v_existing_order.status,
+      'idempotent', true
+    );
+  END IF;
+
   IF jsonb_typeof(p_items) IS DISTINCT FROM 'array' OR jsonb_array_length(p_items) = 0 THEN
     RAISE EXCEPTION 'Cart is empty';
   END IF;
 
-  IF p_payment_method NOT IN ('qr', 'cod', 'credit') THEN
+  IF p_payment_method NOT IN ('qr', 'cod') THEN
     RAISE EXCEPTION 'Invalid payment method';
   END IF;
 
@@ -106,7 +126,7 @@ BEGIN
     FROM checkout_items_tmp
     ORDER BY product_id, size
   LOOP
-    SELECT id, "nameEN", "nameTH", image, price, stock, size_stock
+    SELECT id, "nameEN", "nameTH", image, price, discount_percent, stock, size_stock
     INTO v_product
     FROM products1
     WHERE id = v_item.product_id
@@ -134,12 +154,17 @@ BEGIN
         v_product."nameEN", v_item.size, v_available_stock;
     END IF;
 
-    v_subtotal := v_subtotal + (COALESCE(v_product.price, 0)::NUMERIC * v_item.quantity);
+    v_unit_price := CASE
+      WHEN COALESCE(v_product.discount_percent, 0) > 0 THEN
+        round(COALESCE(v_product.price, 0)::NUMERIC * (1 - COALESCE(v_product.discount_percent, 0)::NUMERIC / 100))
+      ELSE COALESCE(v_product.price, 0)::NUMERIC
+    END;
+    v_subtotal := v_subtotal + (v_unit_price * v_item.quantity);
   END LOOP;
 
   v_shipping_fee := CASE WHEN v_subtotal > 2000 THEN 0 ELSE 50 END;
   v_total := v_subtotal + v_shipping_fee;
-  v_order_number := 'ORD-' || to_char(now(), 'YYYY') || '-' || lpad(floor(random() * 100000)::TEXT, 5, '0');
+  v_order_number := 'ORD-' || to_char(clock_timestamp(), 'YYYYMMDD') || '-' || upper(substr(replace(gen_random_uuid()::TEXT, '-', ''), 1, 10));
 
   INSERT INTO orders (
     user_id,
@@ -155,7 +180,8 @@ BEGIN
     payment_method,
     subtotal,
     shipping_fee,
-    total
+    total,
+    idempotency_key
   )
   VALUES (
     v_user_id,
@@ -171,7 +197,8 @@ BEGIN
     p_payment_method,
     v_subtotal,
     v_shipping_fee,
-    v_total
+    v_total,
+    p_idempotency_key
   )
   RETURNING id INTO v_order_id;
 
@@ -180,11 +207,17 @@ BEGIN
     FROM checkout_items_tmp
     ORDER BY product_id, size
   LOOP
-    SELECT id, "nameEN", "nameTH", image, price, stock, size_stock
+    SELECT id, "nameEN", "nameTH", image, price, discount_percent, stock, size_stock
     INTO v_product
     FROM products1
     WHERE id = v_item.product_id
     FOR UPDATE;
+
+    v_unit_price := CASE
+      WHEN COALESCE(v_product.discount_percent, 0) > 0 THEN
+        round(COALESCE(v_product.price, 0)::NUMERIC * (1 - COALESCE(v_product.discount_percent, 0)::NUMERIC / 100))
+      ELSE COALESCE(v_product.price, 0)::NUMERIC
+    END;
 
     INSERT INTO order_items (
       order_id,
@@ -202,35 +235,37 @@ BEGIN
       v_product."nameEN",
       v_product."nameTH",
       v_product.image,
-      v_product.price,
+      v_unit_price,
       v_item.quantity,
       v_item.size
     );
 
-    v_uses_size_stock := (
-      COALESCE((COALESCE(v_product.size_stock, '{}'::jsonb) ->> 'S')::INTEGER, 0) +
-      COALESCE((COALESCE(v_product.size_stock, '{}'::jsonb) ->> 'M')::INTEGER, 0) +
-      COALESCE((COALESCE(v_product.size_stock, '{}'::jsonb) ->> 'L')::INTEGER, 0) +
-      COALESCE((COALESCE(v_product.size_stock, '{}'::jsonb) ->> 'XL')::INTEGER, 0)
-    ) > 0 AND COALESCE(v_product.size_stock, '{}'::jsonb) ? v_item.size;
+    IF p_payment_method = 'cod' THEN
+      v_uses_size_stock := (
+        COALESCE((COALESCE(v_product.size_stock, '{}'::jsonb) ->> 'S')::INTEGER, 0) +
+        COALESCE((COALESCE(v_product.size_stock, '{}'::jsonb) ->> 'M')::INTEGER, 0) +
+        COALESCE((COALESCE(v_product.size_stock, '{}'::jsonb) ->> 'L')::INTEGER, 0) +
+        COALESCE((COALESCE(v_product.size_stock, '{}'::jsonb) ->> 'XL')::INTEGER, 0)
+      ) > 0 AND COALESCE(v_product.size_stock, '{}'::jsonb) ? v_item.size;
 
-    IF v_uses_size_stock THEN
-      v_new_size_stock := jsonb_set(
-        COALESCE(v_product.size_stock, '{"S": 0, "M": 0, "L": 0, "XL": 0}'::jsonb),
-        ARRAY[v_item.size],
-        to_jsonb(((COALESCE(v_product.size_stock, '{}'::jsonb) ->> v_item.size)::INTEGER - v_item.quantity)),
-        true
-      );
+      IF v_uses_size_stock THEN
+        v_new_size_stock := jsonb_set(
+          COALESCE(v_product.size_stock, '{"S": 0, "M": 0, "L": 0, "XL": 0}'::jsonb),
+          ARRAY[v_item.size],
+          to_jsonb(((COALESCE(v_product.size_stock, '{}'::jsonb) ->> v_item.size)::INTEGER - v_item.quantity)),
+          true
+        );
 
-      UPDATE products1
-      SET
-        size_stock = v_new_size_stock,
-        stock = GREATEST(COALESCE(stock, 0) - v_item.quantity, 0)
-      WHERE id = v_product.id;
-    ELSE
-      UPDATE products1
-      SET stock = GREATEST(COALESCE(stock, 0) - v_item.quantity, 0)
-      WHERE id = v_product.id;
+        UPDATE products1
+        SET
+          size_stock = v_new_size_stock,
+          stock = GREATEST(COALESCE(stock, 0) - v_item.quantity, 0)
+        WHERE id = v_product.id;
+      ELSE
+        UPDATE products1
+        SET stock = GREATEST(COALESCE(stock, 0) - v_item.quantity, 0)
+        WHERE id = v_product.id;
+      END IF;
     END IF;
   END LOOP;
 
@@ -240,63 +275,14 @@ BEGIN
     'subtotal', v_subtotal,
     'shipping_fee', v_shipping_fee,
     'total', v_total,
-    'payment_method', p_payment_method
+    'payment_method', p_payment_method,
+    'status', 'pending',
+    'idempotent', false
   );
 END;
 $$;
 
-REVOKE ALL ON FUNCTION create_checkout_order(JSONB, JSONB, TEXT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION create_checkout_order(JSONB, JSONB, TEXT) TO authenticated;
-
-CREATE OR REPLACE FUNCTION confirm_order_payment(
-  p_order_id UUID,
-  p_payment_details JSONB DEFAULT NULL,
-  p_mock_mode BOOLEAN DEFAULT FALSE
-)
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_user_id UUID := auth.uid();
-  v_order RECORD;
-BEGIN
-  IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'Authentication required';
-  END IF;
-
-  UPDATE orders
-  SET
-    status = CASE
-      WHEN p_mock_mode THEN 'paid'
-      ELSE 'pending_payment_verification'
-    END,
-    payment_confirmed_at = now(),
-    payment_method_details = CASE
-      WHEN p_payment_details IS NULL THEN NULL
-      ELSE p_payment_details::TEXT
-    END
-  WHERE id = p_order_id
-    AND user_id = v_user_id
-    AND payment_method = 'qr'
-    AND status = 'pending'
-  RETURNING id, order_number, status
-  INTO v_order;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Order is not available for payment confirmation';
-  END IF;
-
-  RETURN jsonb_build_object(
-    'id', v_order.id,
-    'order_number', v_order.order_number,
-    'status', v_order.status
-  );
-END;
-$$;
-
-REVOKE ALL ON FUNCTION confirm_order_payment(UUID, JSONB, BOOLEAN) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION confirm_order_payment(UUID, JSONB, BOOLEAN) TO authenticated;
+REVOKE ALL ON FUNCTION create_checkout_order(JSONB, JSONB, TEXT, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION create_checkout_order(JSONB, JSONB, TEXT, TEXT) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';

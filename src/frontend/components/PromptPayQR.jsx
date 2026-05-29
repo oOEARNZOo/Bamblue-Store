@@ -132,13 +132,6 @@ export default function PromptPayQR({
           await new Promise(resolve => setTimeout(resolve, 200));
         }
         
-        // จำลองความสำเร็จ 95% (5% จะแสดง error เพื่อความสมจริง)
-        const isSuccess = Math.random() > 0.05;
-        
-        if (!isSuccess) {
-          throw new Error('ไม่พบรายการโอนเงิน กรุณาลองใหม่อีกครั้ง');
-        }
-        
         // สำเร็จ - เรียก callback
         const paymentData = {
           transactionRef: transactionRef || `MOCK-${Date.now()}`,

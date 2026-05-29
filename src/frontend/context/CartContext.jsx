@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { shopToast } from "@/frontend/utils/toast";
 
 const CartContext = createContext();
@@ -37,12 +37,15 @@ const getSizeStockLimit = (item) => {
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const cartItemsRef = useRef([]);
 
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem(CART_STORAGE_KEY);
       if (savedCart) {
-        setCartItems(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        cartItemsRef.current = parsedCart;
+        setCartItems(parsedCart);
       }
     } catch (error) {
       console.error("Error loading cart from localStorage:", error);
@@ -71,7 +74,8 @@ export function CartProvider({ children }) {
     }
 
     const cartKey = `${product.id}-${size}`;
-    const existingItem = cartItems.find((item) => item.cartKey === cartKey);
+    const currentItems = cartItemsRef.current;
+    const existingItem = currentItems.find((item) => item.cartKey === cartKey);
     const existingQuantity = existingItem ? Number(existingItem.quantity) || 0 : 0;
     const nextQuantity = existingQuantity + quantityToAdd;
 
@@ -80,21 +84,17 @@ export function CartProvider({ children }) {
       return false;
     }
 
-    setCartItems((prevItems) => {
-      const existingItemIndex = prevItems.findIndex((item) => item.cartKey === cartKey);
+    const existingItemIndex = currentItems.findIndex((item) => item.cartKey === cartKey);
+    const nextItems = existingItemIndex !== -1
+      ? currentItems.map((item, index) => (
+        index === existingItemIndex
+          ? { ...item, quantity: nextQuantity, stockLimit }
+          : item
+      ))
+      : [...currentItems, { ...product, cartKey, size, quantity: quantityToAdd, stockLimit }];
 
-      if (existingItemIndex !== -1) {
-        const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          quantity: nextQuantity,
-          stockLimit
-        };
-        return updatedItems;
-      }
-
-      return [...prevItems, { ...product, cartKey, size, quantity: quantityToAdd, stockLimit }];
-    });
+    cartItemsRef.current = nextItems;
+    setCartItems(nextItems);
 
     shopToast.cartAdded({
       name: product.nameTH || product.nameEN,
@@ -107,34 +107,38 @@ export function CartProvider({ children }) {
   };
 
   const updateQuantity = (cartKey, amount) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) => {
-        if (item.cartKey !== cartKey) return item;
+    const nextItems = cartItemsRef.current.map((item) => {
+      if (item.cartKey !== cartKey) return item;
 
-        const stockLimit = getSizeStockLimit(item);
-        const requestedQuantity = Math.max(1, item.quantity + amount);
+      const stockLimit = getSizeStockLimit(item);
+      const requestedQuantity = Math.max(1, item.quantity + amount);
 
-        if (stockLimit !== null && requestedQuantity > stockLimit) {
-          shopToast.stockLimit(item.size || "M", stockLimit);
-          return { ...item, quantity: Math.max(1, stockLimit), stockLimit };
-        }
+      if (stockLimit !== null && requestedQuantity > stockLimit) {
+        shopToast.stockLimit(item.size || "M", stockLimit);
+        return { ...item, quantity: Math.max(1, stockLimit), stockLimit };
+      }
 
-        const newQuantity = stockLimit === null
-          ? requestedQuantity
-          : Math.min(requestedQuantity, Math.max(1, stockLimit));
+      const newQuantity = stockLimit === null
+        ? requestedQuantity
+        : Math.min(requestedQuantity, Math.max(1, stockLimit));
 
-        return { ...item, quantity: newQuantity };
-      })
-    );
+      return { ...item, quantity: newQuantity };
+    });
+
+    cartItemsRef.current = nextItems;
+    setCartItems(nextItems);
   };
 
   const removeFromCart = (cartKey) => {
-    const removedItem = cartItems.find((item) => item.cartKey === cartKey);
-    setCartItems((prevItems) => prevItems.filter((item) => item.cartKey !== cartKey));
+    const removedItem = cartItemsRef.current.find((item) => item.cartKey === cartKey);
+    const nextItems = cartItemsRef.current.filter((item) => item.cartKey !== cartKey);
+    cartItemsRef.current = nextItems;
+    setCartItems(nextItems);
     shopToast.cartRemoved({ name: removedItem?.nameTH || removedItem?.nameEN });
   };
 
   const clearCart = () => {
+    cartItemsRef.current = [];
     setCartItems([]);
   };
 

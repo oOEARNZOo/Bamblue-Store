@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/backend/supabase/server';
 
-const ALLOWED_PAYMENT_METHODS = new Set(['qr', 'cod', 'credit']);
+const ALLOWED_PAYMENT_METHODS = new Set(['qr', 'cod']);
 
 function getBearerToken(request) {
   const authHeader = request.headers.get('authorization') || '';
@@ -18,6 +18,7 @@ function normalizeCheckoutPayload(body) {
   const items = Array.isArray(body?.items) ? body.items : [];
   const customer = body?.customer || {};
   const paymentMethod = String(body?.paymentMethod || '').trim();
+  const idempotencyKey = String(body?.idempotencyKey || '').trim();
 
   return {
     items: items.map((item) => ({
@@ -35,12 +36,14 @@ function normalizeCheckoutPayload(body) {
       shipping_zipcode: String(customer.zipcode || customer.shipping_zipcode || '').trim(),
     },
     paymentMethod,
+    idempotencyKey,
   };
 }
 
 function validatePayload(payload) {
   if (!payload.items.length) return 'Cart is empty.';
   if (!ALLOWED_PAYMENT_METHODS.has(payload.paymentMethod)) return 'Invalid payment method.';
+  if (!/^[a-zA-Z0-9_-]{8,120}$/.test(payload.idempotencyKey)) return 'Invalid checkout request.';
 
   for (const item of payload.items) {
     if (!Number.isInteger(item.product_id) || item.product_id <= 0) return 'Invalid product.';
@@ -57,6 +60,26 @@ function validatePayload(payload) {
   if (!/^0\d{9}$/.test(payload.customer.phone)) return 'Invalid phone number.';
 
   return null;
+}
+
+function formatCheckoutError(error) {
+  const message = error?.message || '';
+
+  if (
+    message.includes('create_checkout_order') ||
+    message.includes('schema cache') ||
+    message.includes('Could not find the function')
+  ) {
+    return {
+      status: 500,
+      message: 'ระบบฐานข้อมูลยังไม่ได้อัปเดต checkout migration กรุณารันไฟล์ supabase/migrations/015_harden_checkout_idempotency_and_qr_stock.sql ใน Supabase SQL Editor แล้วลองใหม่',
+    };
+  }
+
+  return {
+    status: message.includes('stock') || message.includes('Invalid') ? 400 : 500,
+    message,
+  };
 }
 
 export async function POST(request) {
@@ -85,14 +108,13 @@ export async function POST(request) {
       p_items: payload.items,
       p_customer: payload.customer,
       p_payment_method: payload.paymentMethod,
+      p_idempotency_key: payload.idempotencyKey,
     });
 
     if (error) {
-      const status = error.message?.includes('stock') || error.message?.includes('Invalid')
-        ? 400
-        : 500;
+      const formattedError = formatCheckoutError(error);
 
-      return NextResponse.json({ error: error.message }, { status });
+      return NextResponse.json({ error: formattedError.message }, { status: formattedError.status });
     }
 
     return NextResponse.json({ order: data });

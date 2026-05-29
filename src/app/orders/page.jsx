@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/frontend/services/supabaseClient';
 import Link from 'next/link';
-import { Package, Clock, Truck, CheckCircle, XCircle, ChevronRight, ShoppingBag, Star } from 'lucide-react';
+import { Package, Clock, Truck, CheckCircle, XCircle, ChevronRight, ShoppingBag, Star, CreditCard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { OrderListSkeleton, LoadingSpinner } from '@/frontend/components/LoadingSkeletons';
 
@@ -62,6 +62,20 @@ export default function OrderHistoryPage() {
         bg: 'bg-yellow-50',
         border: 'border-yellow-200'
       },
+      pending_payment_verification: {
+        label: 'รอตรวจสอบการชำระเงิน',
+        icon: CreditCard,
+        color: 'text-orange-600',
+        bg: 'bg-orange-50',
+        border: 'border-orange-200'
+      },
+      paid: {
+        label: 'ชำระเงินแล้ว',
+        icon: CheckCircle,
+        color: 'text-emerald-600',
+        bg: 'bg-emerald-50',
+        border: 'border-emerald-200'
+      },
       processing: {
         label: 'กำลังเตรียมสินค้า',
         icon: Package,
@@ -103,6 +117,17 @@ export default function OrderHistoryPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const getTrackingUrl = (carrier, trackingNumber) => {
+    if (!trackingNumber) return null;
+    const normalizedCarrier = String(carrier || '').toLowerCase();
+
+    if (normalizedCarrier.includes('flash')) return `https://www.flashexpress.co.th/tracking/?se=${trackingNumber}`;
+    if (normalizedCarrier.includes('kerry')) return `https://th.kerryexpress.com/th/track/?track=${trackingNumber}`;
+    if (normalizedCarrier.includes('thai')) return `https://track.thailandpost.co.th/?trackNumber=${trackingNumber}`;
+
+    return null;
   };
 
   if (isLoading) {
@@ -244,6 +269,11 @@ export default function OrderHistoryPage() {
                   <div className="px-6 py-4 bg-gray-50 flex flex-col sm:flex-row gap-3 justify-between items-center">
                     <div className="text-sm text-gray-600">
                       <span className="font-medium">จัดส่งไปที่:</span> {order.shipping_address}, {order.shipping_province} {order.shipping_zipcode}
+                      {order.tracking_number && (
+                        <p className="mt-2 text-xs font-semibold text-[#dc6fd6]">
+                          Tracking: {order.shipping_carrier || 'ขนส่ง'} / {order.tracking_number}
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={() => setSelectedOrder(selectedOrder?.id === order.id ? null : order)}
@@ -264,6 +294,22 @@ export default function OrderHistoryPage() {
                             <p><span className="font-medium">ชื่อผู้รับ:</span> {order.first_name} {order.last_name}</p>
                             <p><span className="font-medium">เบอร์โทร:</span> {order.phone}</p>
                             <p><span className="font-medium">อีเมล:</span> {order.email}</p>
+                            {order.tracking_number && (
+                              <div className="rounded-xl border border-pink-100 bg-pink-50 p-3">
+                                <p><span className="font-medium">ขนส่ง:</span> {order.shipping_carrier || '-'}</p>
+                                <p><span className="font-medium">เลขพัสดุ:</span> {order.tracking_number}</p>
+                                {getTrackingUrl(order.shipping_carrier, order.tracking_number) && (
+                                  <a
+                                    href={getTrackingUrl(order.shipping_carrier, order.tracking_number)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-2 inline-flex text-xs font-bold text-[#dc6fd6] hover:underline"
+                                  >
+                                    เช็กสถานะพัสดุ
+                                  </a>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div>

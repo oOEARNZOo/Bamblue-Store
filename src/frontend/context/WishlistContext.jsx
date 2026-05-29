@@ -57,8 +57,12 @@ export function WishlistProvider({ children }) {
     return wishlistItems.some((item) => item.id === productId);
   };
 
+  const clearWishlist = () => {
+    setWishlistItems([]);
+  };
+
   return (
-    <WishlistContext.Provider value={{ wishlistItems, addToWishlist, removeFromWishlist, isInWishlist }}>
+    <WishlistContext.Provider value={{ wishlistItems, addToWishlist, removeFromWishlist, isInWishlist, clearWishlist }}>
       {children}
     </WishlistContext.Provider>
   );
