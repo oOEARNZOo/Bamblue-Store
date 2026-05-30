@@ -368,8 +368,13 @@ export default function Home() {
                 ref={newArrivalCarouselRef}
                 className="flex snap-x snap-mandatory gap-6 overflow-hidden scroll-smooth"
               >
-              {newArrivals.map((item) => (
-                <MotionCard key={item.id} data-new-arrival-card="true" className="group relative flex shrink-0 snap-start flex-col text-center transition-transform duration-500 ease-out basis-full sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]">
+              {newArrivals.map((item, index) => (
+                <article
+                  key={item.id}
+                  data-new-arrival-card="true"
+                  className="animate-product-card-reveal group relative flex shrink-0 snap-start flex-col text-center transition-transform duration-500 ease-out hover:-translate-y-1 basis-full sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]"
+                  style={{ animationDelay: `${Math.min(index * 85, 500)}ms` }}
+                >
                   {/* 🌟 Badges */}
                   <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                     {item.is_new && (
@@ -472,7 +477,7 @@ export default function Home() {
                   >
                     {item.stock === 0 ? 'ดูรายละเอียด' : 'เลือกไซส์'}
                   </Link>
-                </MotionCard>
+                </article>
               ))}
               </div>
 
@@ -517,8 +522,12 @@ export default function Home() {
             <ProductGridSkeleton count={4} />
           ) : (
             <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {bestSellers.map((item) => (
-                <MotionCard key={item.id} className="group flex flex-col text-center relative">
+              {bestSellers.map((item, index) => (
+                <article
+                  key={item.id}
+                  className="animate-product-card-reveal group flex flex-col text-center relative transition-transform duration-500 ease-out hover:-translate-y-1"
+                  style={{ animationDelay: `${Math.min(index * 85, 500)}ms` }}
+                >
                   {/* 🌟 Badges */}
                   <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                     <span className="bg-[#dc6fd6] text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
@@ -619,7 +628,7 @@ export default function Home() {
                   >
                     {item.stock === 0 ? 'ดูรายละเอียด' : 'เลือกไซส์'}
                   </Link>
-                </MotionCard>
+                </article>
               ))}
             </Stagger>
           )}
