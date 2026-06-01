@@ -63,8 +63,7 @@ export function Reveal({ children, className = "", as = "div", delay = 0 }) {
   return (
     <Component
       initial={reduceMotion ? false : "hidden"}
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.18 }}
+      animate="visible"
       variants={{
         hidden: revealVariants.hidden,
         visible: {
@@ -86,8 +85,7 @@ export function Stagger({ children, className = "", as = "div" }) {
   return (
     <Component
       initial={reduceMotion ? false : "hidden"}
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.12 }}
+      animate="visible"
       variants={staggerContainer}
       className={className}
     >

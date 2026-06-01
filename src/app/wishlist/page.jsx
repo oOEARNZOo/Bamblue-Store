@@ -81,7 +81,7 @@ export default function WishlistPage() {
                     {/* ปุ่มลบออกจาก Wishlist พร้อม Slide confirmation */}
                     <div className="absolute top-3 right-3">
                       <div 
-                        className="flex items-center bg-white/95 backdrop-blur-sm rounded-full shadow-lg overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                        className="flex items-center bg-white/95 backdrop-blur-sm rounded-full shadow-lg overflow-hidden transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
                         style={{
                           width: confirmRemove === item.id ? '72px' : '34px',
                         }}

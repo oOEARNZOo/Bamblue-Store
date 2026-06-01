@@ -37,7 +37,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-4">บทนำ</h2>
             <p>
-              Bamblue Store ("เรา", "พวกเรา", "ของเรา") ให้ความสำคัญกับความเป็นส่วนตัวของคุณ 
+              Bamblue Store (&ldquo;เรา&rdquo;, &ldquo;พวกเรา&rdquo;, &ldquo;ของเรา&rdquo;) ให้ความสำคัญกับความเป็นส่วนตัวของคุณ
               นโยบายความเป็นส่วนตัวนี้อธิบายว่าเราเก็บรวบรวม ใช้งาน เปิดเผย และปกป้องข้อมูลส่วนบุคคลของคุณอย่างไร 
               เมื่อคุณใช้งานเว็บไซต์ bambluestore.com และบริการต่างๆ ของเรา
             </p>

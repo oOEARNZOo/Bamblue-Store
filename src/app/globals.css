@@ -11,6 +11,13 @@
 
 /* ตั้งค่าพื้นหลังของเว็บให้เป็นสีชมพูอ่อนๆ สไตล์พาสเทล */
 @layer base {
+  :root {
+    --bamblue-brand: #dc6fd6;
+    --bamblue-brand-hover: #c05ca8;
+    --bamblue-brand-ink: #b342ad;
+    --bamblue-brand-soft: #fff4fd;
+  }
+
   body {
     font-family: "Prompt", "Noto Sans Thai", sans-serif;
     background: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 50%, #fce7f3 100%);
@@ -75,12 +82,10 @@
   from {
     opacity: 0;
     transform: translateY(28px) scale(0.98);
-    filter: blur(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
-    filter: blur(0);
   }
 }
 
@@ -174,7 +179,7 @@
 
   .animate-product-card-reveal {
     animation: productCardReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
-    will-change: transform, opacity, filter;
+    will-change: transform, opacity;
   }
 
   .animate-hero-copy {
@@ -261,7 +266,6 @@
       animation: none;
       opacity: 1;
       transform: none;
-      filter: none;
     }
 
     .animate-hero-copy {

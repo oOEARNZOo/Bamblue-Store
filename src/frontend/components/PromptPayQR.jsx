@@ -198,8 +198,8 @@ export default function PromptPayQR({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-            <CheckCircle className="text-green-500" size={40} />
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-1 ring-emerald-200">
+            <CheckCircle className="text-emerald-600" size={40} />
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">สั่งซื้อสำเร็จ! 🎉</h3>
           <p className="text-gray-500 mb-4">
@@ -272,17 +272,17 @@ export default function PromptPayQR({
                 <div className="flex flex-col items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                     currentStep >= item.step 
-                      ? 'bg-[#dc6fd6] text-white' 
+                      ? 'bg-[var(--bamblue-brand)] text-white'
                       : 'bg-gray-200 text-gray-500'
                   }`}>
                     {currentStep > item.step ? <Check size={16} /> : item.step}
                   </div>
-                  <span className={`text-xs mt-1 ${currentStep >= item.step ? 'text-[#dc6fd6] font-medium' : 'text-gray-400'}`}>
+                  <span className={`text-xs mt-1 ${currentStep >= item.step ? 'text-[var(--bamblue-brand)] font-medium' : 'text-gray-400'}`}>
                     {item.label}
                   </span>
                 </div>
                 {index < 2 && (
-                  <div className={`w-8 h-0.5 mx-1 mb-5 ${currentStep > item.step ? 'bg-[#dc6fd6]' : 'bg-gray-200'}`} />
+                  <div className={`w-8 h-0.5 mx-1 mb-5 ${currentStep > item.step ? 'bg-[var(--bamblue-brand)]' : 'bg-gray-200'}`} />
                 )}
               </div>
             ))}
@@ -327,7 +327,7 @@ export default function PromptPayQR({
               </div>
             ) : (
               <div className="w-52 h-52 bg-gray-100 rounded-2xl flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-100 border-t-blue-600"></div>
               </div>
             )}
 
@@ -335,10 +335,10 @@ export default function PromptPayQR({
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-500">ยอดที่ต้องชำระ</p>
               <div className="flex items-center justify-center gap-2">
-                <p className="text-3xl font-bold text-[#dc6fd6]">฿{amount.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-[var(--bamblue-brand)]">฿{amount.toLocaleString()}</p>
                 <button
                   onClick={handleCopyAmount}
-                  className="p-1.5 rounded-lg hover:bg-pink-50 text-gray-400 hover:text-[#dc6fd6] transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg p-1.5 text-[#9f4f9a] transition-colors hover:bg-pink-50 hover:text-[#c655c7]"
                   title="คัดลอกยอดเงิน"
                 >
                   {copiedAmount ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
@@ -395,7 +395,7 @@ export default function PromptPayQR({
                 if (e.target.value) setCurrentStep(2);
               }}
               placeholder="กรอกเลขอ้างอิงจากสลิป"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dc6fd6] focus:border-transparent text-sm"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--bamblue-brand)] focus:border-transparent text-sm"
             />
             <p className="text-xs text-gray-400 mt-2">
               เลขอ้างอิงช่วยให้ทางร้านตรวจสอบการชำระเงินได้เร็วขึ้น
@@ -451,12 +451,12 @@ export default function PromptPayQR({
             className={`w-full py-4 rounded-xl font-bold text-white transition-all ${
               isProcessing || isExpired
                 ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-[#dc6fd6] hover:bg-[#c05ca8] cursor-pointer hover:shadow-lg'
+                : 'bg-[var(--bamblue-brand)] hover:bg-[var(--bamblue-brand-hover)] cursor-pointer hover:shadow-lg'
             }`}
           >
             {isProcessing ? (
               <span className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/35 border-t-white"></div>
                 {mockMode ? 'กำลังตรวจสอบอัตโนมัติ...' : 'กำลังดำเนินการ...'}
               </span>
             ) : (

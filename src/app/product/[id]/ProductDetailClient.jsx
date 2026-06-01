@@ -516,7 +516,11 @@ export default function ProductDetailPage() {
               <div className="flex space-x-4 mb-5">
                 <MotionButton
                   onClick={handleAddWishlist}
-                  className={`cursor-pointer w-14 h-14 border rounded-xl flex items-center justify-center transition-colors shrink-0 ${wishlistActive ? 'border-[#dc6fd6] text-[#dc6fd6] bg-pink-50' : 'border-gray-300 text-gray-600 hover:border-[#dc6fd6] hover:text-[#dc6fd6]'}`}
+                  className={`cursor-pointer w-14 h-14 border rounded-xl flex items-center justify-center transition-colors shrink-0 ${
+                    wishlistActive
+                      ? 'border-[#dc6fd6] bg-pink-50 text-[#b342ad]'
+                      : 'border-gray-300 text-zinc-700 hover:border-[#dc6fd6] hover:text-[#dc6fd6]'
+                  }`}
                   title={wishlistActive ? 'ลบออกจาก Wishlist' : 'เพิ่มลง Wishlist'}
                 >
                   <Heart size={24} strokeWidth={1.5} className={wishlistActive ? 'fill-[#dc6fd6]' : ''} />

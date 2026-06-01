@@ -55,8 +55,8 @@ function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, 
         <MotionCard
             as="article"
             className="group relative"
-            initial={{ opacity: 0, y: 18, filter: 'blur(6px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
         >
             <Link href={`/product/${product.id}`} className="block">
@@ -122,7 +122,7 @@ function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, 
                             <Heart
                                 size={18}
                                 strokeWidth={1.5}
-                                className={`transition-colors ${wishlistActive ? 'fill-[#dc6fd6] text-[#dc6fd6]' : 'text-gray-500 hover:text-[#dc6fd6]'}`}
+                                className={`transition-colors ${wishlistActive ? 'fill-[var(--bamblue-brand)] text-[var(--bamblue-brand)]' : 'text-gray-500 hover:text-[var(--bamblue-brand)]'}`}
                             />
                         </button>
                     )}
@@ -131,7 +131,7 @@ function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, 
 
             <div>
                 <Link href={`/product/${product.id}`}>
-                    <h3 className="line-clamp-1 text-sm font-bold text-gray-950 transition-colors group-hover:text-[#dc6fd6]">
+                    <h3 className="line-clamp-1 text-sm font-bold text-gray-950 transition-colors group-hover:text-[var(--bamblue-brand)]">
                         {product.nameEN}
                     </h3>
                     <p className="mt-1 line-clamp-1 text-xs text-gray-500">{product.nameTH}</p>
@@ -144,7 +144,7 @@ function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, 
                             <span className="text-sm font-black text-red-500">฿{formatPrice(salePrice)}</span>
                         </>
                     ) : (
-                        <span className="text-sm font-black text-[#dc6fd6]">฿{formatPrice(salePrice)}</span>
+                        <span className="text-sm font-black text-[var(--bamblue-brand)]">฿{formatPrice(salePrice)}</span>
                     )}
                 </div>
 
@@ -158,7 +158,7 @@ function ProductCard({ product, confirmRemove, onWishlistClick, onCancelRemove, 
                     className={`mt-3 flex h-10 w-full items-center justify-center rounded-lg border text-xs font-bold tracking-widest transition-all ${
                         isSoldOut
                             ? 'border-gray-200 bg-gray-100 text-gray-400'
-                            : 'border-gray-300 text-gray-700 hover:border-[#dc6fd6] hover:bg-[#dc6fd6] hover:text-white'
+                            : 'border-gray-300 text-gray-700 hover:border-[var(--bamblue-brand)] hover:bg-[var(--bamblue-brand)] hover:text-white'
                     }`}
                 >
                     {isSoldOut ? 'ดูรายละเอียด' : 'เลือกไซส์'}
@@ -321,8 +321,8 @@ function ProductsContent() {
                     }}
                     className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
                         activeCategory === category.id
-                            ? 'bg-[#dc6fd6] text-white shadow-sm'
-                            : 'text-gray-600 hover:bg-pink-50 hover:text-[#dc6fd6]'
+                            ? 'bg-[var(--bamblue-brand)] text-white shadow-sm'
+                            : 'text-[#4a3347] hover:bg-[var(--bamblue-brand-soft)] hover:text-[var(--bamblue-brand-ink)]'
                     }`}
                 >
                     <span>{category.label} ({category.labelEn})</span>
@@ -378,7 +378,7 @@ function ProductsContent() {
                         <div className="mb-5 flex items-center justify-between border-b border-gray-100 pb-4">
                             <h2 className="text-lg font-bold tracking-wide text-zinc-900">หมวดหมู่สินค้า</h2>
                             {hasActiveFilters && (
-                                <button onClick={clearFilters} className="text-xs font-semibold text-[#dc6fd6] hover:text-[#c655c7]">
+                                <button onClick={clearFilters} className="text-xs font-semibold text-[var(--bamblue-brand)] hover:text-[var(--bamblue-brand-hover)]">
                                     ล้าง
                                 </button>
                             )}
@@ -413,7 +413,7 @@ function ProductsContent() {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="ค้นหาสินค้า..."
-                                className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm outline-none transition-colors focus:border-[#dc6fd6]"
+                                className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm outline-none transition-colors focus:border-[var(--bamblue-brand)]"
                             />
                         </label>
 
@@ -422,7 +422,7 @@ function ProductsContent() {
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm font-semibold text-gray-700 outline-none transition-colors focus:border-[#dc6fd6]"
+                                className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm font-semibold text-gray-700 outline-none transition-colors focus:border-[var(--bamblue-brand)]"
                             >
                                 {SORT_OPTIONS.map((option) => (
                                     <option key={option.id} value={option.id}>{option.label}</option>
@@ -433,7 +433,9 @@ function ProductsContent() {
                         <button
                             onClick={() => setSaleOnly((value) => !value)}
                             className={`h-11 rounded-xl px-4 text-sm font-bold transition-colors ${
-                                saleOnly ? 'bg-red-500 text-white' : 'bg-gray-50 text-gray-600 hover:bg-pink-50 hover:text-[#dc6fd6]'
+                                saleOnly
+                                    ? 'bg-red-500 text-white'
+                                    : 'bg-gray-50 text-[#4a3347] hover:bg-[var(--bamblue-brand-soft)] hover:text-[var(--bamblue-brand-ink)]'
                             }`}
                         >
                             ลดราคา
@@ -442,7 +444,9 @@ function ProductsContent() {
                         <button
                             onClick={() => setInStockOnly((value) => !value)}
                             className={`h-11 rounded-xl px-4 text-sm font-bold transition-colors ${
-                                inStockOnly ? 'bg-emerald-500 text-white' : 'bg-gray-50 text-gray-600 hover:bg-pink-50 hover:text-[#dc6fd6]'
+                                inStockOnly
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-gray-50 text-[#4a3347] hover:bg-[var(--bamblue-brand-soft)] hover:text-[var(--bamblue-brand-ink)]'
                             }`}
                         >
                             พร้อมส่ง
@@ -482,7 +486,7 @@ function ProductsContent() {
                                     <button
                                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                                         disabled={currentPage === 1}
-                                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-all hover:border-[#dc6fd6] hover:bg-[#dc6fd6] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-all hover:border-[var(--bamblue-brand)] hover:bg-[var(--bamblue-brand)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         ก่อนหน้า
                                     </button>
@@ -492,8 +496,8 @@ function ProductsContent() {
                                             onClick={() => setCurrentPage(page)}
                                             className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-all ${
                                                 currentPage === page
-                                                    ? 'border-[#dc6fd6] bg-[#dc6fd6] text-white'
-                                                    : 'border-gray-300 text-gray-600 hover:border-[#dc6fd6] hover:bg-[#dc6fd6] hover:text-white'
+                                                    ? 'border-[var(--bamblue-brand)] bg-[var(--bamblue-brand)] text-white'
+                                                    : 'border-gray-300 text-gray-600 hover:border-[var(--bamblue-brand)] hover:bg-[var(--bamblue-brand)] hover:text-white'
                                             }`}
                                         >
                                             {page}
@@ -502,7 +506,7 @@ function ProductsContent() {
                                     <button
                                         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                                         disabled={currentPage === totalPages}
-                                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-all hover:border-[#dc6fd6] hover:bg-[#dc6fd6] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-all hover:border-[var(--bamblue-brand)] hover:bg-[var(--bamblue-brand)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         ถัดไป
                                     </button>
@@ -535,13 +539,17 @@ function ProductsContent() {
                         <div className="mt-5 grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => setSaleOnly((value) => !value)}
-                                className={`h-11 rounded-xl text-sm font-bold ${saleOnly ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                                className={`h-11 rounded-xl text-sm font-bold ${
+                                    saleOnly ? 'bg-red-500 text-white' : 'bg-gray-100 text-[#4a3347]'
+                                }`}
                             >
                                 ลดราคา
                             </button>
                             <button
                                 onClick={() => setInStockOnly((value) => !value)}
-                                className={`h-11 rounded-xl text-sm font-bold ${inStockOnly ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                                className={`h-11 rounded-xl text-sm font-bold ${
+                                    inStockOnly ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-[#4a3347]'
+                                }`}
                             >
                                 พร้อมส่ง
                             </button>

@@ -248,7 +248,7 @@ export default function Home() {
                     {banner.subtitle}
                   </p>
                 )}
-                <h1 className="whitespace-pre-line text-[3.7rem] font-black uppercase leading-[0.88] tracking-[-0.055em] text-white drop-shadow-[0_12px_38px_rgba(0,0,0,0.34)] sm:text-7xl lg:text-[6.8rem]">
+                <h1 className="whitespace-pre-line text-[3.35rem] font-black uppercase leading-[0.9] tracking-[-0.035em] text-white drop-shadow-[0_12px_38px_rgba(0,0,0,0.34)] sm:text-7xl lg:text-[5.9rem]">
                   {banner.title}
                 </h1>
                 <p className="hidden">
@@ -674,7 +674,7 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">"{review.comment || 'สินค้าสวยมาก คุณภาพดี จัดส่งเร็วมากค่ะ'}"</p>
+                  <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">&ldquo;{review.comment || 'สินค้าสวยมาก คุณภาพดี จัดส่งเร็วมากค่ะ'}&rdquo;</p>
                   {review.product_name && (
                     <p className="text-xs text-[#dc6fd6] mt-3 font-medium">ซื้อ: {review.product_name}</p>
                   )}
