@@ -67,6 +67,19 @@
 }
 
 /* 🌟 Scale In */
+@keyframes dropdownGlassIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
 @keyframes scaleIn {
   from {
     opacity: 0;
@@ -237,7 +250,8 @@
 
   /* Dropdown Animation */
   .dropdown-animate {
-    animation: fadeInDown 0.2s ease-out forwards;
+    transform-origin: top right;
+    animation: dropdownGlassIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   /* Modal Animation */
@@ -269,6 +283,13 @@
     }
 
     .animate-hero-copy {
+      animation: none;
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+
+    .dropdown-animate {
       animation: none;
       opacity: 1;
       transform: none;

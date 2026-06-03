@@ -17,6 +17,27 @@ import { MotionCard, Reveal, Stagger } from '@/frontend/components/motion/Motion
 const PRODUCT_CARD_COLUMNS = 'id, nameEN, nameTH, price, original_price, image, images, is_new, discount_percent, stock, size_stock, category';
 const HOME_REVIEW_COLUMNS = 'id, reviewer_name, rating, title, comment, created_at, is_verified, product_name_en, product_name_th';
 
+function HomeRetryState({ onRetry }) {
+  return (
+    <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-3xl border border-pink-100 bg-white px-6 py-10 text-center shadow-[0_18px_55px_rgba(31,18,36,0.08)]">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--bamblue-brand-soft)] text-[var(--bamblue-brand)]">
+        <RefreshCcw size={22} />
+      </div>
+      <h4 className="text-lg font-black text-gray-950">โหลดข้อมูลไม่สำเร็จ</h4>
+      <p className="mt-2 max-w-sm text-sm leading-6 text-gray-500">
+        ระบบดึงข้อมูลสินค้าจากฐานข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-6 rounded-full bg-[var(--bamblue-brand)] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-pink-200/70 transition-all hover:-translate-y-0.5 hover:bg-[var(--bamblue-brand-hover)]"
+      >
+        ทดลองใหม่
+      </button>
+    </div>
+  );
+}
+
 export default function Home() {
   const { wishlistItems, addToWishlist, removeFromWishlist } = useWishlist();
   const [confirmRemove, setConfirmRemove] = useState(null);
@@ -56,6 +77,7 @@ export default function Home() {
   const [bestSellers, setBestSellers] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
   const [newArrivalPage, setNewArrivalPage] = useState(0);
   const [newArrivalVisibleCount, setNewArrivalVisibleCount] = useState(4);
   const newArrivalCarouselRef = useRef(null);
@@ -164,39 +186,49 @@ export default function Home() {
   };
 
   // 🌟 3. ฟังก์ชันดึงข้อมูลทั้งหมดจาก Supabase (Optimized with Promise.all)
-  useEffect(() => {
-    async function fetchAllData() {
-      try {
-        setIsLoading(true);
+  const fetchAllData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setFetchError('');
         
         // 🚀 ดึงข้อมูลทั้งหมดพร้อมกัน (Parallel Fetching)
-        const [newArrivalsRes, bestSellersRes, reviewsRes] = await Promise.all([
+      const [newArrivalsRes, bestSellersRes, reviewsRes] = await Promise.all([
           // ดึง New Arrivals (4 ชิ้นแรก)
           supabasePublic.from('products1').select(PRODUCT_CARD_COLUMNS).eq('is_new', true).order('id', { ascending: true }).limit(12),
           // ดึง Best Sellers (4 ชิ้นสุ่ม)
           supabasePublic.from('products1').select(PRODUCT_CARD_COLUMNS).order('id', { ascending: false }).limit(4),
           // ดึงรีวิวล่าสุด (3 รีวิว)
           supabasePublic.from('reviews').select(HOME_REVIEW_COLUMNS).eq('is_approved', true).order('created_at', { ascending: false }).limit(3)
-        ]);
+      ]);
+
+      const requestError = newArrivalsRes.error || bestSellersRes.error || reviewsRes.error;
+      if (requestError) {
+        throw requestError;
+      }
 
         // Set ข้อมูลสินค้า
-        setNewArrivals(newArrivalsRes.data || []);
-        setBestSellers(bestSellersRes.data || []);
-        setReviews((reviewsRes.data || []).map((review) => ({
+      setNewArrivals(newArrivalsRes.data || []);
+      setBestSellers(bestSellersRes.data || []);
+      setReviews((reviewsRes.data || []).map((review) => ({
           ...review,
           name: review.reviewer_name,
           product_name: review.product_name_th || review.product_name_en
-        })));
+      })));
 
-      } catch (err) {
-        console.error("System Error:", err);
-      } finally {
-        setIsLoading(false);
-      }
+    } catch (err) {
+      console.error("System Error:", err);
+      setFetchError('home-data-failed');
+      setNewArrivals([]);
+      setBestSellers([]);
+      setReviews([]);
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchAllData();
   }, []);
+
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -335,6 +367,8 @@ export default function Home() {
 
           {isLoading ? (
             <ProductGridSkeleton count={4} />
+          ) : fetchError ? (
+            <HomeRetryState onRetry={fetchAllData} />
           ) : newArrivals.length === 0 ? (
             <p className="text-center text-sm text-gray-500">ยังไม่มีสินค้าใหม่ในตอนนี้</p>
           ) : (
@@ -520,6 +554,8 @@ export default function Home() {
 
           {isLoading ? (
             <ProductGridSkeleton count={4} />
+          ) : fetchError ? (
+            <HomeRetryState onRetry={fetchAllData} />
           ) : (
             <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {bestSellers.map((item, index) => (

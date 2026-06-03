@@ -252,6 +252,7 @@ export default function PromptPayQR({
             </div>
             <button 
               onClick={onClose}
+              aria-label="ปิดหน้าต่างชำระเงิน"
               className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
               <X size={24} />
@@ -319,6 +320,7 @@ export default function PromptPayQR({
                 {/* Download Button */}
                 <button
                   onClick={handleDownloadQR}
+                  aria-label="ดาวน์โหลด QR Code"
                   className="absolute -bottom-3 -right-3 w-10 h-10 bg-white rounded-full shadow-lg border flex items-center justify-center text-gray-600 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
                   title="ดาวน์โหลด QR Code"
                 >
@@ -338,6 +340,7 @@ export default function PromptPayQR({
                 <p className="text-3xl font-bold text-[var(--bamblue-brand)]">฿{amount.toLocaleString()}</p>
                 <button
                   onClick={handleCopyAmount}
+                  aria-label="คัดลอกยอดเงิน"
                   className="cursor-pointer rounded-lg p-1.5 text-[#9f4f9a] transition-colors hover:bg-pink-50 hover:text-[#c655c7]"
                   title="คัดลอกยอดเงิน"
                 >
@@ -374,6 +377,7 @@ export default function PromptPayQR({
               </div>
               <button
                 onClick={handleCopyPhone}
+                aria-label="คัดลอกเบอร์ PromptPay"
                 className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors cursor-pointer"
               >
                 {copiedPhone ? <Check size={16} /> : <Copy size={16} />}
@@ -403,16 +407,16 @@ export default function PromptPayQR({
           </div>
 
           {/* Bank Logos */}
-          <div className="text-center">
+          <div className="rounded-2xl border border-gray-100 bg-gray-50/70 px-4 py-3">
             <p className="text-xs text-gray-500 mb-3">รองรับทุกธนาคาร</p>
-            <div className="flex items-center justify-center gap-2 flex-wrap">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
               {BANK_LOGOS.map((bank) => (
                 <div
                   key={bank.name}
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                  style={{ backgroundColor: bank.color }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[10px] font-bold text-gray-500"
                 >
-                  {bank.name.slice(0, 3)}
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: bank.color }} />
+                  {bank.name}
                 </div>
               ))}
             </div>

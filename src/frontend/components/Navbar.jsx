@@ -209,15 +209,23 @@ export default function Navbar() {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => 
-          prev < suggestions.length - 1 ? prev + 1 : 0
-        );
+        setSelectedIndex(prev => {
+          const nextIndex = prev < suggestions.length - 1 ? prev + 1 : 0;
+          if (suggestions[nextIndex]) {
+            setSearchInput(suggestions[nextIndex].nameEN);
+          }
+          return nextIndex;
+        });
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => 
-          prev > 0 ? prev - 1 : suggestions.length - 1
-        );
+        setSelectedIndex(prev => {
+          const nextIndex = prev > 0 ? prev - 1 : suggestions.length - 1;
+          if (suggestions[nextIndex]) {
+            setSearchInput(suggestions[nextIndex].nameEN);
+          }
+          return nextIndex;
+        });
         break;
       case 'Enter':
         e.preventDefault();
@@ -373,8 +381,15 @@ export default function Navbar() {
             )}
             </button>
 
+            <AnimatePresence>
             {isWishlistOpen && (
-              <div className="fixed inset-x-3 top-[76px] z-50 max-h-[calc(100vh-96px)] overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-2xl cursor-default dropdown-animate md:absolute md:inset-auto md:right-0 md:top-full md:mt-3 md:w-96">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                className="dropdown-animate fixed inset-x-3 top-[76px] z-50 max-h-[calc(100vh-96px)] overflow-hidden rounded-2xl border border-white/60 bg-white/88 p-4 shadow-[0_24px_70px_rgba(31,18,36,0.16)] ring-1 ring-pink-100/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/78 cursor-default md:absolute md:inset-auto md:right-0 md:top-full md:mt-3 md:w-96"
+              >
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                   <div>
                     <h3 className="text-sm font-bold text-gray-800">Wishlist</h3>
@@ -477,8 +492,9 @@ export default function Navbar() {
                     View all Wishlist
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
 
           {user ? (
@@ -579,7 +595,7 @@ export default function Navbar() {
             </button>
 
             {isCartOpen && (
-              <div className="fixed inset-x-3 top-[68px] z-50 max-h-[calc(100vh-88px)] overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-2xl cursor-default dropdown-animate md:absolute md:inset-auto md:right-0 md:top-full md:mt-3 md:w-80">
+              <div className="dropdown-animate fixed inset-x-3 top-[68px] z-50 max-h-[calc(100vh-88px)] overflow-hidden rounded-2xl border border-white/60 bg-white/88 p-4 shadow-[0_24px_70px_rgba(31,18,36,0.16)] ring-1 ring-pink-100/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/78 cursor-default md:absolute md:inset-auto md:right-0 md:top-full md:mt-3 md:w-80">
                 <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
                   <h3 className="text-sm font-bold text-gray-800">
                     ตะกร้าสินค้า ({totalQuantity} ชิ้น)
@@ -748,7 +764,7 @@ export default function Navbar() {
       </AnimatePresence>
 
       {isSearchOpen && (
-        <div ref={searchRef} className="fixed inset-x-3 top-[76px] z-50 max-h-[calc(100vh-96px)] overflow-y-auto rounded-xl border border-gray-100 bg-white p-4 shadow-2xl cursor-default dropdown-animate md:absolute md:left-auto md:right-6 md:top-full md:mt-3 md:w-[28rem] md:max-h-[calc(100vh-120px)]">
+        <div ref={searchRef} className="dropdown-animate fixed inset-x-3 top-[76px] z-50 max-h-[calc(100vh-96px)] overflow-y-auto rounded-2xl border border-white/60 bg-white/88 p-4 shadow-[0_24px_70px_rgba(31,18,36,0.16)] ring-1 ring-pink-100/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/78 cursor-default md:absolute md:left-auto md:right-6 md:top-full md:mt-3 md:w-[28rem] md:max-h-[calc(100vh-120px)]">
           <div className="w-full">
             {/* 🔍 ช่องค้นหาพร้อมไอคอน */}
             <div className="relative w-full mb-5">
