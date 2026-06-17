@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Sun, Tag } from 'lucide-react';
+import SupabaseRetryState from '@/frontend/components/SupabaseRetryState';
 import { supabasePublic } from '@/frontend/services/supabaseClient';
+import { getSupabaseDataErrorState } from '@/frontend/utils/supabaseErrors';
 
 const formatPrice = (price) => {
   return Number(price || 0).toLocaleString('th-TH');
@@ -22,29 +24,33 @@ export default function PromotionsPage() {
   const [showAllProducts, setShowAllProducts] = useState(false);
   const [extraProductsHeight, setExtraProductsHeight] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
+  const fetchSaleProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setFetchError(null);
+      const { data, error } = await supabasePublic
+        .from('products1')
+        .select('id, nameEN, nameTH, price, original_price, image, images, discount_percent, category')
+        .gt('discount_percent', 0)
+        .order('discount_percent', { ascending: false })
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+      setSaleProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching promotion products:', error);
+      setSaleProducts([]);
+      setFetchError(getSupabaseDataErrorState(error, 'สินค้าโปรโมชัน'));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchSaleProducts = async () => {
-      try {
-        const { data, error } = await supabasePublic
-          .from('products1')
-          .select('id, nameEN, nameTH, price, original_price, image, images, discount_percent, category')
-          .gt('discount_percent', 0)
-          .order('discount_percent', { ascending: false })
-          .order('id', { ascending: true });
-
-        if (error) throw error;
-        setSaleProducts(data || []);
-      } catch (error) {
-        console.error('Error fetching promotion products:', error);
-        setSaleProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchSaleProducts();
-  }, []);
+  }, [fetchSaleProducts]);
 
   const maxDiscount = saleProducts.reduce((max, product) => {
     return Math.max(max, Number(product.discount_percent || 0));
@@ -152,6 +158,16 @@ export default function PromotionsPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                ) : fetchError ? (
+                  <div className="flex min-h-[360px] items-center justify-center px-2">
+                    <SupabaseRetryState
+                      title={fetchError.title}
+                      message={fetchError.message}
+                      badge={fetchError.badge}
+                      retryLabel={fetchError.retryLabel}
+                      onRetry={fetchSaleProducts}
+                    />
                   </div>
                 ) : saleProducts.length === 0 ? (
                   <div className="flex min-h-[360px] flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 text-center">

@@ -1,13 +1,15 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCart } from '@/frontend/context/CartContext';
 import { useWishlist } from '@/frontend/context/WishlistContext';
 import { ArrowRight, Heart, Share2, Truck, RefreshCcw, Minus, Plus, X } from 'lucide-react'; // เพิ่ม X ไอคอน
 import Link from 'next/link';
 import ProductReviews from '@/frontend/components/ProductReviews';
+import SupabaseRetryState from '@/frontend/components/SupabaseRetryState';
 import { supabase, supabasePublic } from '@/frontend/services/supabaseClient';
 import { limitedToast, shopToast } from '@/frontend/utils/toast';
+import { getSupabaseDataErrorState, isSupabaseNotFoundError } from '@/frontend/utils/supabaseErrors';
 import { MotionButton, Reveal } from '@/frontend/components/motion/MotionPrimitives';
 
 const PRODUCT_SIZES = ['S', 'M', 'L', 'XL'];
@@ -99,6 +101,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('M');
@@ -112,30 +115,42 @@ export default function ProductDetailPage() {
   // State สำหรับเปิด/ปิด Pop-up แสดงขนาดเสื้อ
   const [showSizeGuide, setShowSizeGuide] = useState(false);
 
-  useEffect(() => {
-    async function fetchSingleProduct() {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabasePublic
-          .from('products1')
-          .select(PRODUCT_DETAIL_COLUMNS)
-          .eq('id', productId)
-          .single();
+  const fetchSingleProduct = useCallback(async () => {
+    if (!productId) return;
 
-        if (error) {
-          console.error("หาข้อมูลไม่เจอ:", error);
-          setProduct(null);
-        } else {
-          setProduct(data);
-          setMainImage(data.image);
+    try {
+      setIsLoading(true);
+      setFetchError(null);
+      const { data, error } = await supabasePublic
+        .from('products1')
+        .select(PRODUCT_DETAIL_COLUMNS)
+        .eq('id', productId)
+        .single();
+
+      if (error) {
+        if (!isSupabaseNotFoundError(error)) {
+          throw error;
         }
-      } catch (err) {
-        console.error("System Error:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
 
+        console.error("หาข้อมูลไม่เจอ:", error);
+        setProduct(null);
+        setMainImage(null);
+        return;
+      }
+
+      setProduct(data);
+      setMainImage(data.image);
+    } catch (err) {
+      console.error("System Error:", err);
+      setProduct(null);
+      setMainImage(null);
+      setFetchError(getSupabaseDataErrorState(err, 'รายละเอียดสินค้า'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
     if (productId) {
       fetchSingleProduct();
       
@@ -161,7 +176,7 @@ export default function ProductDetailPage() {
         supabase.removeChannel(channel);
       };
     }
-  }, [productId]);
+  }, [fetchSingleProduct, productId]);
 
   useEffect(() => {
     if (!product) return;
@@ -246,6 +261,20 @@ export default function ProductDetailPage() {
   }
 
   if (!product) {
+    if (fetchError) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
+          <SupabaseRetryState
+            title={fetchError.title}
+            message={fetchError.message}
+            badge={fetchError.badge}
+            retryLabel={fetchError.retryLabel}
+            onRetry={fetchSingleProduct}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">ไม่พบสินค้านี้ 😢</h1>

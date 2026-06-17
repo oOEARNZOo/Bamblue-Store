@@ -5,6 +5,8 @@ import { useWishlist } from '@/frontend/context/WishlistContext';
 import { supabasePublic } from '@/frontend/services/supabaseClient';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, Heart, Search, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import SupabaseRetryState from '@/frontend/components/SupabaseRetryState';
+import { getSupabaseDataErrorState } from '@/frontend/utils/supabaseErrors';
 import {
     ProductGridSkeleton,
     CategoryFilterSkeleton
@@ -174,7 +176,7 @@ function ProductsContent() {
     const [confirmRemove, setConfirmRemove] = useState(null);
     const [productsData, setProductsData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [fetchError, setFetchError] = useState('');
+    const [fetchError, setFetchError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('featured');
@@ -208,16 +210,14 @@ function ProductsContent() {
                 .order('id', { ascending: true });
 
             if (error) {
-                console.error('Error fetching products:', error);
-                setProductsData([]);
-                setFetchError('ไม่สามารถโหลดสินค้าได้ในตอนนี้ กรุณาลองใหม่อีกครั้ง');
+                throw error;
             } else {
                 setProductsData(data || []);
             }
         } catch (error) {
             console.error('Error fetching products:', error);
             setProductsData([]);
-            setFetchError('ไม่สามารถโหลดสินค้าได้ในตอนนี้ กรุณาลองใหม่อีกครั้ง');
+            setFetchError(getSupabaseDataErrorState(error, 'สินค้า'));
         } finally {
             setIsLoading(false);
         }
@@ -355,17 +355,14 @@ function ProductsContent() {
 
     if (fetchError) {
         return (
-            <div className="mx-auto flex min-h-[420px] max-w-3xl flex-col items-center justify-center px-6 text-center">
-                <div className="rounded-3xl border border-red-100 bg-red-50 px-8 py-10">
-                    <p className="text-lg font-black text-gray-950">โหลดสินค้าไม่สำเร็จ</p>
-                    <p className="mt-2 text-sm text-gray-600">{fetchError}</p>
-                    <button
-                        onClick={fetchProducts}
-                        className="mt-6 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-zinc-800"
-                    >
-                        ลองโหลดใหม่
-                    </button>
-                </div>
+            <div className="mx-auto flex min-h-[420px] max-w-3xl items-center justify-center px-6">
+                <SupabaseRetryState
+                    title={fetchError.title}
+                    message={fetchError.message}
+                    badge={fetchError.badge}
+                    retryLabel={fetchError.retryLabel}
+                    onRetry={fetchProducts}
+                />
             </div>
         );
     }

@@ -350,150 +350,150 @@ export default function Navbar() {
           {/* ปุ่ม Wishlist บน Navbar */}
           <div className="relative hidden sm:block" ref={wishlistRef}>
             <button
-            onClick={() => {
-              if (!user) {
-                router.push('/login');
-                return;
-              }
+              onClick={() => {
+                if (!user) {
+                  router.push('/login');
+                  return;
+                }
 
-              setIsWishlistOpen(!isWishlistOpen);
-              setConfirmWishlistRemove(null);
-              setIsCartOpen(false);
-              setIsSearchOpen(false);
-              setIsProfileOpen(false);
-              setIsMobileMenuOpen(false);
-            }}
-            className={`relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-none bg-transparent transition-colors ${isWishlistOpen ? 'bg-pink-50 text-[var(--bamblue-brand)]' : 'hover:bg-pink-50 hover:text-[var(--bamblue-brand)]'}`}
-            title="รายการโปรด"
-            aria-label={isWishlistOpen ? 'ปิดรายการโปรด' : 'เปิดรายการโปรด'}
-            aria-expanded={isWishlistOpen}
-          >
-            <Heart size={20} strokeWidth={1.5} />
-            {mounted && wishlistCount > 0 && (
-              <motion.span
-                key={wishlistCount}
-                initial={{ scale: 0.7, y: 2 }}
-                animate={{ scale: 1, y: 0 }}
-                className="absolute -top-1 right-0 bg-[var(--bamblue-brand)] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm"
-              >
-                {wishlistCount}
-              </motion.span>
-            )}
+                setIsWishlistOpen(!isWishlistOpen);
+                setConfirmWishlistRemove(null);
+                setIsCartOpen(false);
+                setIsSearchOpen(false);
+                setIsProfileOpen(false);
+                setIsMobileMenuOpen(false);
+              }}
+              className={`relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-none bg-transparent transition-colors ${isWishlistOpen ? 'bg-pink-50 text-[var(--bamblue-brand)]' : 'hover:bg-pink-50 hover:text-[var(--bamblue-brand)]'}`}
+              title="รายการโปรด"
+              aria-label={isWishlistOpen ? 'ปิดรายการโปรด' : 'เปิดรายการโปรด'}
+              aria-expanded={isWishlistOpen}
+            >
+              <Heart size={20} strokeWidth={1.5} />
+              {mounted && wishlistCount > 0 && (
+                <motion.span
+                  key={wishlistCount}
+                  initial={{ scale: 0.7, y: 2 }}
+                  animate={{ scale: 1, y: 0 }}
+                  className="absolute -top-1 right-0 bg-[var(--bamblue-brand)] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm"
+                >
+                  {wishlistCount}
+                </motion.span>
+              )}
             </button>
 
             <AnimatePresence>
-            {isWishlistOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className="dropdown-animate fixed inset-x-3 top-[76px] z-50 max-h-[calc(100vh-96px)] overflow-hidden rounded-2xl border border-white/60 bg-white/88 p-4 shadow-[0_24px_70px_rgba(31,18,36,0.16)] ring-1 ring-pink-100/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/78 cursor-default md:absolute md:inset-auto md:right-0 md:top-full md:mt-3 md:w-96"
-              >
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-800">Wishlist</h3>
-                    <p className="text-xs text-gray-500">{wishlistCount} saved items</p>
+              {isWishlistOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                  className="dropdown-animate fixed inset-x-4 top-[78px] z-[60] max-h-[calc(100vh-104px)] overflow-hidden rounded-2xl border border-pink-100 bg-white p-4 shadow-[0_28px_80px_rgba(31,18,36,0.22)] ring-1 ring-pink-100 cursor-default md:absolute md:inset-auto md:right-0 md:top-full md:mt-4 md:w-[23rem]"
+                >
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-800">Wishlist</h3>
+                      <p className="text-xs text-gray-500">{wishlistCount} saved items</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsWishlistOpen(false);
+                        setConfirmWishlistRemove(null);
+                      }}
+                      className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#dc6fd6]"
+                      aria-label="Close wishlist"
+                    >
+                      <X size={16} />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      setIsWishlistOpen(false);
-                      setConfirmWishlistRemove(null);
-                    }}
-                    className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#dc6fd6]"
-                    aria-label="Close wishlist"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
 
-                {wishlistCount === 0 ? (
-                  <div className="py-8 text-center">
-                    <Heart size={36} className="mx-auto mb-3 text-gray-300" />
-                    <p className="text-sm font-medium text-gray-600">No saved products yet</p>
-                    <p className="mt-1 text-xs text-gray-400">Tap a heart on a product to save it here.</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="max-h-[56vh] space-y-3 overflow-y-auto py-4 pr-1 md:max-h-[420px]">
-                      {wishlistItems.slice(0, 6).map((item) => (
-                        <div key={item.id} className="flex gap-3 rounded-lg border border-gray-100 p-2">
-                          <Link
-                            href={`/product/${item.id}`}
-                            onClick={() => setIsWishlistOpen(false)}
-                            className="h-20 w-16 shrink-0 overflow-hidden rounded-md bg-gray-50"
-                          >
-                            <img src={item.image} alt={item.nameEN} className="h-full w-full object-cover" />
-                          </Link>
-                          <div className="min-w-0 flex-1">
-                            <Link href={`/product/${item.id}`} onClick={() => setIsWishlistOpen(false)}>
-                              <p className="line-clamp-1 text-sm font-semibold text-gray-800 transition-colors hover:text-[#dc6fd6]">{item.nameEN}</p>
+                  {wishlistCount === 0 ? (
+                    <div className="my-4 rounded-2xl border border-gray-100 bg-gray-50 px-5 py-6 text-center">
+                      <Heart size={34} className="mx-auto mb-3 text-gray-300" />
+                      <p className="text-sm font-bold text-gray-700">No saved products yet</p>
+                      <p className="mt-1 text-xs leading-5 text-gray-500">Tap a heart on a product to save it here.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="max-h-[56vh] space-y-3 overflow-y-auto py-4 pr-1 md:max-h-[420px]">
+                        {wishlistItems.slice(0, 6).map((item) => (
+                          <div key={item.id} className="flex gap-3 rounded-xl border border-gray-100 bg-white p-2 shadow-sm">
+                            <Link
+                              href={`/product/${item.id}`}
+                              onClick={() => setIsWishlistOpen(false)}
+                              className="h-20 w-16 shrink-0 overflow-hidden rounded-md bg-gray-50"
+                            >
+                              <img src={item.image} alt={item.nameEN} className="h-full w-full object-cover" />
                             </Link>
-                            <p className="line-clamp-1 text-xs text-gray-500">{item.nameTH}</p>
-                            <div className="mt-2 flex items-center justify-between gap-2">
-                              <span className="text-sm font-bold text-[#dc6fd6]">{formatWishlistPrice(item.price)}</span>
-                              <div
-                                className="flex h-8 items-center overflow-hidden rounded-full bg-white transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                                style={{ width: confirmWishlistRemove === item.id ? '72px' : '32px' }}
-                              >
-                                {confirmWishlistRemove === item.id ? (
-                                  <div className="flex w-full items-center gap-1 px-1">
+                            <div className="min-w-0 flex-1">
+                              <Link href={`/product/${item.id}`} onClick={() => setIsWishlistOpen(false)}>
+                                <p className="line-clamp-1 text-sm font-semibold text-gray-800 transition-colors hover:text-[#dc6fd6]">{item.nameEN}</p>
+                              </Link>
+                              <p className="line-clamp-1 text-xs text-gray-500">{item.nameTH}</p>
+                              <div className="mt-2 flex items-center justify-between gap-2">
+                                <span className="text-sm font-bold text-[#dc6fd6]">{formatWishlistPrice(item.price)}</span>
+                                <div
+                                  className="flex h-8 items-center overflow-hidden rounded-full bg-white transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                                  style={{ width: confirmWishlistRemove === item.id ? '72px' : '32px' }}
+                                >
+                                  {confirmWishlistRemove === item.id ? (
+                                    <div className="flex w-full items-center gap-1 px-1">
+                                      <button
+                                        onClick={() => setConfirmWishlistRemove(null)}
+                                        className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                                        aria-label="Cancel remove"
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          removeFromWishlist(item.id);
+                                          setConfirmWishlistRemove(null);
+                                        }}
+                                        className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white transition-colors hover:bg-red-600"
+                                        aria-label={`Confirm remove ${item.nameEN} from wishlist`}
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  ) : (
                                     <button
-                                      onClick={() => setConfirmWishlistRemove(null)}
-                                      className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                                      aria-label="Cancel remove"
+                                      onClick={() => setConfirmWishlistRemove(item.id)}
+                                      className="flex h-8 w-8 items-center justify-center rounded-full text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                      aria-label={`Remove ${item.nameEN} from wishlist`}
                                     >
-                                      <X size={14} />
+                                      <Trash2 size={15} />
                                     </button>
-                                    <button
-                                      onClick={() => {
-                                        removeFromWishlist(item.id);
-                                        setConfirmWishlistRemove(null);
-                                      }}
-                                      className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white transition-colors hover:bg-red-600"
-                                      aria-label={`Confirm remove ${item.nameEN} from wishlist`}
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <button
-                                    onClick={() => setConfirmWishlistRemove(item.id)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                                    aria-label={`Remove ${item.nameEN} from wishlist`}
-                                  >
-                                    <Trash2 size={15} />
-                                  </button>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
 
-                    {wishlistCount > 6 && (
-                      <p className="mb-3 text-center text-xs text-gray-500">
-                        {wishlistCount - 6} more items in Wishlist
-                      </p>
-                    )}
-                  </>
-                )}
+                      {wishlistCount > 6 && (
+                        <p className="mb-3 text-center text-xs text-gray-500">
+                          {wishlistCount - 6} more items in Wishlist
+                        </p>
+                      )}
+                    </>
+                  )}
 
-                <div className="border-t border-gray-100 pt-3">
-                  <Link
-                    href="/wishlist"
-                    onClick={() => {
-                      setIsWishlistOpen(false);
-                      setConfirmWishlistRemove(null);
-                    }}
-                    className="block w-full rounded-lg bg-zinc-900 px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-zinc-800"
-                  >
-                    View all Wishlist
-                  </Link>
-                </div>
-              </motion.div>
-            )}
+                  <div className="border-t border-gray-100 pt-3">
+                    <Link
+                      href="/wishlist"
+                      onClick={() => {
+                        setIsWishlistOpen(false);
+                        setConfirmWishlistRemove(null);
+                      }}
+                      className="block w-full rounded-lg bg-zinc-900 px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-zinc-800"
+                    >
+                      View all Wishlist
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
 
@@ -571,12 +571,12 @@ export default function Navbar() {
           <div className="relative order-2 lg:order-none" ref={cartRef}>
             <button
               onClick={() => {
-              setIsCartOpen(!isCartOpen);
-              setIsWishlistOpen(false);
-              setIsSearchOpen(false);
-              setIsProfileOpen(false);
-              setIsMobileMenuOpen(false);
-            }}
+                setIsCartOpen(!isCartOpen);
+                setIsWishlistOpen(false);
+                setIsSearchOpen(false);
+                setIsProfileOpen(false);
+                setIsMobileMenuOpen(false);
+              }}
               className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-none bg-transparent transition-colors hover:bg-pink-50 hover:text-[var(--bamblue-brand)]"
               aria-label={isCartOpen ? 'ปิดตะกร้าสินค้า' : 'เปิดตะกร้าสินค้า'}
               aria-expanded={isCartOpen}
@@ -595,7 +595,7 @@ export default function Navbar() {
             </button>
 
             {isCartOpen && (
-              <div className="dropdown-animate fixed inset-x-3 top-[68px] z-50 max-h-[calc(100vh-88px)] overflow-hidden rounded-2xl border border-white/60 bg-white/88 p-4 shadow-[0_24px_70px_rgba(31,18,36,0.16)] ring-1 ring-pink-100/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/78 cursor-default md:absolute md:inset-auto md:right-0 md:top-full md:mt-3 md:w-80">
+              <div className="dropdown-animate fixed inset-x-4 top-[78px] z-[60] max-h-[calc(100vh-104px)] overflow-hidden rounded-2xl border border-pink-100 bg-white p-4 shadow-[0_28px_80px_rgba(31,18,36,0.22)] ring-1 ring-pink-100 cursor-default md:absolute md:inset-auto md:right-0 md:top-full md:mt-4 md:w-80">
                 <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
                   <h3 className="text-sm font-bold text-gray-800">
                     ตะกร้าสินค้า ({totalQuantity} ชิ้น)
@@ -615,22 +615,22 @@ export default function Navbar() {
                         const isAtStockLimit = stockLimit !== null && item.quantity >= stockLimit;
 
                         return (
-                        <div key={item.cartKey || item.id} className="flex gap-3">
-                          <img src={item.image} alt={item.nameEN} className="w-16 h-20 object-cover rounded shrink-0 bg-gray-50" />
-                          <div className="grow flex flex-col justify-center">
-                            <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.nameEN}</p>
-                            <p className="text-xs text-gray-500 mb-1">ไซส์: {item.size || 'M'}</p>
-                            <p className="text-xs text-[var(--bamblue-brand)] font-medium mb-2">฿{Number(item.price).toLocaleString()}</p>
-                            <div className="flex items-center justify-between">
-                              <div className="flex h-9 w-28 items-center rounded-lg border border-gray-200">
-                                <button onClick={() => updateQuantity(item.cartKey, -1)} disabled={item.quantity <= 1} className="flex h-9 w-9 cursor-pointer items-center justify-center text-gray-500 hover:text-[var(--bamblue-brand)] disabled:cursor-not-allowed disabled:opacity-30" aria-label={`ลดจำนวน ${item.nameEN}`}><Minus size={13} /></button>
-                                <span className="w-10 text-center text-xs font-semibold" aria-live="polite">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.cartKey, 1)} disabled={isAtStockLimit} className="flex h-9 w-9 cursor-pointer items-center justify-center text-gray-500 hover:text-[var(--bamblue-brand)] disabled:cursor-not-allowed disabled:opacity-30" aria-label={`เพิ่มจำนวน ${item.nameEN}`}><Plus size={13} /></button>
+                          <div key={item.cartKey || item.id} className="flex gap-3">
+                            <img src={item.image} alt={item.nameEN} className="w-16 h-20 object-cover rounded shrink-0 bg-gray-50" />
+                            <div className="grow flex flex-col justify-center">
+                              <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.nameEN}</p>
+                              <p className="text-xs text-gray-500 mb-1">ไซส์: {item.size || 'M'}</p>
+                              <p className="text-xs text-[var(--bamblue-brand)] font-medium mb-2">฿{Number(item.price).toLocaleString()}</p>
+                              <div className="flex items-center justify-between">
+                                <div className="flex h-9 w-28 items-center rounded-lg border border-gray-200">
+                                  <button onClick={() => updateQuantity(item.cartKey, -1)} disabled={item.quantity <= 1} className="flex h-9 w-9 cursor-pointer items-center justify-center text-gray-500 hover:text-[var(--bamblue-brand)] disabled:cursor-not-allowed disabled:opacity-30" aria-label={`ลดจำนวน ${item.nameEN}`}><Minus size={13} /></button>
+                                  <span className="w-10 text-center text-xs font-semibold" aria-live="polite">{item.quantity}</span>
+                                  <button onClick={() => updateQuantity(item.cartKey, 1)} disabled={isAtStockLimit} className="flex h-9 w-9 cursor-pointer items-center justify-center text-gray-500 hover:text-[var(--bamblue-brand)] disabled:cursor-not-allowed disabled:opacity-30" aria-label={`เพิ่มจำนวน ${item.nameEN}`}><Plus size={13} /></button>
+                                </div>
+                                <button onClick={() => removeFromCart(item.cartKey)} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-red-400 transition-colors hover:bg-red-50 hover:text-red-600" aria-label={`ลบ ${item.nameEN} ออกจากตะกร้า`}><Trash2 size={16} /></button>
                               </div>
-                              <button onClick={() => removeFromCart(item.cartKey)} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-red-400 transition-colors hover:bg-red-50 hover:text-red-600" aria-label={`ลบ ${item.nameEN} ออกจากตะกร้า`}><Trash2 size={16} /></button>
                             </div>
                           </div>
-                        </div>
                         );
                       })}
                     </div>
@@ -654,7 +654,7 @@ export default function Navbar() {
       {(isMobileMenuOpen || isSearchOpen || isCartOpen || isWishlistOpen || isProfileOpen) && (
         <button
           type="button"
-          className="fixed inset-x-0 bottom-0 top-[61px] z-40 bg-black/10 backdrop-blur-[1px] lg:hidden"
+          className="fixed inset-x-0 bottom-0 top-[61px] z-40 bg-white/80 backdrop-blur-sm"
           aria-label="Close open navigation panel"
           onClick={() => {
             setIsMobileMenuOpen(false);
@@ -668,138 +668,134 @@ export default function Navbar() {
       )}
 
       <AnimatePresence>
-      {isMobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-50 bg-white border-t border-gray-100 py-4 px-3 sm:px-5 lg:hidden"
-        >
-          <div className="space-y-2">
-            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>หน้าหลัก</Link>
-            <Link href="/products" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/products' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>สินค้าทั้งหมด</Link>
-            <Link href="/reviews" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/reviews' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>รีวิวจากลูกค้า</Link>
-            <Link href="/promotions" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/promotions' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>ข่าวสารโปรโมชั่น</Link>
-            <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/contact' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>ติดต่อเรา</Link>
-          </div>
-          <div className="mt-4 border-t border-gray-100 pt-4">
-            <p className="mb-2 px-4 text-xs font-bold uppercase tracking-widest text-gray-400">Account</p>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-50 bg-white border-t border-gray-100 py-4 px-3 sm:px-5 lg:hidden"
+          >
             <div className="space-y-2">
-              <Link
-                href="/wishlist"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                  pathname === '/wishlist'
-                    ? 'bg-pink-50 text-[#b342ad]'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <span>Wishlist</span>
-                {mounted && wishlistCount > 0 && (
-                  <span className="rounded-full bg-[#dc6fd6] px-2 py-0.5 text-xs font-bold text-white">{wishlistCount}</span>
-                )}
-              </Link>
-
-              {user ? (
-                <>
-                  {isAdmin && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="block rounded-lg px-4 py-3 text-sm font-semibold text-purple-600 transition-colors hover:bg-purple-50"
-                    >
-                      Admin Dashboard
-                    </Link>
-                  )}
-                  <Link
-                    href="/profile"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                      pathname === '/profile'
-                        ? 'bg-pink-50 text-[#b342ad]'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    โปรไฟล์ของฉัน
-                  </Link>
-                  <Link
-                    href="/orders"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                      pathname === '/orders'
-                        ? 'bg-pink-50 text-[#b342ad]'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    ประวัติการสั่งซื้อ
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      handleLogout();
-                    }}
-                    className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-red-500 transition-colors hover:bg-red-50"
-                  >
-                    ออกจากระบบ
-                  </button>
-                </>
-              ) : (
+              <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>หน้าหลัก</Link>
+              <Link href="/products" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/products' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>สินค้าทั้งหมด</Link>
+              <Link href="/reviews" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/reviews' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>รีวิวจากลูกค้า</Link>
+              <Link href="/promotions" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/promotions' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>ข่าวสารโปรโมชั่น</Link>
+              <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg transition-colors text-sm font-medium ${pathname === '/contact' ? 'bg-[#dc6fd6] text-white' : 'text-gray-700 hover:bg-gray-100'}`}>ติดต่อเรา</Link>
+            </div>
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <p className="mb-2 px-4 text-xs font-bold uppercase tracking-widest text-gray-400">Account</p>
+              <div className="space-y-2">
                 <Link
-                  href="/login"
+                  href="/wishlist"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                    pathname === '/login'
+                  className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${pathname === '/wishlist'
                       ? 'bg-pink-50 text-[#b342ad]'
                       : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
-                  เข้าสู่ระบบ
+                  <span>Wishlist</span>
+                  {mounted && wishlistCount > 0 && (
+                    <span className="rounded-full bg-[#dc6fd6] px-2 py-0.5 text-xs font-bold text-white">{wishlistCount}</span>
+                  )}
                 </Link>
-              )}
+
+                {user ? (
+                  <>
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block rounded-lg px-4 py-3 text-sm font-semibold text-purple-600 transition-colors hover:bg-purple-50"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${pathname === '/profile'
+                          ? 'bg-pink-50 text-[#b342ad]'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      โปรไฟล์ของฉัน
+                    </Link>
+                    <Link
+                      href="/orders"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${pathname === '/orders'
+                          ? 'bg-pink-50 text-[#b342ad]'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      ประวัติการสั่งซื้อ
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-red-500 transition-colors hover:bg-red-50"
+                    >
+                      ออกจากระบบ
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${pathname === '/login'
+                        ? 'bg-pink-50 text-[#b342ad]'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    เข้าสู่ระบบ
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {isSearchOpen && (
-        <div ref={searchRef} className="dropdown-animate fixed inset-x-3 top-[76px] z-50 max-h-[calc(100vh-96px)] overflow-y-auto rounded-2xl border border-white/60 bg-white/88 p-4 shadow-[0_24px_70px_rgba(31,18,36,0.16)] ring-1 ring-pink-100/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/78 cursor-default md:absolute md:left-auto md:right-6 md:top-full md:mt-3 md:w-[28rem] md:max-h-[calc(100vh-120px)]">
+        <div ref={searchRef} className="dropdown-animate fixed inset-x-4 top-[78px] z-[60] max-h-[calc(100vh-104px)] overflow-y-auto rounded-2xl border border-pink-100 bg-white p-4 shadow-[0_28px_80px_rgba(31,18,36,0.22)] ring-1 ring-pink-100 cursor-default md:absolute md:left-auto md:right-6 md:top-full md:mt-4 md:w-[28rem] md:max-h-[calc(100vh-120px)]">
           <div className="w-full">
             {/* 🔍 ช่องค้นหาพร้อมไอคอน */}
             <div className="relative w-full mb-5">
               <div className="relative">
-                <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="ค้นหาสินค้า เช่น เสื้อ, Butterfly, Dress..."
-                  className="w-full pl-8 pr-8 bg-transparent border-b-2 border-gray-200 focus:border-[#dc6fd6] py-2.5 focus:outline-none text-gray-800 text-sm transition-colors"
+                  className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-10 text-sm text-gray-800 shadow-inner shadow-gray-100/60 outline-none transition-colors focus:border-[#dc6fd6]"
                   autoFocus
                   value={searchInput}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                 />
                 {searchInput && (
-                  <button 
+                  <button
                     onClick={() => { setSearchInput(''); setSuggestions([]); setSelectedIndex(-1); }}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                     aria-label="ล้างคำค้นหา"
                   >
                     <X size={18} />
                   </button>
                 )}
               </div>
-              
+
               {/* 💡 Keyboard hint */}
               {searchInput && (
                 <p className="text-xs text-gray-400 mt-2">
                   กด <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-mono">↑</kbd> <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-mono">↓</kbd> เพื่อเลือก, <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-mono">Enter</kbd> เพื่อยืนยัน
                 </p>
               )}
-              
+
               {/* 🎯 Suggestions Dropdown */}
               {searchInput.trim().length > 0 && (
-                <div className="mt-3 w-full bg-white border border-gray-100 shadow-lg rounded-xl overflow-hidden">
+                <div className="mt-3 w-full overflow-hidden rounded-xl border border-gray-100 bg-white shadow-lg ring-1 ring-gray-100">
                   {suggestions.length > 0 ? (
                     <>
                       <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
@@ -818,9 +814,8 @@ export default function Navbar() {
                             setSearchInput('');
                             setSuggestions([]);
                           }}
-                          className={`w-full text-left px-4 py-3 flex items-center gap-4 transition-colors border-b border-gray-50 last:border-none cursor-pointer ${
-                            index === selectedIndex ? 'bg-pink-50 ring-1 ring-inset ring-[#dc6fd6]/35' : 'hover:bg-gray-50'
-                          }`}
+                          className={`w-full text-left px-4 py-3 flex items-center gap-4 transition-colors border-b border-gray-50 last:border-none cursor-pointer ${index === selectedIndex ? 'bg-pink-50 ring-1 ring-inset ring-[#dc6fd6]/35' : 'hover:bg-gray-50'
+                            }`}
                         >
                           <img src={item.image} alt={item.nameEN} className="w-14 h-18 object-cover rounded-lg bg-gray-100 shrink-0 shadow-sm" />
                           <div className="flex-1 min-w-0">
